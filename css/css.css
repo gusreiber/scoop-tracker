@@ -1,0 +1,67 @@
+html {
+  font-size: 100%; /* = user’s default, usually 16px */
+  font-family: sans-serif;
+}
+body *{
+    position: relative;
+    margin: 0; padding: 0; list-style: none; position: relative; box-sizing: border-box;
+    box-shadow: inset 0 0 0 .5px rgba(0,255,100,.5), 0 0 0 .5px rgba(0,255,100,.5);
+}
+
+.GRID{
+    margin:3rem;
+    max-width: 60rem;
+    
+    
+    
+    
+
+    & .row{ 
+        display: grid;
+        grid-template-columns:repeat(3, 1fr);
+        & .cell{
+            min-height: 2rem;
+            & input{
+                position: absolute;
+                right:0; left:0; top:0; bottom:0;
+                padding: .5rem;
+                border: none;
+            }
+            & input:focus{
+                border-style: solid;
+            }
+        }
+
+    }
+
+}
+
+table.zGRID{
+    margin:2rem;
+    width:auto;
+    border-spacing: 0;
+    & th,
+    & .groupCell{
+        padding:.5rem;
+    }
+    & .row{
+        
+        & .minMax:before {
+            content: '+';
+        }
+
+        & .cell{
+            position: relative;
+            padding: 1rem 6rem;
+            
+            
+            & input{
+                position: absolute;
+                border-style: solid;
+                top:0; left:0; right:0; bottom:0;
+                padding:.5rem;
+                
+            }        
+        }
+    }
+}

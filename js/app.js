@@ -2,21 +2,209 @@
 ////////////////////////////////////////
 // GUI CONTROLS
 /////////////////////////////
+// TYPE TO COMPLETE ----------------
+class FindIt{
+  constructor(target, data = {id:0,display:'',type:'',options:[],badges:[]} ){
+    this.target = target;
+    this.data = data;
+    console.log(data);
+    this.name = data.type + '_' + data.colKey;
+    this.currentValue = data;
+    this.options = data.options || [];
+    this.BASE = document.createElement('div');
+    this.UL = document.createElement('ul');
+
+    this.render();
+  }
+  
+  render() {
+    const el = (tag, {
+      text,
+      html,
+      attrs = {},
+      classes = [],
+      on = {},
+    } = {}) => {
+      const n = document.createElement(tag);
+
+      if (text != null) n.textContent = text;
+      if (html != null) n.innerHTML = html;
+
+      if (Array.isArray(classes) && classes.length) {
+        n.classList.add(...classes);
+      }
+
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v != null) n.setAttribute(k, v);
+      }
+
+      for (const [evt, fn] of Object.entries(on)) {
+        n.addEventListener(evt, fn);
+      }
+
+      return n;
+    };
+    
+    this.BASE.classList.add('findIt',this.name);
+    this.UL.classList.add('options');
+    const BTN = el('button', { classes: ['clear'], text:'X'});
+    const HDN = el('input',  { attrs: {type:'hidden', name:this.name+'_id'}});
+    const INP = el('input',  { attrs: {
+        type: 'text',
+        name:this.name,
+        value: this.currentValue.display,
+        autocomplete: 'off'
+      }
+    });
+    
+    for (const op of this.options) {
+      const A = el('a', {
+        text: op.label,
+        attrs: { 'data-key': op.key, tabindex: 0 }
+      });
+
+      const LI = el('li');
+      LI.append(A);
+      this.UL.append(LI);
+    }
+
+    this.BASE.append(HDN, INP, BTN, ((this.options.length > 0)?this.UL:null));
+    this.target.append(this.BASE);
+
+    this.bindEvents();
+  }
+  bindEvents(){
+    const HDN = this.BASE.querySelector('input[type="hidden"]');
+    const INP = this.BASE.querySelector('input[type="text"]');
+    const UL  = this.BASE.querySelector('ul.options');
+    const X   = this.BASE.querySelector('button.clear');
+    
+    INP.addEventListener("input", () => {
+      this.filtered = this._matchOptions(INP.value);
+      this.activeIndex = this.filtered.length ? 0 : -1;
+      this._renderOptions();
+    });
+
+    INP.addEventListener("keydown", (e) => {
+      if (!this.filtered?.length) return;
+
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        this.activeIndex = Math.min(this.activeIndex + 1, this.filtered.length - 1);
+        this._renderOptions();
+      }
+
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        this.activeIndex = Math.max(this.activeIndex - 1, 0);
+        this._renderOptions();
+      }
+
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const op = this.filtered[this.activeIndex];
+        if (op) this._select(op);
+      }
+
+      if (e.key === "Escape") {
+        e.preventDefault();
+        this.activeIndex = -1;
+        this._renderOptions();
+      }
+    });
+
+    this.UL.addEventListener("click", (e) => {
+      const a = e.target.closest("a[data-key]");
+      if (!a) return;
+      e.preventDefault();
+      const op = this.filtered.find(x => String(x.key) === a.dataset.key);
+      if (op) this._select(op);
+    });
+
+    this.UL.addEventListener('click', (e)=>{
+      const a = e.target.closest('a');
+      if (!a || !this.UL.contains(a)) return;
+      const label = a.textContent;
+      const key   = a.dataset.key;
+
+      INP.value = label;
+    });
+
+    X.addEventListener('click', (e)=>{
+      INP.value = '';
+    });
+
+  }
+
+  // ---- lost method (the important one)
+  _select(key){
+    const opt = this.options.find(o => String(o.key) === String(key));
+    if (!opt) return;
+
+    this.currentValue = opt.label ?? "";
+    this.INP.value = this.currentValue;
+
+    // optional: notify host
+    this.onSelect?.(opt);
+
+    this._close();
+  }
+
+  _norm(s){
+    return (s ?? "")
+      .toString()
+      .trim()
+      .toLowerCase();
+  }
+
+
+  _matchOptions(query){
+    const q = this._norm(query);
+    if (!q) return this.options;
+
+    const scored = this.options.map(op => {
+      const s = this._norm(op.label);
+      if (s.startsWith(q)) return { op, score: 0 };
+      const i = s.indexOf(q);
+      if (i >= 0) return { op, score: 10 + i };
+      return null;
+    }).filter(Boolean);
+
+    scored.sort((a,b) => a.score - b.score);
+    return scored.map(x => x.op);
+  }
+
+  _renderOptions(){
+    this.UL.replaceChildren();
+
+    this.filtered.forEach((op, i) => {
+      const A = document.createElement("a");
+      A.href = "#";
+      A.dataset.key = op.key;
+      A.tabIndex = -1;                 // keep tab on the input; roving focus later
+      A.textContent = op.label;
+      if (i === this.activeIndex) A.classList.add("active");
+
+      const LI = document.createElement("li");
+      LI.append(A);
+      this.UL.append(LI);
+    });
+  }
+
+  
+}
 
 // GRID ---------------------------
 class Grid{
-  constructor(target, state){
+  constructor(target, state, name = ""){
     this.target = target;
-    
     this.state = state;
+    this.name = name;
   }
   
   init() {
-
-
     this.render();
     this.bindEvents();
-    
   }
 
   render() { 
@@ -31,7 +219,7 @@ class Grid{
       return n;
     }
 
-    const { columns, rows, minCount } = this.state;
+    const { columns, rows,  minCount } = this.state;
     
     const TABLE = el('table', 'zGRID');
     const THEAD = el("thead");
@@ -60,35 +248,41 @@ class Grid{
         const GD = el("td",    "groupCell");
         GD.colSpan = columns.length;
 
-        
-const label = el("span", "groupLabel");
-label.textContent = g.label;
-GD.append(label);
+        const label = el("span", "groupLabel");
+        label.textContent = g.label;
+        GD.append(label);
 
-// badges (raw counts)
-const badges = el("span", "groupBadges");
-console.log('g.badges',g.badges);
-for (const b of (g.badges ?? [])) {
-  const B = el("span", "badge");
-  B.textContent = b.text;      // e.g. "U:3"
-  if (b.title) B.title = b.title;
-  badges.append(B);
-}
-GD.append(badges);
-
-
+        // badges (from getGroupBadges)
+        const BDGs = el("span", "badges");
+        for (const b of (g.badges ?? [])) {
+          const B = el("span", "badge");
+          B.textContent = b.text;      // e.g. "U:3"
+          if (b.title) B.title = b.title;
+          BDGs.append(B);
+        }
+        GD.append(BDGs);
         GR.append(GD);
         TBODY.append(GR);
       }
       
       const ROW = el('tr','row');
       for(let x = 0; x < columns.length; x++){
-        const CELL = el('td','cell');
-        const INP  = el('input');
+        // badges (from fillRow -> rowOptions -> _cellBadges)
+        const cBadges  = (rows[y]._cellBadges)? rows[y]._cellBadges[columns[x].key]:[];
+        const cOptions = (rows[y]._options)?    rows[y]._options[columns[x].key]:[];
+    
+        const BDGs = el("span", "badges"); 
+        if(cBadges) for(const b of cBadges){
+          const B = el("span", "badge", (b?b.class:''));
+          B.textContent = b.text;
+          if (b.title) B.title = b.title;
+          BDGs.append(B);
+        }
+        const CELL  = el('td','cell', columns[x].key);
+        const data = rows[y]?.[columns[x].key] ?? "";
+        const INP   = new FindIt(CELL, data);
 
-        INP.value = rows[y]?.[columns[x].key] ?? "";
-        
-        CELL.append(INP);
+        CELL.append(BDGs);
         ROW.append(CELL);
       }
 
@@ -96,7 +290,6 @@ GD.append(badges);
     }
     
     this.target.append(TABLE);
-    console.log(TABLE);
 
   }
 
@@ -116,6 +309,51 @@ GD.append(badges);
 /////////////////////////////
 
 // GRID --------------------------
+class Flavor {
+  constructor({ flavorsById, tubs, location }) {
+    this.flavorsById = flavorsById;
+    this.location = location;
+
+    const isAvail = t => t.state !== "Opened" && t.state !== "Emptied";
+
+    const allAvail = (tubs ?? []).filter(isAvail);
+    const locAvail = allAvail.filter(t => t.location === location);
+    const rmtAvail = allAvail.filter(t => t.location !== location);
+
+    this.availAll = DataLoader.groupBy(allAvail, t => t.flavor);
+    this.availLoc = DataLoader.groupBy(locAvail, t => t.flavor);
+    this.availRmt = DataLoader.groupBy(rmtAvail, t => t.flavor);
+
+    this.optionsAll = [...flavorsById.entries()]
+      .map(([id, f]) => ({ key: id, label: f._title }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }
+  
+  badges(id, specs) {
+    if (!id) return [];
+    return (specs ?? [])
+      .map(s => {
+        const n = s.count(id, this);
+        if (s.hideZero && !n) return null;
+        return { key: s.key, text: s.format(n), title: s.title ?? "" };
+      })
+      .filter(Boolean);
+  }
+
+
+  getFlavorBadgeSpecs() {
+    return [
+      { key:"loc", title:"Available here", hideZero:true,
+        count:(flavorId, m) => m.availLoc.get(flavorId)?.length ?? 0,
+        format:n => `L:${n}` },
+
+      { key:"rmt", title:"Available elsewhere", hideZero:true,
+        count:(flavorId, m) => m.availRmt.get(flavorId)?.length ?? 0,
+        format:n => `R:${n}` },
+    ];
+  }
+}
+
 class BaseGridModel {
   
   constructor(domain, { location } = {}) {
@@ -126,10 +364,23 @@ class BaseGridModel {
     this.columns = [];
     this.rows = [];
     this.rowGroups = [];
-    this.options = {};
     this.minCount = 0;
 
-    this.badgeSpecs = [];
+    // --- derived indexes (convenience, not exposed to Grid) ---
+    this._tubsById         = DataLoader.byId(domain.tubs.filter(t => t.state !== 'emptied'));
+    this._flavorsById      = DataLoader.byId(domain.flavors);
+    this._availByFlavor    = DataLoader.groupBy(
+                              domain.tubs.filter( t => t.state !== "Emptied"),
+                              t => t.flavor
+                            );
+
+    this.flavorMeta = new Flavor({
+      flavorsById: this._flavorsById,
+      tubs: domain.tubs,
+      location: this.location
+    });
+
+    this.fBadgeSpecs = this.flavorMeta.getFlavorBadgeSpecs();
   }
 
   getIdsForLocation(list, { locationKey = "location", idKey = "id" } = {}) {
@@ -146,13 +397,8 @@ class BaseGridModel {
       item?.[locationKey] === this.location
     );
   }
-
   
-  labelFromMap(objOrId, map, {
-      fieldKey = null,
-      fallbackNoun = "Item"
-    } = {})
-  {
+  labelFromMap(objOrId, map, {fieldKey = null, fallbackNoun = "Item"} = {}){
     const id = fieldKey
       ? objOrId?.[fieldKey]
       : objOrId;
@@ -164,24 +410,7 @@ class BaseGridModel {
 
   }
 
-  isValidId(itemId) {
-    return Number(itemId) > 0;
-  }
-
-  badgesFrom(items, specs = []) {
-    const arr = Array.isArray(items) ? items : [];
-    console.log('badgesFrom:',items, specs);
-    return specs
-      .map(s => {
-        const n = s.count(arr);
-        if (s.hideZero && !n) return null;
-        return { key: s.key, text: s.format(n), title: s.title ?? "" };
-      })
-      .filter(Boolean);
-  }
-
   build() {
-    console.log('BaseGridModel builds:', this);
     this.buildCols();
     this.builRows();
   }
@@ -198,20 +427,22 @@ class BaseGridModel {
     groupsMap,            // Map<groupId, item[]>
     includeGroupId,       // (groupId) => boolean
     getGroupLabel,        // (groupId) => string
-    getGroupBadges,       // optional callback to get meta info
+    getGroupBadges,       // optional callback to get meta info on groups
+    getCellBadges,        // optional callback to get meta info on cells
     makeRowId,            // (item) => any
     fillRow,              // (row, item) => void
     groupIdKey = "groupId"// key name stored in rowGroups entries
   }) {
     this.rows = [];
     this.rowGroups = [];
-
+    let i = 0;
     for (const [groupId, items] of (groupsMap ?? new Map()).entries()) {
       if (includeGroupId && !includeGroupId(groupId)) continue;
 
       const badges = getGroupBadges ? (getGroupBadges(items, groupId) ?? []) : [];
 
       this.rowGroups.push({
+        index       : i,
         startIndex  : this.rows.length,
         label       : getGroupLabel ? getGroupLabel(groupId) : String(groupId),
         [groupIdKey]: groupId,
@@ -220,7 +451,7 @@ class BaseGridModel {
 
       for (const item of (items ?? [])) {
         const row = { id: makeRowId ? makeRowId(item) : item?.id };
-        if (fillRow) fillRow(row, item);
+        if (fillRow) fillRow(row, item, i++);
         this.rows.push(row);
       }
     }
@@ -228,24 +459,53 @@ class BaseGridModel {
     return this.rows;
 
   }
+  
+
+  getBadges( type, fieldName, id){
+    // TODO: Badges could differ by type or field name, but at the moment
+    // I only have flavor bages and they are all tub counts of that ID.
+    return this.flavorMeta.badges(id, this.fBadgeSpecs);
+  }
+
+  getOptions( type, fieldName, id){
+    return this.flavorMeta.optionsAll;
+  }
 
   fillRowFromColumns(
-    row, obj, 
-    {
-    idKey = "id",
-    resolveTitleKeys = new Map(), // key -> map (e.g. "flavor" -> this._flavorsById)
-    } = {}) 
+    row, // The row so far...
+    obj, // THE RAW DATA for the item that is the basis for the row
+    i,   // a simple 
+  ) 
   {
     for (const col of this.columns) {
       const key = col?.key;
-      if (!key || key === idKey) continue;
-
-      const map = resolveTitleKeys.get(key);
-      if (map) {
-        row[key] = this.labelFromMap(obj, map, { fieldKey: key, fallbackNoun: col.label ?? key });
-      } else {
-        row[key] = obj?.[key] ?? null;
+      if (!key) continue;
+      console.log('col',col);
+    
+      if(col.type && Number.isInteger(obj?.[key] ?? null)){
+        if(col.type === 'flavor'){
+          row[key] = {
+            id      : obj[key],
+            rowId   : obj['id'] || i,
+            display : DoNorm?._titleOf(this._flavorsById.get(obj[key]) ?? obj[key] ),
+            type    : col.type,
+            colKey  : col.key,
+            options : this.getOptions( col.type, col.key, row[key] ),
+            badges  : this.getBadges( col.type, col.key, row[key] ),
+          }
+        } 
+        else row[key] = { 
+          id      : obj[key],
+          rowId   : obj['id'] || i,
+          display : DoNorm._titleOf(this._flavorsById.get(obj[key])),
+          type    : col.type,
+          colKey  : col.key,
+          options : this.getOptions(row[key], col.type),
+          badges  : this.getBadges(row[key], col.type),
+        };
       }
+      else row[key] = { rowId: obj['id'] || i, display: obj?.[key] ?? null, type: col.type, colKey: col.key}
+
     }
   }
 
@@ -256,25 +516,22 @@ class CabinetGridModel extends BaseGridModel{
   constructor(domain, { location = 935 } = {}) {
     super(domain, { location });
 
-    this._cabinetsById     = DataLoader.byId(domain.cabinets);
-    this._flavorsById      = DataLoader.byId(domain.flavors);
-    this._slotsByCabinetId = DataLoader.groupBy(
-      domain.slots,
-      s => s.cabinet
+    this._cabinetsById = DataLoader.byId(domain.cabinets);
+    this._flavorsById  = DataLoader.byId(domain.flavors);
 
-    );
+    this._slotsByCabinetId = DataLoader.groupBy(domain.slots, s => s.cabinet);
+
+
 
     this.build();
   }
 
-
-
   buildCols(){
     this.columns = [
       {key:'id',              label:'id'},
-      {key:'current_flavor',  label:'Current Flavor'},
-      {key:'immediate_flavor',label:'Immediate Flavor'},
-      {key:'next_flavor',     label:'Planned Flavor'}
+      {key:'current_flavor',  label:'Current Flavor',   type:"flavor"},
+      {key:'immediate_flavor',label:'Immediate Flavor', type:"flavor"},
+      {key:'next_flavor',     label:'Planned Flavor',   type:"flavor"}
     ]
 
     return this.columns;
@@ -288,16 +545,8 @@ class CabinetGridModel extends BaseGridModel{
       groupIdKey    : "cabinetId",
       includeGroupId: (id) => cabinetIds.has(Number(id)),      
       getGroupLabel : (id) => this.labelFromMap(id, this._cabinetsById),
-      getGroupBadges: (items) => this.badgesFrom(items, this.badgeSpecs),
-      fillRow       : (row, item) => {
-                      this.fillRowFromColumns(row, item, {
-                        resolveTitleKeys: new Map([
-                          ["current_flavor", this._flavorsById],
-                          ["immediate_flavor", this._flavorsById],
-                          ["next_flavor", this._flavorsById],
-                         ]),
-                      });
-                    }
+      getCellBadges : (items) => this.badgesFrom(items, this.cellBadgeSpecs),
+      fillRow       : (row, item, i) => { this.fillRowFromColumns(row, item, i); }
     });
   }
 
@@ -307,27 +556,17 @@ class FlavorTubsGridModel extends BaseGridModel{
   constructor(domain, {location = 935} = {} ){
     super(domain, { location });
 
-    // --- derived indexes (convenience, not exposed to Grid) ---
-    this._tubsById         = DataLoader.byId(domain.tubs);
-    this._flavorsById      = DataLoader.byId(domain.flavors);
     
-    this.badgeSpecs = [
-      { key: "unopened", title: "Unopened", hideZero: true,
-        count: tubs => tubs.length,
-        format: n => `U:${n}` },
-      { key: "serving", title: "Serving", hideZero: true,
-        count: tubs => tubs.filter(t => t.state === "Serving").length,
-        format: n => `S:${n}` },
-    ];
-
+    
     this.build();
+    console.log(this);
   }
 
   buildCols(){
     this.columns = [
       {key:'id',              label:'id'},
       {key:'state',           label:'state'},
-      {key:'flavor',          label:'flavor'},
+      {key:'flavor',          label:'flavor',  type:"flavor"},
       {key:'date',            label:'date'},
       {key:'index',           label:'index'},
     ]
@@ -342,17 +581,11 @@ class FlavorTubsGridModel extends BaseGridModel{
     return this.buildGroupedRows({
       groupsMap     : tubsByFlavorId,
       groupIdKey    : "flavor",
-      includeGroupId: (id)    => this.isValidId(id),
-      getGroupLabel : (id)    => this.labelFromMap(id, this._flavorsById),
-      getGroupBadges: (item) => this.badgesFrom(item, this.badgeSpecs),
+      includeGroupId: (id)   => Number(id) > 0,
+      getGroupLabel : (id)   => this.labelFromMap(id, this._flavorsById),
       makeRowId     : (item) => item.id,
-      fillRow       : (row, items) => { 
-                      this.fillRowFromColumns(row, items, {
-                        resolveTitleKeys: new Map([
-                          ["flavor", this._flavorsById],
-                        ]),
-                      });
-                    }
+      getGroupBadges: (items, flavorId) => this.flavorMeta.badges(flavorId, this.fBadgeSpecs), // optional hide-zero
+      fillRow       : (row, items, i) => { this.fillRowFromColumns(row, items, i); }
     });
   }
 
@@ -591,13 +824,15 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   const D   = DoNorm.normalize(raw);
 
 
+
+
   const CGM = new CabinetGridModel(D);
   const FTM = new FlavorTubsGridModel(D);
 
-  const grid = new Grid(document.body, CGM );
+  const grid = new Grid(document.body, CGM, 'planning' );
   await grid.init();
 
-  const tub = new Grid(document.body, FTM );
+  const tub = new Grid(document.body, FTM, 'tubs' );
   await tub.init();
   
 });

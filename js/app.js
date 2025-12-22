@@ -22,7 +22,6 @@ class FindIt{
     this.value   = this.data.id ?? 0;
     this.display = this.data.display ?? "";
     this.options = Array.isArray(this.data.options) ? this.data.options : [];
-    this.showAll = false;
 
     // Required for stable field names
     this.rowId  = this.data.rowId ?? this.data.id ?? 0;
@@ -56,13 +55,6 @@ class FindIt{
     for (const [evt, fn] of Object.entries(on)) n.addEventListener(evt, fn);
 
     return n;
-  }
-
-  _showAllOptions() {
-    this.showAll = true;
-    this.filtered = this.options;           // all options
-    this.activeIndex = this.filtered.length ? 0 : -1;
-    this._renderOptions();
   }
 
   _open() {
@@ -228,7 +220,6 @@ class FindIt{
     // Compose
     this.BASE.replaceChildren();
     this.BASE.append(HDN, INP, BTN);
-    if (this.options.length) this.BASE.append(this.UL);
 
     this.target.append(this.BASE);
 
@@ -245,13 +236,21 @@ class FindIt{
     this.activeIndex = -1;
     this.isOpen = false;
 
+    
+    // Listen on the closest form (scoped) or fall back to document (global)
+    const root = this.BASE.closest("form") ?? document;
+
+    root.addEventListener("grid:close-findits", () => {
+      this._close();
+    });
+
+
     // open on focus
     this.INP.addEventListener("focus", () => this._open());
 
     // filter on input
     this.INP.addEventListener("input", () => {
-      if (!this.isOpen) this._open();
-      this.showAll = false;                   // typing means filter mode
+      if (!this.isOpen) this._open();                 // typing means filter mode
       this.filtered = this._matchOptions(this.INP.value);
       this.activeIndex = this.filtered.length ? 0 : -1;
       this._renderOptions();
@@ -288,18 +287,7 @@ class FindIt{
         return;
       }
 
-
-
       if (!this.isOpen) return;
-
-
-      if (k === "ArrowUp") {
-        e.preventDefault();
-        if (!this.filtered.length) return;
-        this.activeIndex = Math.max(this.activeIndex - 1, 0);
-        this._renderOptions();
-        return;
-      }
 
       if (k === "Enter" || k === " ") {
         if (!this.isOpen) return;              // allow normal typing behavior when closed
@@ -318,13 +306,6 @@ class FindIt{
       e.preventDefault();
       const op = this.filtered?.find(x => String(x.key) === String(a.dataset.key));
       if (op) this._select(op);
-    });
-
-    // click-outside closes
-    document.addEventListener("mousedown", (e) => {
-      if (!this.isOpen) return;
-      if (this.BASE.contains(e.target)) return;
-      this._close();
     });
 
     // clear button
@@ -420,13 +401,20 @@ class Grid{
       const ROW = el('tr','row');
       for(let x = 0; x < columns.length; x++){
         const col = this.state.columns[x];
-        const BDGs = el("span", "badges"); 
- 
-        const CELL = el('td','cell', columns[x].key);
         const data = rows[y]?.[columns[x].key] ?? "";
+        const BDGs = el("span", "badges"); 
+        
+        for(const b of data?.badges ?? []){
+          const B = el('span', 'badge');
+          B.append(b.text);
+          BDGs.append(B);
+        }
+
+        const CELL = el('td','cell', columns[x].key);
+        
         if(col.write) new FindIt(CELL, data, this.name);
         else{
-          CELL.append(data.display);
+          CELL.append('' + (data.display || ''));
           CELL.classList.add('read-only');
         }
         
@@ -444,15 +432,21 @@ class Grid{
   }
 
   bindEvents() {
-    console.log('Grid EVENTS', this.FORM);
     if (!this.FORM) return;
+
+    this.FORM.addEventListener("mousedown", (e) => {
+        if (e.target.closest(".findIt")) return;
+        this.FORM.dispatchEvent(new Event("grid:close-findits"));
+      },
+      true // capture
+    );
+
 
     // Only validate the planning grid posts
     if (this.name !== "planning") return;
 
     this.FORM.addEventListener("submit", (e) => {
       e.preventDefault();
-      alert('?');
 
       // 1) extract "planning[cells][slotId][colKey]" from the form
       const { changes } = extractPlanningChangesFromForm(this.FORM, this.name);
@@ -554,7 +548,7 @@ class BaseGridModel {
     this.minCount = 0;
 
     // --- derived indexes (convenience, not exposed to Grid) ---
-    this._tubsById         = DataLoader.byId(domain.tubs.filter(t => t.state !== 'emptied'));
+    this._tubsById         = DataLoader.byId(domain.tubs.filter(t => t.state !== 'Emptied'));
     this._flavorsById      = DataLoader.byId(domain.flavors);
     this._availByFlavor    = DataLoader.groupBy(
                               domain.tubs.filter( t => t.state !== "Emptied"),
@@ -615,7 +609,6 @@ class BaseGridModel {
     includeGroupId,       // (groupId) => boolean
     getGroupLabel,        // (groupId) => string
     getGroupBadges,       // optional callback to get meta info on groups
-    getCellBadges,        // optional callback to get meta info on cells
     makeRowId,            // (item) => any
     fillRow,              // (row, item) => void
     groupIdKey = "groupId"// key name stored in rowGroups entries
@@ -667,17 +660,18 @@ class BaseGridModel {
     for (const col of this.columns) {
       const key = col?.key;
       if (!key) continue;
+      const id = Number(obj?.[key] ?? 0);
     
       if(col.type && Number.isInteger(obj?.[key] ?? null)){
         if(col.type === 'flavor'){
           row[key] = {
-            id      : obj[key],
+            id      : id,
             rowId   : obj['id'] || i,
             display : DoNorm?._titleOf(this._flavorsById.get(obj[key]) ?? obj[key] ),
             type    : col.type,
             colKey  : col.key,
-            options : this.getOptions( col.type, col.key, row[key] ),
-            badges  : this.getBadges( col.type, col.key, row[key] ),
+            options : this.getOptions( col.type, col.key, id ),
+            badges  : this.getBadges( col.type, col.key, id ),
           }
         } 
         else row[key] = { 
@@ -686,8 +680,8 @@ class BaseGridModel {
           display : DoNorm._titleOf(this._flavorsById.get(obj[key])),
           type    : col.type,
           colKey  : col.key,
-          options : this.getOptions(row[key], col.type),
-          badges  : this.getBadges(row[key], col.type),
+          options : this.getOptions( col.type, col.key, id ),
+          badges  : this.getBadges( col.type, col.key, id ),
         };
       }
       else row[key] = { rowId: obj['id'] || i, display: obj?.[key] ?? null, type: col.type, colKey: col.key}
@@ -731,7 +725,6 @@ class CabinetGridModel extends BaseGridModel{
       groupIdKey    : "cabinetId",
       includeGroupId: (id) => cabinetIds.has(Number(id)),      
       getGroupLabel : (id) => this.labelFromMap(id, this._cabinetsById),
-      getCellBadges : (items) => this.badgesFrom(items, this.cellBadgeSpecs),
       fillRow       : (row, item, i) => { this.fillRowFromColumns(row, item, i); }
     });
   }

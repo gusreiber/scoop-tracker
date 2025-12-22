@@ -1,195 +1,340 @@
+import {
+  extractPlanningChangesFromForm,
+  validatePlanningChanges
+} from "./slotChecker.js";
 
 ////////////////////////////////////////
 // GUI CONTROLS
 /////////////////////////////
 // TYPE TO COMPLETE ----------------
 class FindIt{
-  constructor(target, data = {id:0,display:'',type:'',options:[],badges:[]} ){
+  constructor(
+    target,
+    data = { id: 0, rowId: 0, colKey: "", display: "", type: "", options: [], badges: [] },
+    formKey = ''
+    //{ formKey = "grid", includeDisplayName = false } = {}
+  ) {
     this.target = target;
-    this.data = data;
-    console.log(data);
-    this.name = data.type + '_' + data.colKey;
-    this.currentValue = data;
-    this.options = data.options || [];
-    this.BASE = document.createElement('div');
-    this.UL = document.createElement('ul');
+    this.data   = data ?? {};
+    this.formKey = formKey;
+
+    // Authoritative value + options
+    this.value   = this.data.id ?? 0;
+    this.display = this.data.display ?? "";
+    this.options = Array.isArray(this.data.options) ? this.data.options : [];
+    this.showAll = false;
+
+    // Required for stable field names
+    this.rowId  = this.data.rowId ?? this.data.id ?? 0;
+    this.colKey = this.data.colKey ?? "";
+    this.type   = this.data.type ?? "";
+
+    // Name for the hidden input only (visible input can be nameless)
+    // Example: planning[cells][1181][current_flavor]
+    this.fieldName = `${this.formKey}[cells][${this.rowId}][${this.colKey}]`;
+
+    /* Optional: keep a display field in POST if you ever want it
+    this.displayName = includeDisplayName
+      ? `${this.formKey}[display][${this.rowId}][${this.colKey}]`
+      : null;
+    */
+    // Root elements
+    this.BASE = document.createElement("div");
+    this.UL   = document.createElement("ul");
 
     this.render();
   }
-  
-  render() {
-    const el = (tag, {
-      text,
-      html,
-      attrs = {},
-      classes = [],
-      on = {},
-    } = {}) => {
-      const n = document.createElement(tag);
 
-      if (text != null) n.textContent = text;
-      if (html != null) n.innerHTML = html;
+  // --- HELPERS ---
+  _el(tag, { text, html, attrs = {}, classes = [], on = {} } = {}) {
+    const n = document.createElement(tag);
 
-      if (Array.isArray(classes) && classes.length) {
-        n.classList.add(...classes);
-      }
+    if (text != null) n.textContent = text;
+    if (html != null) n.innerHTML = html;
+    if (classes?.length) n.classList.add(...classes);
+    for (const [k, v] of Object.entries(attrs)) if (v != null) n.setAttribute(k, v);
+    for (const [evt, fn] of Object.entries(on)) n.addEventListener(evt, fn);
 
-      for (const [k, v] of Object.entries(attrs)) {
-        if (v != null) n.setAttribute(k, v);
-      }
-
-      for (const [evt, fn] of Object.entries(on)) {
-        n.addEventListener(evt, fn);
-      }
-
-      return n;
-    };
-    
-    this.BASE.classList.add('findIt',this.name);
-    this.UL.classList.add('options');
-    const BTN = el('button', { classes: ['clear'], text:'X'});
-    const HDN = el('input',  { attrs: {type:'hidden', name:this.name+'_id'}});
-    const INP = el('input',  { attrs: {
-        type: 'text',
-        name:this.name,
-        value: this.currentValue.display,
-        autocomplete: 'off'
-      }
-    });
-    
-    for (const op of this.options) {
-      const A = el('a', {
-        text: op.label,
-        attrs: { 'data-key': op.key, tabindex: 0 }
-      });
-
-      const LI = el('li');
-      LI.append(A);
-      this.UL.append(LI);
-    }
-
-    this.BASE.append(HDN, INP, BTN, ((this.options.length > 0)?this.UL:null));
-    this.target.append(this.BASE);
-
-    this.bindEvents();
-  }
-  bindEvents(){
-    const HDN = this.BASE.querySelector('input[type="hidden"]');
-    const INP = this.BASE.querySelector('input[type="text"]');
-    const UL  = this.BASE.querySelector('ul.options');
-    const X   = this.BASE.querySelector('button.clear');
-    
-    INP.addEventListener("input", () => {
-      this.filtered = this._matchOptions(INP.value);
-      this.activeIndex = this.filtered.length ? 0 : -1;
-      this._renderOptions();
-    });
-
-    INP.addEventListener("keydown", (e) => {
-      if (!this.filtered?.length) return;
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        this.activeIndex = Math.min(this.activeIndex + 1, this.filtered.length - 1);
-        this._renderOptions();
-      }
-
-      if (e.key === "ArrowUp") {
-        e.preventDefault();
-        this.activeIndex = Math.max(this.activeIndex - 1, 0);
-        this._renderOptions();
-      }
-
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const op = this.filtered[this.activeIndex];
-        if (op) this._select(op);
-      }
-
-      if (e.key === "Escape") {
-        e.preventDefault();
-        this.activeIndex = -1;
-        this._renderOptions();
-      }
-    });
-
-    this.UL.addEventListener("click", (e) => {
-      const a = e.target.closest("a[data-key]");
-      if (!a) return;
-      e.preventDefault();
-      const op = this.filtered.find(x => String(x.key) === a.dataset.key);
-      if (op) this._select(op);
-    });
-
-    this.UL.addEventListener('click', (e)=>{
-      const a = e.target.closest('a');
-      if (!a || !this.UL.contains(a)) return;
-      const label = a.textContent;
-      const key   = a.dataset.key;
-
-      INP.value = label;
-    });
-
-    X.addEventListener('click', (e)=>{
-      INP.value = '';
-    });
-
+    return n;
   }
 
-  // ---- lost method (the important one)
-  _select(key){
-    const opt = this.options.find(o => String(o.key) === String(key));
-    if (!opt) return;
+  _showAllOptions() {
+    this.showAll = true;
+    this.filtered = this.options;           // all options
+    this.activeIndex = this.filtered.length ? 0 : -1;
+    this._renderOptions();
+  }
 
-    this.currentValue = opt.label ?? "";
-    this.INP.value = this.currentValue;
+  _open() {
+    if (this.isOpen) return;
 
-    // optional: notify host
-    this.onSelect?.(opt);
+    // Nothing to show — never attach UL
+    if (!this.options || this.options.length === 0) return;
+
+    this.isOpen = true;
+
+    if (!this.BASE.contains(this.UL)) this.BASE.append(this.UL);
+
+    this.filtered = this._matchOptions(this.INP.value);
+    this.activeIndex = this.filtered.length ? 0 : -1;
+    this._renderOptions();
+  }
+
+
+  _close() {
+    if (!this.isOpen) return;
+    this.isOpen = false;
+    this.activeIndex = -1;
+
+    if (this.BASE.contains(this.UL)) this.UL.remove();
+  }
+
+  _commitActive() {
+    const op = this.filtered?.[this.activeIndex];
+    if (!op) return false;
+    this._select(op);      // must accept option object
+    return true;
+  }
+
+  _clear() {
+    this.HDN.value = "";
+    this.INP.value = "";
+    this.value = 0;
+    this.display = "";
+    this.filtered = this._matchOptions("");
+    this.activeIndex = this.filtered.length ? 0 : -1;
+    if (this.isOpen) this._renderOptions();
+  }
+
+  _select(op) {
+    // authoritative value
+    this.value = op?.key ?? 0;
+    this.display = op?.label ?? "";
+
+    this.HDN.value = String(this.value || "");
+    this.INP.value = this.display;
+
+    this.onSelect?.(op);
 
     this._close();
   }
 
-  _norm(s){
-    return (s ?? "")
-      .toString()
-      .trim()
-      .toLowerCase();
+  _norm(s) {
+    return (s ?? "").toString().trim().toLowerCase();
   }
 
-
-  _matchOptions(query){
+  _matchOptions(query) {
     const q = this._norm(query);
-    if (!q) return this.options;
+    const opts = Array.isArray(this.options) ? this.options : [];
+    if (!q) return opts;
 
-    const scored = this.options.map(op => {
-      const s = this._norm(op.label);
-      if (s.startsWith(q)) return { op, score: 0 };
-      const i = s.indexOf(q);
-      if (i >= 0) return { op, score: 10 + i };
-      return null;
-    }).filter(Boolean);
+    const scored = [];
+    for (const op of opts) {
+      const label = this._norm(op.label);
+      if (!label) continue;
 
-    scored.sort((a,b) => a.score - b.score);
+      if (label.startsWith(q)) scored.push({ op, score: 0 });
+      else {
+        const i = label.indexOf(q);
+        if (i >= 0) scored.push({ op, score: 10 + i });
+      }
+    }
+
+    scored.sort((a, b) => a.score - b.score);
     return scored.map(x => x.op);
   }
 
-  _renderOptions(){
+  _renderOptions() {
+    const el = this._el.bind(this);
+
     this.UL.replaceChildren();
 
-    this.filtered.forEach((op, i) => {
-      const A = document.createElement("a");
-      A.href = "#";
-      A.dataset.key = op.key;
-      A.tabIndex = -1;                 // keep tab on the input; roving focus later
-      A.textContent = op.label;
-      if (i === this.activeIndex) A.classList.add("active");
+    const list = this.filtered ?? [];
+    for (let i = 0; i < list.length; i++) {
+      const op = list[i];
 
-      const LI = document.createElement("li");
+      const A = el("a", {
+        text: op?.label ?? "",
+        attrs: {
+          href: "#",
+          "data-key": String(op?.key ?? ""),
+          tabindex: "-1",
+        }
+      });
+
+      const LI = el("li",{
+        classes: (i === this.activeIndex) ? ["active"] : []
+      });
       LI.append(A);
       this.UL.append(LI);
+    }
+}
+
+  // --- RENDER ---
+  render() {
+    const el = this._el.bind(this);
+
+    // Root
+    this.BASE.className = ""; // in case render() is ever re-called
+    this.BASE.classList.add("findIt");
+    if (this.type) this.BASE.classList.add(`type-${this.type}`);
+    if (this.colKey) this.BASE.classList.add(`col-${this.colKey}`);
+
+    // Hidden authoritative value
+    const HDN = el("input", {
+      attrs: { type: "hidden", name: this.fieldName, value: String(this.value ?? "") }
+    });
+
+    // Visible input is UI-only (no name by default)
+    const inpAttrs = {
+      type: "text",
+      value: this.display ?? "",
+      autocomplete: "off",
+      "data-field": this.fieldName
+    };
+    if (this.displayName) inpAttrs.name = this.displayName;
+
+    const INP = el("input", { attrs: inpAttrs });
+
+    // Clear button should not submit the parent form
+    const BTN = el("button", {
+      classes: ["clear"],
+      text: "X",
+      attrs: { type: "button" }
+    });
+    this.BTN = BTN;
+
+    // Options list (leave in place for now; you can lazy-fill later)
+    this.UL.className = "";
+    this.UL.classList.add("options");
+    this.UL.replaceChildren();
+
+    /*
+    for (const op of this.options) {
+      const A = el("a", {
+        text: op.label ?? "",
+        attrs: {
+          href: "#",
+          "data-key": op.key,
+          tabindex: -1
+        }
+      });
+
+      const LI = el("li");
+      LI.append(A);
+      this.UL.append(LI);
+    }
+    */
+    // Compose
+    this.BASE.replaceChildren();
+    this.BASE.append(HDN, INP, BTN);
+    if (this.options.length) this.BASE.append(this.UL);
+
+    this.target.append(this.BASE);
+
+    // Cache references for other methods (bindEvents/_select/etc.)
+    this.HDN = HDN;
+    this.INP = INP;
+
+    this.bindEvents();
+  }
+
+  // --- bindEvents refactored to use the helpers ---
+  bindEvents() {
+    this.filtered = [];
+    this.activeIndex = -1;
+    this.isOpen = false;
+
+    // open on focus
+    this.INP.addEventListener("focus", () => this._open());
+
+    // filter on input
+    this.INP.addEventListener("input", () => {
+      if (!this.isOpen) this._open();
+      this.showAll = false;                   // typing means filter mode
+      this.filtered = this._matchOptions(this.INP.value);
+      this.activeIndex = this.filtered.length ? 0 : -1;
+      this._renderOptions();
+    });
+
+    // keyboard navigation + commit
+    this.INP.addEventListener("keydown", (e) => {
+      const k = e.key;
+
+      if (k === "Escape") {
+        e.preventDefault();
+        this._clear();   // your requested behavior: ESC clears
+        this._close();
+        return;
+      }
+
+      if (k === "ArrowDown" || k === "ArrowUp") {
+        e.preventDefault();
+
+        if (!this.isOpen) this._open();
+        if (!this.filtered?.length) return;
+        const dir = (k === "ArrowDown") ? 1 : -1;
+        const n = this.filtered.length;
+
+        if (this.activeIndex < 0) this.activeIndex = 0;
+        else this.activeIndex = (this.activeIndex + dir + n) % n;
+
+        this._renderOptions();
+
+        // keep highlighted option visible
+        const activeEl = this.UL.querySelector(".active");
+        activeEl?.scrollIntoView({ block: "nearest" });
+
+        return;
+      }
+
+
+
+      if (!this.isOpen) return;
+
+
+      if (k === "ArrowUp") {
+        e.preventDefault();
+        if (!this.filtered.length) return;
+        this.activeIndex = Math.max(this.activeIndex - 1, 0);
+        this._renderOptions();
+        return;
+      }
+
+      if (k === "Enter" || k === " ") {
+        if (!this.isOpen) return;              // allow normal typing behavior when closed
+        e.preventDefault();
+        this._commitActive();
+        return;
+      }
+
+
+    });
+
+    // click selection
+    this.UL.addEventListener("click", (e) => {
+      const a = e.target.closest("a[data-key]");
+      if (!a) return;
+      e.preventDefault();
+      const op = this.filtered?.find(x => String(x.key) === String(a.dataset.key));
+      if (op) this._select(op);
+    });
+
+    // click-outside closes
+    document.addEventListener("mousedown", (e) => {
+      if (!this.isOpen) return;
+      if (this.BASE.contains(e.target)) return;
+      this._close();
+    });
+
+    // clear button
+    this.BTN.addEventListener("click", (e) => {
+      e.preventDefault();
+      this._clear();
+      this.INP.focus();
     });
   }
+
 
   
 }
@@ -221,9 +366,16 @@ class Grid{
 
     const { columns, rows,  minCount } = this.state;
     
-    const TABLE = el('table', 'zGRID');
-    const THEAD = el("thead");
-    const TRH = el("tr");
+    const FORM   = el('form', 'zGRID-form');
+    const SUBMIT = el('button');
+    const TABLE  = el('table', 'zGRID');
+    const THEAD  = el("thead");
+    const TRH    = el("tr");
+
+    this.FORM = FORM;
+
+    SUBMIT.setAttribute('type','submit');
+    SUBMIT.append('Submit');
 
     for (const col of columns) {
       const TH = el("th");
@@ -267,21 +419,17 @@ class Grid{
       
       const ROW = el('tr','row');
       for(let x = 0; x < columns.length; x++){
-        // badges (from fillRow -> rowOptions -> _cellBadges)
-        const cBadges  = (rows[y]._cellBadges)? rows[y]._cellBadges[columns[x].key]:[];
-        const cOptions = (rows[y]._options)?    rows[y]._options[columns[x].key]:[];
-    
+        const col = this.state.columns[x];
         const BDGs = el("span", "badges"); 
-        if(cBadges) for(const b of cBadges){
-          const B = el("span", "badge", (b?b.class:''));
-          B.textContent = b.text;
-          if (b.title) B.title = b.title;
-          BDGs.append(B);
-        }
-        const CELL  = el('td','cell', columns[x].key);
+ 
+        const CELL = el('td','cell', columns[x].key);
         const data = rows[y]?.[columns[x].key] ?? "";
-        const INP   = new FindIt(CELL, data);
-
+        if(col.write) new FindIt(CELL, data, this.name);
+        else{
+          CELL.append(data.display);
+          CELL.classList.add('read-only');
+        }
+        
         CELL.append(BDGs);
         ROW.append(CELL);
       }
@@ -289,13 +437,52 @@ class Grid{
       TBODY.append(ROW);
     }
     
-    this.target.append(TABLE);
+    FORM.append(TABLE);
+    FORM.append(SUBMIT);
+    this.target.append(FORM);
 
   }
 
-  bindEvents() { 
-    console.log(this.state);
-   }
+  bindEvents() {
+    console.log('Grid EVENTS', this.FORM);
+    if (!this.FORM) return;
+
+    // Only validate the planning grid posts
+    if (this.name !== "planning") return;
+
+    this.FORM.addEventListener("submit", (e) => {
+      e.preventDefault();
+      alert('?');
+
+      // 1) extract "planning[cells][slotId][colKey]" from the form
+      const { changes } = extractPlanningChangesFromForm(this.FORM, this.name);
+
+      // 2) validate against your current domain model
+      // IMPORTANT: your BaseGridModel holds `domain` as `this.state.domain`
+      const domain = this.state.domain;
+      const location = this.state.location;
+
+      const result = validatePlanningChanges(changes, domain, { location });
+
+      // 3) act like a REST response
+      if (!result.ok) {
+        console.log("VALIDATION FAILED", result);
+        // TODO: show inline errors next to cells
+        return;
+      }
+
+      // You may still want to show warnings but proceed
+      if (result.warnings.length || Object.keys(result.fieldWarnings).length) {
+        console.log("VALIDATION WARNINGS", result.warnings, result.fieldWarnings);
+      }
+
+      // 4) "pretend POST" (this is your mock endpoint)
+      // The important artifact is `result.normalized`
+      console.log("MOCK POST OK. Normalized payload:", result.normalized);
+
+      // Optional: mark form clean / disable submit / etc.
+    });
+  }
 
   destroy() {
     //TODO: this doesn't exist
@@ -480,7 +667,6 @@ class BaseGridModel {
     for (const col of this.columns) {
       const key = col?.key;
       if (!key) continue;
-      console.log('col',col);
     
       if(col.type && Number.isInteger(obj?.[key] ?? null)){
         if(col.type === 'flavor'){
@@ -529,9 +715,9 @@ class CabinetGridModel extends BaseGridModel{
   buildCols(){
     this.columns = [
       {key:'id',              label:'id'},
-      {key:'current_flavor',  label:'Current Flavor',   type:"flavor"},
-      {key:'immediate_flavor',label:'Immediate Flavor', type:"flavor"},
-      {key:'next_flavor',     label:'Planned Flavor',   type:"flavor"}
+      {key:'current_flavor',  label:'Current Flavor',   type:"flavor",   write:true},
+      {key:'immediate_flavor',label:'Immediate Flavor', type:"flavor",   write:true},
+      {key:'next_flavor',     label:'Planned Flavor',   type:"flavor",   write:true}
     ]
 
     return this.columns;
@@ -556,10 +742,7 @@ class FlavorTubsGridModel extends BaseGridModel{
   constructor(domain, {location = 935} = {} ){
     super(domain, { location });
 
-    
-    
     this.build();
-    console.log(this);
   }
 
   buildCols(){

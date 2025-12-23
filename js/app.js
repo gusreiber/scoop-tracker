@@ -1,7 +1,149 @@
-import {
-  extractPlanningChangesFromForm,
-  validatePlanningChanges
-} from "./slotChecker.js";
+/**
+ * Extract changes for a grid from a form containing hidden inputs like:
+ *   planning[cells][1295][current_flavor] = 940
+ *
+ * Returns:
+ * {
+ *   changes: { cells: { [rowId]: { [colKey]: number|string } } },
+ *   flat:    [{ rowId, colKey, value, name, input }]
+ * }
+ *
+ * Notes:
+ * - This reads only hidden inputs inside the form whose name starts with `${formKey}[cells]`.
+ * - It ignores empty colKeys and empty rowIds.
+ * - It normalizes numeric values to integers when possible ("" => 0; "1652" => 1652).
+ */
+function extractPlanningChangesFromForm(form, formKey = "planning") {
+  if (!form || !(form instanceof HTMLFormElement)) {
+    throw new TypeError("extractPlanningChangesFromForm(form, formKey): form must be a HTMLFormElement");
+  }
+
+  const prefix = `${formKey}[cells]`;
+  const changes = { cells: {} };
+  const flat = [];
+
+  // Only hidden inputs matter (FindIt posts authoritative values via hidden inputs)
+  const inputs = form.querySelectorAll(`input[type="hidden"][name^="${cssEscape(prefix)}"]`);
+
+  for (const input of inputs) {
+    const name = input.getAttribute("name") || "";
+    const parsed = parseBracketName(name);
+
+    // Expect: [formKey, 'cells', rowId, colKey]
+    if (!parsed || parsed.length < 4) continue;
+    if (parsed[0] !== formKey) continue;
+    if (parsed[1] !== "cells") continue;
+
+    const rowIdRaw = parsed[2];
+    const colKey   = parsed[3];
+
+    // Must have slot id and column key
+    const rowId = Number(rowIdRaw);
+    if (!Number.isFinite(rowId) || rowId <= 0) continue;
+    if (!colKey) continue;
+
+    // Normalize value
+    // - Empty string means "clear" => 0 (matches your PHP cast)
+    // - Numeric strings become numbers
+    // - Otherwise keep string
+    const raw = input.value ?? "";
+    const value = normalizeScalar(raw);
+
+    // Record flat
+    flat.push({ rowId, colKey, value, name, input });
+
+    // Record nested
+    if (!changes.cells[rowId]) changes.cells[rowId] = {};
+    changes.cells[rowId][colKey] = value;
+  }
+
+  return { changes, flat };
+}
+
+/**
+ * Parse a name like:
+ *   planning[cells][1295][current_flavor]
+ * into:
+ *   ["planning", "cells", "1295", "current_flavor"]
+ */
+function parseBracketName(name) {
+  if (!name || typeof name !== "string") return null;
+
+  // Split "planning[cells][1295][current_flavor]" -> ["planning", "cells", "1295", "current_flavor"]
+  // This intentionally ignores deeper nesting beyond 4 parts (but will still return them).
+  const parts = [];
+  const re = /([^[\]]+)|\[(.*?)\]/g;
+  let m;
+
+  while ((m = re.exec(name))) {
+    const token = (m[1] != null) ? m[1] : m[2];
+    parts.push(token);
+  }
+
+  return parts.length ? parts : null;
+}
+
+/**
+ * Normalize form values:
+ * - "" => 0
+ * - "1652" => 1652
+ * - "  1652 " => 1652
+ * - otherwise keep trimmed string
+ */
+function normalizeScalar(v) {
+  const s = (v ?? "").toString().trim();
+  if (s === "") return 0;
+
+  // Only treat pure integer as number (avoids "0012x" turning into 12)
+  if (/^-?\d+$/.test(s)) return parseInt(s, 10);
+
+  return s;
+}
+
+/**
+ * CSS.escape wrapper (for older browsers / WP admin oddities)
+ */
+function cssEscape(s) {
+  if (typeof CSS !== "undefined" && CSS.escape) return CSS.escape(s);
+  // Basic fallback; sufficient for "planning[cells]" selector usage
+  return s.replace(/["\\]/g, "\\$&");
+}
+
+/**
+ * POST the planning payload to your WP REST endpoint.
+ *
+ * Expects:
+ *   planningPayload = { cells: { [slotId]: { [field]: value } } }
+ *
+ * Uses the localized globals you set in PHP:
+ *   SCOOP.restUrl  (e.g. /wp-json/scoop/v1/planning)
+ *   SCOOP.nonce    (wp_rest nonce)
+ */
+async function postPlanningChanges(planningPayload) {
+  if (!planningPayload || typeof planningPayload !== "object") {
+    throw new TypeError("postPlanningChanges(planningPayload): planningPayload must be an object");
+  }
+
+  const res = await fetch(SCOOP.restUrl, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      "X-WP-Nonce": SCOOP.nonce,
+      "Accept": "application/json",
+    },
+    body: JSON.stringify({ planning: planningPayload }),
+  });
+
+  // Try to parse JSON even on 4xx so you can see errors
+  let data = null;
+  const text = await res.text();
+  try { data = text ? JSON.parse(text) : null; }
+  catch { data = { ok: false, error: "Non-JSON response", raw: text }; }
+
+  return { ok: res.ok, status: res.status, data };
+}
+
 
 ////////////////////////////////////////
 // GUI CONTROLS
@@ -445,37 +587,30 @@ class Grid{
     // Only validate the planning grid posts
     if (this.name !== "planning") return;
 
-    this.FORM.addEventListener("submit", (e) => {
-      e.preventDefault();
+this.FORM.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-      // 1) extract "planning[cells][slotId][colKey]" from the form
-      const { changes } = extractPlanningChangesFromForm(this.FORM, this.name);
+  const { changes } = extractPlanningChangesFromForm(this.FORM, this.name);
 
-      // 2) validate against your current domain model
-      // IMPORTANT: your BaseGridModel holds `domain` as `this.state.domain`
-      const domain = this.state.domain;
-      const location = this.state.location;
+  // optional: validate first (your existing logic)
+  //const domain = this.state.domain;
+  //const location = this.state.location;
+  //const result = validatePlanningChanges(changes, domain, { location });
+  //if (!result.ok) return;
 
-      const result = validatePlanningChanges(changes, domain, { location });
+  // POST normalized payload (recommended)
+  const r = await postPlanningChanges(changes);
 
-      // 3) act like a REST response
-      if (!result.ok) {
-        console.log("VALIDATION FAILED", result);
-        // TODO: show inline errors next to cells
-        return;
-      }
+  console.log("POST result:", r);
 
-      // You may still want to show warnings but proceed
-      if (result.warnings.length || Object.keys(result.fieldWarnings).length) {
-        console.log("VALIDATION WARNINGS", result.warnings, result.fieldWarnings);
-      }
+  if (!r.ok || !r.data?.ok) {
+    // TODO: render errors next to cells
+    return;
+  }
 
-      // 4) "pretend POST" (this is your mock endpoint)
-      // The important artifact is `result.normalized`
-      console.log("MOCK POST OK. Normalized payload:", result.normalized);
+  // TODO: mark successful cells as clean, update baselines, etc.
+});
 
-      // Optional: mark form clean / disable submit / etc.
-    });
   }
 
   destroy() {
@@ -988,12 +1123,12 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   // Safe to query and manipulate DOM elements
 
   const loader = new DataLoader({
-    cabinets: "/wp-json/wp/v2/cabinets.json",
-    flavors:  "/wp-json/wp/v2/flavors.json",
-    slots:    "/wp-json/wp/v2/slots.json",
-    location: "/wp-json/wp/v2/location.json",
-    locations:"/wp-json/wp/v2/locations.json",
-    tubs:     "/wp-json/wp/v2/tubs.json"
+    cabinets: "/wp-json/wp/v2/cabinets.json?per_page=100&_fields=id,slots,location",
+    flavors:  "/wp-json/wp/v2/flavors.json?per_page=100&_fields=id,title,tubs",
+    slots:    "/wp-json/wp/v2/slots.json?per_page=100&_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet",
+    location: "/wp-json/wp/v2/location.json?per_page=100",
+    locations:"/wp-json/wp/v2/locations.json?per_page=100",
+    tubs:     "/wp-json/wp/v2/tubs.json?per_page=100&_fields=id,title,flavor,location,state,index,date"
   });
 
   const raw = await loader.load();
@@ -1005,10 +1140,10 @@ document.addEventListener('DOMContentLoaded', async ()=>{
   const CGM = new CabinetGridModel(D);
   const FTM = new FlavorTubsGridModel(D);
 
-  const grid = new Grid(document.body, CGM, 'planning' );
-  await grid.init();
+  const grid = new Grid(document.getElementById('wpbody-content'), CGM, 'planning' );
+  grid.init();
 
-  const tub = new Grid(document.body, FTM, 'tubs' );
-  await tub.init();
+  const tub = new Grid(document.getElementById('wpbody-content'), FTM, 'tubs' );
+  tub.init();
   
 });

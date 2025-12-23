@@ -1,0 +1,2900 @@
+[
+  {
+    "id": 1371,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_1212/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_1212",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_1212/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|12"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1371",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "12",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1371",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1371"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1370,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_1211/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_1211",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_1211/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|11"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1370",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "11",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1370",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1370"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1369,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_1210/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_1210",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_1210/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|10"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1369",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "10",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1369",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1369"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1368,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_129/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_129",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_129/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|9"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1368",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "9",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1368",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1368"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1367,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_128/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_128",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_128/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|8"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1367",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "8",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1367",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1367"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1366,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_127/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_127",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_127/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|7"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1366",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "7",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1366",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1366"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1365,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_126/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_126",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_126/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|6"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1365",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "6",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1365",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1365"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1364,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_125/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_125",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_125/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|5"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1364",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "5",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1364",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1364"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1363,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_124/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_124",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_124/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|4"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1363",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "4",
+    "reload": "0",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1363",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1363"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1362,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_123/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_123",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_123/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|3"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1362",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "3",
+    "reload": "1",
+    "current_flavor": 974,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1362",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1362"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1361,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_122/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_122",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_122/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|2"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1361",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "2",
+    "reload": "1",
+    "current_flavor": 974,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1361",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1361"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1360,
+    "date": "2025-12-14T00:44:14",
+    "date_gmt": "2025-12-14T00:44:14",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_121/"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "mountlake-terrace_dairy_121",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mountlake-terrace_dairy_121/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12|1"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1360",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1359,
+    "index": "1",
+    "reload": "1",
+    "current_flavor": 997,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1360",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1360"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1295,
+    "date": "2025-12-12T02:21:36",
+    "date_gmt": "2025-12-12T02:21:36",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_88/"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "woodinville_restricted_88",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_88/",
+    "title": {
+      "rendered": "Woodinville_restricted_8|8"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1295",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1287,
+    "index": "8",
+    "reload": "1",
+    "current_flavor": false,
+    "immediate_flavor": 1652,
+    "next_flavor": 1704,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1295",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1295"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1294,
+    "date": "2025-12-12T02:21:36",
+    "date_gmt": "2025-12-12T02:21:36",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_87/"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "woodinville_restricted_87",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_87/",
+    "title": {
+      "rendered": "Woodinville_restricted_8|7"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1294",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1287,
+    "index": "7",
+    "reload": "1",
+    "current_flavor": 1615,
+    "immediate_flavor": 1647,
+    "next_flavor": 1693,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1294",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1294"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1293,
+    "date": "2025-12-12T02:21:36",
+    "date_gmt": "2025-12-12T02:21:36",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_86/"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "woodinville_restricted_86",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_86/",
+    "title": {
+      "rendered": "Woodinville_restricted_8|6"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1293",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1287,
+    "index": "6",
+    "reload": "1",
+    "current_flavor": 1606,
+    "immediate_flavor": 1643,
+    "next_flavor": 1687,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1293",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1293"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1292,
+    "date": "2025-12-12T02:21:36",
+    "date_gmt": "2025-12-12T02:21:36",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_85/"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "woodinville_restricted_85",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_85/",
+    "title": {
+      "rendered": "Woodinville_restricted_8|5"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1292",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1287,
+    "index": "5",
+    "reload": "1",
+    "current_flavor": 1611,
+    "immediate_flavor": 1638,
+    "next_flavor": 1699,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1292",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1292"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1291,
+    "date": "2025-12-12T02:21:36",
+    "date_gmt": "2025-12-12T02:21:36",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_84/"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "woodinville_restricted_84",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_84/",
+    "title": {
+      "rendered": "Woodinville_restricted_8|4"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1291",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1287,
+    "index": "4",
+    "reload": "1",
+    "current_flavor": 1725,
+    "immediate_flavor": 1633,
+    "next_flavor": 1679,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1291",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1291"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1290,
+    "date": "2025-12-12T02:21:36",
+    "date_gmt": "2025-12-12T02:21:36",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_83/"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "woodinville_restricted_83",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_83/",
+    "title": {
+      "rendered": "Woodinville_restricted_8|3"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1290",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1287,
+    "index": "3",
+    "reload": "1",
+    "current_flavor": 1603,
+    "immediate_flavor": 1628,
+    "next_flavor": 1671,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1290",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1290"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1289,
+    "date": "2025-12-12T02:21:36",
+    "date_gmt": "2025-12-12T02:21:36",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_82/"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "woodinville_restricted_82",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_82/",
+    "title": {
+      "rendered": "Woodinville_restricted_8|2"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1289",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1287,
+    "index": "2",
+    "reload": "1",
+    "current_flavor": 1597,
+    "immediate_flavor": 1624,
+    "next_flavor": 1675,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1289",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1289"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1288,
+    "date": "2025-12-12T02:21:36",
+    "date_gmt": "2025-12-12T02:21:36",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_81/"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "woodinville_restricted_81",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_restricted_81/",
+    "title": {
+      "rendered": "Woodinville_restricted_8|1"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1288",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1287,
+    "index": "1",
+    "reload": "1",
+    "current_flavor": 1593,
+    "immediate_flavor": 1619,
+    "next_flavor": 1662,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1288",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1288"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1247,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_1212/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_1212",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_1212/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|12"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1247",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "12",
+    "reload": "1",
+    "current_flavor": 1009,
+    "immediate_flavor": 987,
+    "next_flavor": 986,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1247",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1247"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1246,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_1211/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_1211",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_1211/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|11"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1246",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "11",
+    "reload": "1",
+    "current_flavor": 977,
+    "immediate_flavor": 948,
+    "next_flavor": 946,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1246",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1246"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1245,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_1210/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_1210",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_1210/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|10"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1245",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "10",
+    "reload": "1",
+    "current_flavor": 989,
+    "immediate_flavor": 965,
+    "next_flavor": 969,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1245",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1245"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1244,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_129/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_129",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_129/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|9"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1244",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "9",
+    "reload": "1",
+    "current_flavor": 1542,
+    "immediate_flavor": 1548,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1244",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1244"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1243,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_128/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_128",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_128/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|8"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1243",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "8",
+    "reload": "1",
+    "current_flavor": false,
+    "immediate_flavor": 984,
+    "next_flavor": 974,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1243",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1243"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1242,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_127/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_127",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_127/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|7"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1242",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "7",
+    "reload": "1",
+    "current_flavor": 1010,
+    "immediate_flavor": 970,
+    "next_flavor": 1528,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1242",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1242"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1241,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_126/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_126",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_126/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|6"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1241",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "6",
+    "reload": "1",
+    "current_flavor": 953,
+    "immediate_flavor": 996,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1241",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1241"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1240,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_125/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_125",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_125/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|5"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1240",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "5",
+    "reload": "1",
+    "current_flavor": 1011,
+    "immediate_flavor": false,
+    "next_flavor": 972,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1240",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1240"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1239,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_124/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_124",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_124/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|4"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1239",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "4",
+    "reload": "1",
+    "current_flavor": 999,
+    "immediate_flavor": 1479,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1239",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1239"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1238,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_123/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_123",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_123/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|3"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1238",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "3",
+    "reload": "1",
+    "current_flavor": 1014,
+    "immediate_flavor": 1460,
+    "next_flavor": 991,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1238",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1238"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1237,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_122/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_122",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_122/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|2"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1237",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "2",
+    "reload": "1",
+    "current_flavor": 981,
+    "immediate_flavor": 998,
+    "next_flavor": 945,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1237",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1237"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1236,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_121/"
+    },
+    "modified": "2025-12-11T00:12:05",
+    "modified_gmt": "2025-12-11T00:12:05",
+    "slug": "woodinville_dairy_121",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/woodinville_dairy_121/",
+    "title": {
+      "rendered": "Woodinville_dairy_12|1"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1236",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": 1235,
+    "index": "1",
+    "reload": "1",
+    "current_flavor": 1436,
+    "immediate_flavor": 1435,
+    "next_flavor": 973,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1236",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1236"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1123,
+    "date": "2025-12-07T06:49:38",
+    "date_gmt": "2025-12-07T06:49:38",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1123"
+    },
+    "modified": "2025-12-07T06:49:38",
+    "modified_gmt": "2025-12-07T06:49:38",
+    "slug": "mtnd",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mtnd/",
+    "title": {
+      "rendered": "mtnd"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1123",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "1",
+    "reload": "1",
+    "current_flavor": 997,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1123",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1123"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1122,
+    "date": "2025-12-07T06:45:07",
+    "date_gmt": "2025-12-07T06:45:07",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1122"
+    },
+    "modified": "2025-12-07T06:45:07",
+    "modified_gmt": "2025-12-07T06:45:07",
+    "slug": "mtd",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/mtd/",
+    "title": {
+      "rendered": "mtd"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1122",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "1",
+    "reload": "1",
+    "current_flavor": 970,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1122",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1122"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1042,
+    "date": "2025-12-07T00:48:54",
+    "date_gmt": "2025-12-07T00:48:54",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1042"
+    },
+    "modified": "2025-12-07T00:48:54",
+    "modified_gmt": "2025-12-07T00:48:54",
+    "slug": "n3",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/n3/",
+    "title": {
+      "rendered": "n3"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1042",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "",
+    "reload": "",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1042",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1042"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1041,
+    "date": "2025-12-07T00:48:29",
+    "date_gmt": "2025-12-07T00:48:29",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1041"
+    },
+    "modified": "2025-12-07T00:48:29",
+    "modified_gmt": "2025-12-07T00:48:29",
+    "slug": "n2",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/n2/",
+    "title": {
+      "rendered": "n2"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1041",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "",
+    "reload": "",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1041",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1041"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1040,
+    "date": "2025-12-07T00:47:52",
+    "date_gmt": "2025-12-07T00:47:52",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1040"
+    },
+    "modified": "2025-12-07T04:44:13",
+    "modified_gmt": "2025-12-07T04:44:13",
+    "slug": "n1",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/n1/",
+    "title": {
+      "rendered": "n1"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1040",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "1",
+    "reload": "1",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1040",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1040"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1038,
+    "date": "2025-12-07T00:45:45",
+    "date_gmt": "2025-12-07T00:45:45",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1038"
+    },
+    "modified": "2025-12-07T00:45:45",
+    "modified_gmt": "2025-12-07T00:45:45",
+    "slug": "na",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/na/",
+    "title": {
+      "rendered": "na"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1038",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "",
+    "reload": "",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1038",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1038"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1036,
+    "date": "2025-12-07T00:39:44",
+    "date_gmt": "2025-12-07T00:39:44",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1036"
+    },
+    "modified": "2025-12-07T00:39:44",
+    "modified_gmt": "2025-12-07T00:39:44",
+    "slug": "c",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/c/",
+    "title": {
+      "rendered": "c"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1036",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "3",
+    "reload": "1",
+    "current_flavor": 964,
+    "immediate_flavor": false,
+    "next_flavor": 958,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1036",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1036"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1035,
+    "date": "2025-12-07T00:38:32",
+    "date_gmt": "2025-12-07T00:38:32",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1035"
+    },
+    "modified": "2025-12-07T00:38:32",
+    "modified_gmt": "2025-12-07T00:38:32",
+    "slug": "d",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/d/",
+    "title": {
+      "rendered": "d"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1035",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "4",
+    "reload": "1",
+    "current_flavor": 948,
+    "immediate_flavor": false,
+    "next_flavor": 946,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1035",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1035"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1029,
+    "date": "2025-12-06T00:55:18",
+    "date_gmt": "2025-12-06T00:55:18",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1029"
+    },
+    "modified": "2025-12-07T00:34:54",
+    "modified_gmt": "2025-12-07T00:34:54",
+    "slug": "b",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/b/",
+    "title": {
+      "rendered": "b"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1029",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "2",
+    "reload": "1",
+    "current_flavor": 940,
+    "immediate_flavor": false,
+    "next_flavor": 942,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1029",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1029"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1028,
+    "date": "2025-12-06T00:48:48",
+    "date_gmt": "2025-12-06T00:48:48",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=slot&#038;p=1028"
+    },
+    "modified": "2025-12-06T01:01:08",
+    "modified_gmt": "2025-12-06T01:01:08",
+    "slug": "a",
+    "status": "publish",
+    "type": "slot",
+    "link": "https://track.swankyscoop.net/blog/slot/a/",
+    "title": {
+      "rendered": "a"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1028",
+      "slot",
+      "type-slot",
+      "status-publish",
+      "hentry"
+    ],
+    "cabinet": false,
+    "index": "1",
+    "reload": "1",
+    "current_flavor": false,
+    "immediate_flavor": false,
+    "next_flavor": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot/1028",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/slot"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/slot"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1028"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  }
+]

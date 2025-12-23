@@ -1,0 +1,285 @@
+[
+  {
+    "id": 1359,
+    "date": "2025-12-14T00:44:13",
+    "date_gmt": "2025-12-14T00:44:13",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=cabinet&#038;p=1359"
+    },
+    "modified": "2025-12-14T00:44:14",
+    "modified_gmt": "2025-12-14T00:44:14",
+    "slug": "a-3",
+    "status": "publish",
+    "type": "cabinet",
+    "link": "https://track.swankyscoop.net/blog/cabinet/a-3/",
+    "title": {
+      "rendered": "Mountlake Terrace_dairy_12"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1359",
+      "cabinet",
+      "type-cabinet",
+      "status-publish",
+      "hentry"
+    ],
+    "location": 1118,
+    "max_tubs": "12",
+    "slots": [1360, 1361, 1362, 1363, 1364, 1365, 1366, 1367, 1368, 1369, 1370, 1371],
+    "prohibited_allergens": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/cabinet/1359",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/cabinet"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/cabinet"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1359"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1287,
+    "date": "2025-12-12T02:21:35",
+    "date_gmt": "2025-12-12T02:21:35",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=cabinet&#038;p=1287"
+    },
+    "modified": "2025-12-12T02:21:36",
+    "modified_gmt": "2025-12-12T02:21:36",
+    "slug": "a-2",
+    "status": "publish",
+    "type": "cabinet",
+    "link": "https://track.swankyscoop.net/blog/cabinet/a-2/",
+    "title": {
+      "rendered": "Woodinville_restricted_8"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1287",
+      "cabinet",
+      "type-cabinet",
+      "status-publish",
+      "hentry"
+    ],
+    "location": 935,
+    "max_tubs": "8",
+    "slots": [1288, 1289, 1290, 1291, 1292, 1293, 1294, 1295],
+    "prohibited_allergens": [
+      {
+        "ID": 1204,
+        "post_title": "Dairy",
+        "post_content": "",
+        "post_excerpt": "",
+        "post_author": "1",
+        "post_date": "2025-12-10 23:34:36",
+        "post_date_gmt": "2025-12-10 23:34:36",
+        "post_status": "publish",
+        "comment_status": "closed",
+        "ping_status": "closed",
+        "post_password": "",
+        "post_name": "dairy",
+        "to_ping": "",
+        "pinged": "",
+        "post_modified": "2025-12-10 23:34:36",
+        "post_modified_gmt": "2025-12-10 23:34:36",
+        "post_content_filtered": "",
+        "post_parent": 0,
+        "guid": "https://track.swankyscoop.net/?post_type=allergen&#038;p=1204",
+        "menu_order": 0,
+        "post_type": "allergen",
+        "post_mime_type": "",
+        "comment_count": "0",
+        "comments": false,
+        "id": 1204
+      },
+      {
+        "ID": 1206,
+        "post_title": "Peanuts",
+        "post_content": "",
+        "post_excerpt": "",
+        "post_author": "1",
+        "post_date": "2025-12-10 23:35:18",
+        "post_date_gmt": "2025-12-10 23:35:18",
+        "post_status": "publish",
+        "comment_status": "closed",
+        "ping_status": "closed",
+        "post_password": "",
+        "post_name": "peanuts",
+        "to_ping": "",
+        "pinged": "",
+        "post_modified": "2025-12-10 23:35:18",
+        "post_modified_gmt": "2025-12-10 23:35:18",
+        "post_content_filtered": "",
+        "post_parent": 0,
+        "guid": "https://track.swankyscoop.net/?post_type=allergen&#038;p=1206",
+        "menu_order": 0,
+        "post_type": "allergen",
+        "post_mime_type": "",
+        "comment_count": "0",
+        "comments": false,
+        "id": 1206
+      },
+      {
+        "ID": 1205,
+        "post_title": "Tree nuts",
+        "post_content": "",
+        "post_excerpt": "",
+        "post_author": "1",
+        "post_date": "2025-12-10 23:35:02",
+        "post_date_gmt": "2025-12-10 23:35:02",
+        "post_status": "publish",
+        "comment_status": "closed",
+        "ping_status": "closed",
+        "post_password": "",
+        "post_name": "tree-nuts",
+        "to_ping": "",
+        "pinged": "",
+        "post_modified": "2025-12-10 23:35:02",
+        "post_modified_gmt": "2025-12-10 23:35:02",
+        "post_content_filtered": "",
+        "post_parent": 0,
+        "guid": "https://track.swankyscoop.net/?post_type=allergen&#038;p=1205",
+        "menu_order": 0,
+        "post_type": "allergen",
+        "post_mime_type": "",
+        "comment_count": "0",
+        "comments": false,
+        "id": 1205
+      }
+    ],
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/cabinet/1287",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/cabinet"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/cabinet"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1287"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  },
+  {
+    "id": 1235,
+    "date": "2025-12-11T00:12:05",
+    "date_gmt": "2025-12-11T00:12:05",
+    "guid": {
+      "rendered": "https://track.swankyscoop.net/?post_type=cabinet&#038;p=1235"
+    },
+    "modified": "2025-12-11T00:12:06",
+    "modified_gmt": "2025-12-11T00:12:06",
+    "slug": "a",
+    "status": "publish",
+    "type": "cabinet",
+    "link": "https://track.swankyscoop.net/blog/cabinet/a/",
+    "title": {
+      "rendered": "Woodinville_dairy_12"
+    },
+    "content": {
+      "rendered": "",
+      "protected": false
+    },
+    "template": "",
+    "class_list": [
+      "post-1235",
+      "cabinet",
+      "type-cabinet",
+      "status-publish",
+      "hentry"
+    ],
+    "location": 935,
+    "max_tubs": "12",
+    "slots": [1236, 1237, 1238, 1239, 1240, 1241, 1242, 1243, 1244, 1245, 1246, 1247],
+    "prohibited_allergens": false,
+    "_links": {
+      "self": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/cabinet/1235",
+          "targetHints": {
+            "allow": [
+              "GET"
+            ]
+          }
+        }
+      ],
+      "collection": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/cabinet"
+        }
+      ],
+      "about": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/types/cabinet"
+        }
+      ],
+      "wp:attachment": [
+        {
+          "href": "https://track.swankyscoop.net/wp-json/wp/v2/media?parent=1235"
+        }
+      ],
+      "curies": [
+        {
+          "name": "wp",
+          "href": "https://api.w.org/{rel}",
+          "templated": true
+        }
+      ]
+    }
+  }
+]

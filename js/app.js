@@ -1,153 +1,112 @@
-/**
- * Extract changes for a grid from a form containing hidden inputs like:
- *   planning[cells][1295][current_flavor] = 940
- *
- * Returns:
- * {
- *   changes: { cells: { [rowId]: { [colKey]: number|string } } },
- *   flat:    [{ rowId, colKey, value, name, input }]
- * }
- *
- * Notes:
- * - This reads only hidden inputs inside the form whose name starts with `${formKey}[cells]`.
- * - It ignores empty colKeys and empty rowIds.
- * - It normalizes numeric values to integers when possible ("" => 0; "1652" => 1652).
- */
-function extractPlanningChangesFromForm(form, formKey = "planning") {
-  if (!form || !(form instanceof HTMLFormElement)) {
-    throw new TypeError("extractPlanningChangesFromForm(form, formKey): form must be a HTMLFormElement");
-  }
-
-  const prefix = `${formKey}[cells]`;
-  const changes = { cells: {} };
-  const flat = [];
-
-  // Only hidden inputs matter (FindIt posts authoritative values via hidden inputs)
-  const inputs = form.querySelectorAll(`input[type="hidden"][name^="${cssEscape(prefix)}"]`);
-
-  for (const input of inputs) {
-    const name = input.getAttribute("name") || "";
-    const parsed = parseBracketName(name);
-
-    // Expect: [formKey, 'cells', rowId, colKey]
-    if (!parsed || parsed.length < 4) continue;
-    if (parsed[0] !== formKey) continue;
-    if (parsed[1] !== "cells") continue;
-
-    const rowIdRaw = parsed[2];
-    const colKey   = parsed[3];
-
-    // Must have slot id and column key
-    const rowId = Number(rowIdRaw);
-    if (!Number.isFinite(rowId) || rowId <= 0) continue;
-    if (!colKey) continue;
-
-    // Normalize value
-    // - Empty string means "clear" => 0 (matches your PHP cast)
-    // - Numeric strings become numbers
-    // - Otherwise keep string
-    const raw = input.value ?? "";
-    const value = normalizeScalar(raw);
-
-    // Record flat
-    flat.push({ rowId, colKey, value, name, input });
-
-    // Record nested
-    if (!changes.cells[rowId]) changes.cells[rowId] = {};
-    changes.cells[rowId][colKey] = value;
-  }
-
-  return { changes, flat };
-}
-
-/**
- * Parse a name like:
- *   planning[cells][1295][current_flavor]
- * into:
- *   ["planning", "cells", "1295", "current_flavor"]
- */
-function parseBracketName(name) {
-  if (!name || typeof name !== "string") return null;
-
-  // Split "planning[cells][1295][current_flavor]" -> ["planning", "cells", "1295", "current_flavor"]
-  // This intentionally ignores deeper nesting beyond 4 parts (but will still return them).
-  const parts = [];
-  const re = /([^[\]]+)|\[(.*?)\]/g;
-  let m;
-
-  while ((m = re.exec(name))) {
-    const token = (m[1] != null) ? m[1] : m[2];
-    parts.push(token);
-  }
-
-  return parts.length ? parts : null;
-}
-
-/**
- * Normalize form values:
- * - "" => 0
- * - "1652" => 1652
- * - "  1652 " => 1652
- * - otherwise keep trimmed string
- */
-function normalizeScalar(v) {
-  const s = (v ?? "").toString().trim();
-  if (s === "") return 0;
-
-  // Only treat pure integer as number (avoids "0012x" turning into 12)
-  if (/^-?\d+$/.test(s)) return parseInt(s, 10);
-
-  return s;
-}
-
-/**
- * CSS.escape wrapper (for older browsers / WP admin oddities)
- */
-function cssEscape(s) {
-  if (typeof CSS !== "undefined" && CSS.escape) return CSS.escape(s);
-  // Basic fallback; sufficient for "planning[cells]" selector usage
-  return s.replace(/["\\]/g, "\\$&");
-}
-
-/**
- * POST the planning payload to your WP REST endpoint.
- *
- * Expects:
- *   planningPayload = { cells: { [slotId]: { [field]: value } } }
- *
- * Uses the localized globals you set in PHP:
- *   SCOOP.restUrl  (e.g. /wp-json/scoop/v1/planning)
- *   SCOOP.nonce    (wp_rest nonce)
- */
-async function postPlanningChanges(planningPayload) {
-  if (!planningPayload || typeof planningPayload !== "object") {
-    throw new TypeError("postPlanningChanges(planningPayload): planningPayload must be an object");
-  }
-
-  const res = await fetch(SCOOP.restUrl, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {
-      "Content-Type": "application/json",
-      "X-WP-Nonce": SCOOP.nonce,
-      "Accept": "application/json",
-    },
-    body: JSON.stringify({ planning: planningPayload }),
-  });
-
-  // Try to parse JSON even on 4xx so you can see errors
-  let data = null;
-  const text = await res.text();
-  try { data = text ? JSON.parse(text) : null; }
-  catch { data = { ok: false, error: "Non-JSON response", raw: text }; }
-
-  return { ok: res.ok, status: res.status, data };
-}
-
-
 ////////////////////////////////////////
 // GUI CONTROLS
 /////////////////////////////
+class Toast {
+  static _el(tag, text='', ...classes) {
+    const n = document.createElement(tag);
+    if (classes.length) n.classList.add(...classes);
+    if(text.length > 0) n.append(text);
+    return n;
+  }
+  static _ensureHost(){
+    let TOASTER = document.querySelector('body > .TOASTER'); 
+    if(TOASTER) return TOASTER;
+
+    TOASTER = Toast._el('div', '', 'TOASTER');
+    document.body.append(TOASTER);
+    return TOASTER;
+  }
+
+  static addMessage({title='title', message='This event happened', state='OK'}){
+    const date    = Date.now();
+    const TOASTER = Toast._ensureHost();
+    const TOAST   = Toast._el('div', '', 'TOAST', state, 't'+date);
+    const H3      = Toast._el('h3', title);
+    const P       = Toast._el('p', message);
+    const DATE    = Toast._el('spen', new Date(date).toLocaleString(), 'date' );
+    const CLOSE   = Toast._el('button', 'x', 'close');
+
+    CLOSE.addEventListener('click', (e)=>{
+      e.target.closest('.TOAST').remove();
+      Toast.hide();
+    });
+
+    TOAST.append(DATE);
+    TOAST.append(H3);
+    TOAST.append(P);
+    TOAST.append(CLOSE);
+
+    TOASTER.append(TOAST);
+    TOASTER.classList.add('show');
+  }
+  static hide(){
+    Toast._ensureHost().classList.remove('show');
+  }
+  static show(){
+    Toast._ensureHost().classList.add('show');
+  }
+  static empty(){
+    Toast._ensureHost().replaceChildren();
+  }
+
+}
+
+// Simple text input
+class TextIt {
+  constructor(target, data, formKey = "") {
+    this.target = target;
+    this.data = data ?? {};
+    this.formKey = formKey;
+
+    this.value = this.data.value ?? this.data.display ?? "";
+    this.rowId  = this.data.rowId ?? this.data.id ?? 0;
+    this.colKey = this.data.colKey ?? "";
+    this.type   = this.data.type ?? "text"; // "number" or "text"
+
+    this.fieldName = `${this.formKey}[cells][${this.rowId}][${this.colKey}]`;
+
+    this.render();
+  }
+
+  render() {
+    this.target.classList.add('textIt-box');
+    const HDN = document.createElement("input");
+    HDN.type = "hidden";
+    HDN.name = this.fieldName;
+    HDN.value = String(this.value ?? "");
+
+    const INP = document.createElement("input");
+    INP.type = (this.type === "number") ? "number" : "text";
+    INP.value = String(this.value ?? "");
+    INP.autocomplete = "off";
+
+    // Keep hidden input authoritative
+    INP.addEventListener("input", () => {
+      HDN.value = INP.value;
+    });
+
+    const BTN = document.createElement("button");
+    BTN.type = "button";
+    BTN.classList.add("clear");
+    BTN.textContent = "X";
+    BTN.addEventListener("click", (e) => {
+      e.preventDefault();
+      INP.value = "";
+      HDN.value = "";
+      INP.focus();
+    });
+
+    const BASE = document.createElement("div");
+    BASE.classList.add("textIt",'cell', `col-${this.colKey}`);
+
+    BASE.append(HDN, INP, BTN);
+    this.target.append(BASE);
+
+    this.HDN = HDN;
+    this.INP = INP;
+  }
+}
+
 // TYPE TO COMPLETE ----------------
 class FindIt{
   constructor(
@@ -460,17 +419,29 @@ class FindIt{
 
 
   
-}
+} 
 
 // GRID ---------------------------
-class Grid{
-  constructor(target, state, name = ""){
+class Grid {
+  constructor(target, name="", {
+                api = {baseUrl:'/'},
+                formCodec = FormCodec,
+                domainCodec = DomainCodec,
+              } = {}) 
+  {
     this.target = target;
-    this.state = state;
+    this.api = api;
+    this.formCodec = formCodec;
+    this.domainCodec = domainCodec;
+
+    this.state = null;
     this.name = name;
+    this.FORM = null;
+    this.postUrl = api.baseUrl;
   }
   
-  init() {
+  init(state = this.state) {
+    this.state = state;
     this.render();
     this.bindEvents();
   }
@@ -512,10 +483,9 @@ class Grid{
     let TBODY = el('tbody');
     const hasGroups = groupByStart.size > 0;
     if(hasGroups) TABLE.append(TBODY);
-
+    
     for(let y = 0; y < rows.length; y++){
       const g = groupByStart.get(y);
-      
       if (g) {
         TBODY = el("tbody", "groupBody");
         TABLE.append(TBODY);
@@ -554,23 +524,30 @@ class Grid{
 
         const CELL = el('td','cell', columns[x].key);
         
-        if(col.write) new FindIt(CELL, data, this.name);
-        else{
+        if(col.write){
+          
+          if(col.control === "text"){
+            console.log('col',col);
+            new TextIt(CELL, data, this.name);
+          }
+          else new FindIt(CELL, data, this.name);
+        }else{
           CELL.append('' + (data.display || ''));
           CELL.classList.add('read-only');
         }
         
         CELL.append(BDGs);
         ROW.append(CELL);
+        
       }
 
       TBODY.append(ROW);
     }
-    
+    if( !TABLE.contains(TBODY) ) TABLE.append(TBODY); 
     FORM.append(TABLE);
     FORM.append(SUBMIT);
     this.target.append(FORM);
-
+    
   }
 
   bindEvents() {
@@ -583,33 +560,55 @@ class Grid{
       true // capture
     );
 
-
+    console.log('this grid',this);
     // Only validate the planning grid posts
-    if (this.name !== "planning") return;
+    //if (this.name !== "planning") return;
 
-this.FORM.addEventListener("submit", async (e) => {
-  e.preventDefault();
+    this.FORM.addEventListener("submit", async (e) => {
+      
+      e.preventDefault();
 
-  const { changes } = extractPlanningChangesFromForm(this.FORM, this.name);
+      if (!this.api) throw new Error('Grid submit: missing this.api');
+      if (!this.postUrl) throw new Error('Grid submit: missing this.postUrl');
 
-  // optional: validate first (your existing logic)
-  //const domain = this.state.domain;
-  //const location = this.state.location;
-  //const result = validatePlanningChanges(changes, domain, { location });
-  //if (!result.ok) return;
+      const submitBtn = this.FORM.querySelector('button[type="submit"], input[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
 
-  // POST normalized payload (recommended)
-  const r = await postPlanningChanges(changes);
+      try {
+        const { changes, flat } = this.formCodec.extractGridChanges(this.FORM, this.name);
+        console.log(flat);
+        console.log(this.formCodec);
 
-  console.log("POST result:", r);
+        // OPTIONAL: no-op submit guard
+        if (!Object.keys(changes.cells).length) {
+          console.log("No changes to submit.", changes);
+          
+          console.log("No Object to submit.", Object);
+          return;
+        }
 
-  if (!r.ok || !r.data?.ok) {
-    // TODO: render errors next to cells
-    return;
-  }
+        const r = await this.api.postPlanningChanges(this.postUrl, changes);
+        console.log("POST result:", r);
 
-  // TODO: mark successful cells as clean, update baselines, etc.
-});
+        if (!r.ok) {
+          Toast.addMessage({title:'no POST', message:`HTTP ${r.status}`});
+          return;
+        }
+
+        if (!r.data?.ok) {
+          // app error payload from your endpoint
+          // TODO: use r.data.errors to mark cells invalid
+          Toast.addMessage({title:'bad post', message:JSON.stringify(r.data, null)});
+          return;
+        }
+
+        // TODO: mark successful cells as clean (e.g., store baseline values)
+      } catch (err) {
+        console.error("POST exception:", err);
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
 
   }
 
@@ -636,9 +635,9 @@ class Flavor {
     const locAvail = allAvail.filter(t => t.location === location);
     const rmtAvail = allAvail.filter(t => t.location !== location);
 
-    this.availAll = DataLoader.groupBy(allAvail, t => t.flavor);
-    this.availLoc = DataLoader.groupBy(locAvail, t => t.flavor);
-    this.availRmt = DataLoader.groupBy(rmtAvail, t => t.flavor);
+    this.availAll = Indexer.groupBy(allAvail, t => t.flavor);
+    this.availLoc = Indexer.groupBy(locAvail, t => t.flavor);
+    this.availRmt = Indexer.groupBy(rmtAvail, t => t.flavor);
 
     this.optionsAll = [...flavorsById.entries()]
       .map(([id, f]) => ({ key: id, label: f._title }))
@@ -683,9 +682,9 @@ class BaseGridModel {
     this.minCount = 0;
 
     // --- derived indexes (convenience, not exposed to Grid) ---
-    this._tubsById         = DataLoader.byId(domain.tubs.filter(t => t.state !== 'Emptied'));
-    this._flavorsById      = DataLoader.byId(domain.flavors);
-    this._availByFlavor    = DataLoader.groupBy(
+    this._tubsById         = Indexer.byId(domain.tubs.filter(t => t.state !== 'Emptied'));
+    this._flavorsById      = Indexer.byId(domain.flavors);
+    this._availByFlavor    = Indexer.groupBy(
                               domain.tubs.filter( t => t.state !== "Emptied"),
                               t => t.flavor
                             );
@@ -698,6 +697,17 @@ class BaseGridModel {
 
     this.fBadgeSpecs = this.flavorMeta.getFlavorBadgeSpecs();
   }
+
+  getById(map, id) {
+    if (!id) return null;
+    return map.get(Number(id)) ?? null;
+  }
+
+  titleById(map, id, fallback = "") {
+    if (!id) return "";
+    return map.get(Number(id))?._title ?? fallback;
+  }
+
 
   getIdsForLocation(list, { locationKey = "location", idKey = "id" } = {}) {
     const ids = new Set();
@@ -802,7 +812,7 @@ class BaseGridModel {
           row[key] = {
             id      : id,
             rowId   : obj['id'] || i,
-            display : DoNorm?._titleOf(this._flavorsById.get(obj[key]) ?? obj[key] ),
+            display : this.titleById(this._flavorsById, obj[key]),
             type    : col.type,
             colKey  : col.key,
             options : this.getOptions( col.type, col.key, id ),
@@ -812,7 +822,7 @@ class BaseGridModel {
         else row[key] = { 
           id      : obj[key],
           rowId   : obj['id'] || i,
-          display : DoNorm._titleOf(this._flavorsById.get(obj[key])),
+          display : this.titleById(this._flavorsById, obj[key]),
           type    : col.type,
           colKey  : col.key,
           options : this.getOptions( col.type, col.key, id ),
@@ -827,14 +837,62 @@ class BaseGridModel {
 
 }
 
+class BatchGridModel extends BaseGridModel{
+  constructor(domain, { location = 935 } = {}) {
+    super(domain, { location });
+      this._flavorsById  = Indexer.byId(domain.flavors) || {};
+
+      this.build();
+  }
+
+  buildCols() {
+    this.columns = [
+      { key: "count", label: "count", write: true, control: "text", type: "number" },
+      { key: "flavor", label: "flavor", write: true, type: "flavor" }
+    ];
+    return this.columns;
+  }
+  
+  builRows() {
+    // single row
+    const rowId = 0;
+    
+    this.rows = [{
+      id: rowId,
+
+      // count cell (TextIt expects value/display + rowId/colKey/type)
+      count: { 
+        rowId,
+        colKey: "count",
+        type: "number",
+        value: ""          // default blank
+      },
+
+      // flavor cell (FindIt expects id/display/options/etc.)
+      flavor: {
+        id: 0,
+        rowId,
+        colKey: "flavor",
+        type: "flavor",
+        display: "",
+        options: this.getOptions("flavor", "flavor", 0),
+        badges: []
+      }
+    }];
+
+    return this.rows;
+  } 
+
+}
+
 class CabinetGridModel extends BaseGridModel{
   constructor(domain, { location = 935 } = {}) {
     super(domain, { location });
 
-    this._cabinetsById = DataLoader.byId(domain.cabinets);
-    this._flavorsById  = DataLoader.byId(domain.flavors);
+    this._cabinetsById = Indexer.byId(domain.cabinets);
+    //this._flavorsById  = Indexer.byId(domain.flavors);
 
-    this._slotsByCabinetId = DataLoader.groupBy(domain.slots, s => s.cabinet);
+    this._slotsByCabinetId = Indexer.groupBy(domain.slots, s => s.cabinet);
 
 
 
@@ -854,7 +912,6 @@ class CabinetGridModel extends BaseGridModel{
 
   builRows() {
     const cabinetIds = this.getIdsForLocation(this.domain.cabinets);
-
     return this.buildGroupedRows({
       groupsMap     : this._slotsByCabinetId,
       groupIdKey    : "cabinetId",
@@ -887,7 +944,7 @@ class FlavorTubsGridModel extends BaseGridModel{
 
   builRows(){
     const locationTubIds = this.filterByLocation(this.domain.tubs);
-    const tubsByFlavorId = DataLoader.groupBy(locationTubIds, t => t.flavor);
+    const tubsByFlavorId = Indexer.groupBy(locationTubIds, t => t.flavor);
                    
     return this.buildGroupedRows({
       groupsMap     : tubsByFlavorId,
@@ -906,173 +963,397 @@ class FlavorTubsGridModel extends BaseGridModel{
 // DATA tools
 //////////////////////////////
 
-// WP / PODs cleaner-upper...
-class DoNorm{
+class ScoopAPI {
+  constructor({ nonce, base = "/" } = {}) {
+    this.nonce      = nonce ?? null;
+    this.base       = base;
+    this.baseUrl    = this._absUrl(base);
+    this.controller = new AbortController();
+  }
 
-  static normalize(D) {
-    if (!D || typeof D !== "object") return D;
+  abort() { this.controller.abort(); }
 
-    // Shallow clone so we don't mutate the loader result accidentally
-    const nD = { ...D };
+  _absUrl(pathOrUrl) {
+    if (!pathOrUrl) return new URL(window.location.origin);
 
-    // Normalize top-level collections (only if present)
-    if (Array.isArray(nD.tubs))      nD.tubs      = DoNorm.nTubs(nD.tubs);
-    if (Array.isArray(nD.slots))     nD.slots     = DoNorm.nSlots(nD.slots);
-    if (Array.isArray(nD.cabinets))  nD.cabinets  = DoNorm.nCabinets(nD.cabinets);
-    if (Array.isArray(nD.flavors))   nD.flavors   = DoNorm.nFlavors(nD.flavors);
-    if (Array.isArray(nD.locations)) nD.locations = DoNorm.nLocations
-      ? DoNorm.nLocations(nD.locations)
-      : nD.locations;
+    try{ 
+      return new URL(pathOrUrl);
+    }
+    catch {
+      return new URL(pathOrUrl, window.location.origin);
+    }
+  }
 
-    // Singular location endpoint (if you keep it)
-    if (nD.location && typeof nD.location === "object") {
-      nD.location = DoNorm.nLocations
-        ? DoNorm.nLocations([nD.location])[0]
-        : nD.location;
+  async _fetch(url = this.baseUrl, { method = "GET", headers = {}, body = null, useNonce = false } = {}) {
+    const res = await fetch(this._absUrl(url), {
+      method,
+      credentials: "same-origin",
+      signal: this.controller.signal,
+      headers: {
+        "Accept": "application/json",
+        ...headers,
+        ...(useNonce && this.nonce ? { "X-WP-Nonce": this.nonce } : {}),
+      },
+      body,
+    });
+
+    const text = await res.text().catch(() => "");
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; }
+    catch { data = { ok: false, error: "Non-JSON response", raw: text }; }
+
+    return { ok: res.ok, status: res.status, data, res };
+  }
+
+  async getJson(url = this.baseUrl) {
+    const r = await this._fetch(url, { method: "GET" });
+    return r.data;
+  }
+
+  async getAllPages(url = this.baseUrl, { perPage = 100, maxPages = 1000 } = {}) {
+    const all = [];
+    let page = 1;
+    let totalPages = 1;
+
+    while (page <= totalPages) {
+      if (page > maxPages) throw new Error(`Too many pages for ${url}`);
+
+      const u = new URL(this._absUrl(url), window.location.origin);
+      if (!u.searchParams.get("per_page")) u.searchParams.set("per_page", String(perPage));
+      u.searchParams.set("page", String(page));
+
+      const r = await this._fetch(u.toString(), { method: "GET" });
+
+      if (!Array.isArray(r.data)) return r.data;
+
+      all.push(...r.data);
+
+      const tp = Number(r.res.headers.get("X-WP-TotalPages") || "1");
+      totalPages = Number.isFinite(tp) && tp > 0 ? tp : 1;
+
+      page++;
     }
 
-    return nD;
+    return all;
   }
 
+  async postJson(url, payload, { useNonce = true } = {}) {
+    const r = await this._fetch(url = this.baseUrl, {
+      method: "POST",
+      useNonce,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload ?? {}),
+    });
+    return { ok: r.ok, status: r.status, data: r.data };
+  }
 
-  static nTubs(tubs = []) {
+  async loadBundle(endpoints) {
+    const entries = Object.entries(endpoints ?? {});
+    const pairs = await Promise.all(entries.map(async ([key, spec]) => {
+      const cfg = (typeof spec === "string") ? { url: spec } : (spec ?? {});
+      if (!cfg.url) throw new Error(`Missing url for endpoint "${key}"`);
+
+      const data = cfg.paged
+        ? await this.getAllPages(cfg.url, { perPage: cfg.perPage ?? 100, maxPages: cfg.maxPages ?? 1000 })
+        : await this.getJson(cfg.url);
+
+      return [key, data];
+    }));
+
+    return Object.fromEntries(pairs);
+  }
+
+  // Generic: post planning to a provided endpoint
+  async postPlanningChanges(planningUrl, planningPayload) {
+    if (!planningUrl) throw new Error("postPlanningChanges(planningUrl, payload): missing planningUrl");
+    if (!planningPayload || typeof planningPayload !== "object") {
+      throw new TypeError("postPlanningChanges(planningUrl, payload): payload must be an object");
+    }
+    return this.postJson(planningUrl, { planning: planningPayload }, { useNonce: true });
+  }
+}
+
+class DomainCodec {
+  // Keep “policy” explicit so you can audit/remove later.
+  static defaults = {
+    // If true, decode relationship fields (arrays/objects) into scalar IDs.
+    coerceRelationIds: true,
+    // If true, compute _title strings from WP-ish title shapes.
+    computeTitles: true,
+    // If true, normalize embedded tubs inside flavors.
+    normalizeEmbeddedTubs: true,
+  };
+
+  /**
+   * Decode a raw bundle (WP REST / Pods-shaped) into your canonical domain.
+   * This is the one place “WP shape quirks” should live.
+   */
+  static decode(bundle, opts = {}) {
+    if (!bundle || typeof bundle !== "object") return bundle;
+
+    const o = { ...DomainCodec.defaults, ...opts };
+    const D = { ...bundle }; // shallow clone of bundle
+
+    if (Array.isArray(D.tubs))     D.tubs     = DomainCodec.decodeTubs(D.tubs, o);
+    if (Array.isArray(D.slots))    D.slots    = DomainCodec.decodeSlots(D.slots, o);
+    if (Array.isArray(D.cabinets)) D.cabinets = DomainCodec.decodeCabinets(D.cabinets, o);
+    if (Array.isArray(D.flavors))  D.flavors  = DomainCodec.decodeFlavors(D.flavors, o);
+
+    if (Array.isArray(D.locations)) D.locations = DomainCodec.decodeLocations(D.locations, o);
+
+    // Singular location endpoint (if you keep it)
+    if (D.location && typeof D.location === "object" && !Array.isArray(D.location)) {
+      D.location = DomainCodec.decodeLocations([D.location], o)[0] ?? D.location;
+    }
+
+    return D;
+  }
+
+  // -------------------------
+  // Collection decoders
+  // -------------------------
+
+  static decodeTubs(tubs = [], o = DomainCodec.defaults) {
     if (!Array.isArray(tubs)) return [];
-
-    return tubs.map(t => {
-      // Preserve non-objects as-is (defensive)
-      if (!t || typeof t !== "object") return t;
-
-      // --- canonical id/title ---
-      if (t.id == null || t.id === 0) t.id = DoNorm._idOf(t.id ?? t.ID);
-      t._title = DoNorm._titleOf(t);
-
-      // --- scalar overwrites ---
-      t.state     = DoNorm._titleOf(t.state);   // ["Freezing"] -> "Freezing"; "Freezing" -> "Freezing"
-      t.flavor    = DoNorm._idOf(t.flavor);      // [ {ID:...} ] or 1783 -> 1783
-      t.location  = DoNorm._idOf(t.location);    // [ {ID:...} ] or 935  -> 935
-      t.batch     = DoNorm._idOf(t.batch);       // [ {ID:...} ] or 1782 -> 1782
-      t.cabinet   = DoNorm._idOf(t.cabinet);     // false -> 0, id/object/array -> id
-
-      return t;
-    });
+    return tubs.map(t => DomainCodec._decodeTub(t, o));
   }
 
-  static nSlots(slots = []) {
+  static decodeSlots(slots = [], o = DomainCodec.defaults) {
     if (!Array.isArray(slots)) return [];
-
-    return slots.map(s => {
-      if (!s || typeof s !== "object") return s;
-
-      // --- canonical id / title ---
-      if (s.id == null || s.id === 0) s.id = DoNorm._idOf(s.id ?? s.ID);
-      s._title = DoNorm._titleOf(s);
-
-      // --- scalar relationships ---
-      s.cabinet           = DoNorm._idOf(s.cabinet);
-      s.current_flavor    = DoNorm._idOf(s.current_flavor);
-      s.immediate_flavor  = DoNorm._idOf(s.immediate_flavor);
-      s.next_flavor       = DoNorm._idOf(s.next_flavor);
-
-      return s;
-    });
+    return slots.map(s => DomainCodec._decodeSlot(s, o));
   }
 
-  static nCabinets(cabinets = []) {
+  static decodeCabinets(cabinets = [], o = DomainCodec.defaults) {
     if (!Array.isArray(cabinets)) return [];
-
-    return cabinets.map(c => {
-      if (!c || typeof c !== "object") return c;
-
-      // --- canonical id / title ---
-      if (c.id == null || c.id === 0) c.id = DoNorm._idOf(c.id ?? c.ID);
-      c._title = DoNorm._titleOf(c);
-
-      // --- scalar relationship aliases ---
-      c.location = DoNorm._idOf(c.location);
-
-      // --- numeric coercions (safe, mechanical) ---
-      if (c.max_tubs != null) {
-        const n = Number(c.max_tubs);
-        c.max_tubs = Number.isFinite(n) ? n : 0;
-      }
-
-      return c;
-    });
+    return cabinets.map(c => DomainCodec._decodeCabinet(c, o));
   }
 
-  static nFlavors(flavors = []) {
+  static decodeFlavors(flavors = [], o = DomainCodec.defaults) {
     if (!Array.isArray(flavors)) return [];
-
-    return flavors.map(f => {
-      if (!f || typeof f !== "object") return f;
-
-      // --- canonical id / title ---
-      if (f.id == null || f.id === 0) f.id = DoNorm._idOf(f.id ?? f.ID);
-      f._title = DoNorm._titleOf(f);
-
-      // --- normalize embedded tubs ---
-      if (Array.isArray(f.tubs)) {
-        f.tubs = DoNorm.nTubs(f.tubs);
-      }
-
-      return f;
-    });
+    return flavors.map(f => DomainCodec._decodeFlavor(f, o));
   }
 
-  static _first(v){ 
+  static decodeLocations(locations = [], o = DomainCodec.defaults) {
+    if (!Array.isArray(locations)) return [];
+    return locations.map(loc => DomainCodec._decodeLocation(loc, o));
+  }
+
+  // -------------------------
+  // Shared per-entity helpers
+  // -------------------------
+
+  /**
+   * Ensure:
+   * - canonical numeric id in x.id
+   * - optional string title in x._title (without overwriting server-provided _title)
+   *
+   * Returns a CLONED object so callers can safely mutate.
+   */
+  static _withIdAndTitle(obj, o) {
+    if (!obj || typeof obj !== "object") return obj;
+
+    const x = { ...obj };
+
+    if (x.id == null || x.id === 0) {
+      x.id = DomainCodec._idOf(x.id ?? x.ID);
+    }
+
+    if (o.computeTitles) {
+      if (x._title == null || x._title === "") {
+        x._title = DomainCodec._titleOf(x);
+      }
+    }
+
+    return x;
+  }
+
+  // -------------------------
+  // Item decoders
+  // -------------------------
+
+  static _decodeTub(t, o) {
+    if (!t || typeof t !== "object") return t;
+
+    const x = DomainCodec._withIdAndTitle(t, o);
+
+    // scalar overwrites
+    x.state = DomainCodec._titleOf(x.state);
+
+    if (o.coerceRelationIds) {
+      x.flavor   = DomainCodec._idOf(x.flavor);
+      x.location = DomainCodec._idOf(x.location);
+      x.batch    = DomainCodec._idOf(x.batch);
+      x.cabinet  = DomainCodec._idOf(x.cabinet);
+    }
+
+    return x;
+  }
+
+  static _decodeSlot(s, o) {
+    if (!s || typeof s !== "object") return s;
+
+    const x = DomainCodec._withIdAndTitle(s, o);
+
+    if (o.coerceRelationIds) {
+      x.cabinet          = DomainCodec._idOf(x.cabinet);
+      x.location         = DomainCodec._idOf(x.location);
+      x.current_flavor   = DomainCodec._idOf(x.current_flavor);
+      x.immediate_flavor = DomainCodec._idOf(x.immediate_flavor);
+      x.next_flavor      = DomainCodec._idOf(x.next_flavor);
+    }
+
+    return x;
+  }
+
+  static _decodeCabinet(c, o) {
+    if (!c || typeof c !== "object") return c;
+
+    const x = DomainCodec._withIdAndTitle(c, o);
+
+    if (o.coerceRelationIds) {
+      x.location = DomainCodec._idOf(x.location);
+    }
+
+    if (x.max_tubs != null) {
+      const n = Number(x.max_tubs);
+      x.max_tubs = Number.isFinite(n) ? n : 0;
+    }
+
+    return x;
+  }
+
+  static _decodeFlavor(f, o) {
+    if (!f || typeof f !== "object") return f;
+
+    const x = DomainCodec._withIdAndTitle(f, o);
+
+    if (o.normalizeEmbeddedTubs && Array.isArray(x.tubs)) {
+      x.tubs = DomainCodec.decodeTubs(x.tubs, o);
+    }
+
+    return x;
+  }
+
+  static _decodeLocation(loc, o) {
+    if (!loc || typeof loc !== "object") return loc;
+
+    const x = DomainCodec._withIdAndTitle(loc, o);
+
+    // If you have relationship fields on location later, coerce them here.
+
+    return x;
+  }
+
+  // -------------------------
+  // Shared coercion helpers
+  // -------------------------
+
+  static _first(v) {
     if (v == null) return null;
     return Array.isArray(v) ? (v.length ? v[0] : null) : v;
   }
-  static _idOf(v){
-      const x = DoNorm._first(v);
-      if (x == null || x === false ) return 0;
-      if (typeof x === "object")  
-        return DoNorm._idOf(x.id ?? x.ID ?? x.value);
-      
-      const n = Number(x);
-      return Number.isFinite(n) ? n : 0;
+
+  static _idOf(v) {
+    const x = DomainCodec._first(v);
+    if (x == null || x === false) return 0;
+
+    if (typeof x === "object") {
+      return DomainCodec._idOf(x.id ?? x.ID ?? x.value);
+    }
+
+    const n = Number(x);
+    return Number.isFinite(n) ? n : 0;
   }
-  static _titleOf(v){ 
-    const x = DoNorm._first(v);
+
+  static _titleOf(v) {
+    const x = DomainCodec._first(v);
     if (x == null || x === false) return "";
-    if (typeof x === 'string') return x;
-    if (typeof x === "object"){
+    if (typeof x === "string") return x;
+
+    if (typeof x === "object") {
       const t = x.title;
       if (t && typeof t === "string") return t;
       if (t && typeof t === "object" && typeof t.rendered === "string") return t.rendered;
-      
+
       if (typeof x.post_title === "string") return x.post_title;
       if (typeof x.name === "string") return x.name;
       if (typeof x.slug === "string") return x.slug;
       if (typeof x.rendered === "string") return x.rendered;
     }
 
-    return '';
+    return "";
   }
-
 }
 
-// DataLoader
-class DataLoader {
-  constructor(endpoints) {
-    this.endpoints = endpoints; // { cells, meta, options, ... }
-    this.controller = new AbortController();
-  }
-
-  async fetchJSON(url) {
-    const res = await fetch(url, {
-      signal: this.controller.signal,
-      headers: { Accept: "application/json" },
-      credentials: "same-origin",
-    });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status} for ${url}`);
+class FormCodec {
+  static extractGridChanges(form, formKey = "planning") {
+    if (!form || !(form instanceof HTMLFormElement)) {
+      throw new TypeError("extractGridChanges(form, formKey): form must be a HTMLFormElement");
     }
 
-    return res.json();
+    const prefix = `${formKey}[cells]`;
+    const changes = { cells: {} };
+    const flat = [];
+
+    const inputs = form.querySelectorAll(
+      `input[type="hidden"][name^="${FormCodec.cssEscape(prefix)}"]`
+    );
+console.log(inputs);
+    for (const input of inputs) {
+      const name = input.getAttribute("name") || "";
+      const parsed = FormCodec.parseBracketName(name);
+
+      if (!parsed || parsed.length < 4) continue;
+      if (parsed[0] !== formKey) continue;
+      if (parsed[1] !== "cells") continue;
+console.log('parsed',parsed);
+      const rowId = Number(parsed[2]);
+      const colKey = parsed[3];
+
+      if (!Number.isFinite(rowId) || rowId <= 0) continue;
+      if (!colKey) continue;
+
+      const raw = input.value ?? "";
+      const value = FormCodec.normalizeScalar(raw);
+
+      flat.push({ rowId, colKey, value, name, input });
+
+      if (!changes.cells[rowId]) changes.cells[rowId] = {};
+      changes.cells[rowId][colKey] = value;
+    }
+
+    return { changes, flat };
   }
 
+  static parseBracketName(name) {
+    if (!name || typeof name !== "string") return null;
+
+    const parts = [];
+    const re = /([^[\]]+)|\[(.*?)\]/g;
+    let m;
+
+    while ((m = re.exec(name))) {
+      const token = (m[1] != null) ? m[1] : m[2];
+      parts.push(token);
+    }
+
+    return parts.length ? parts : null;
+  }
+
+  static normalizeScalar(v) {
+    const s = (v ?? "").toString().trim();
+    if (s === "") return 0;
+    if (/^-?\d+$/.test(s)) return parseInt(s, 10);
+    return s;
+  }
+
+  static cssEscape(s) {
+    if (typeof CSS !== "undefined" && CSS.escape) return CSS.escape(s);
+    return s.replace(/["\\]/g, "\\$&");
+  }
+}
+
+class Indexer {
   static byId(list, key = "id") {
     const map = new Map();
     for (const item of (list ?? [])) {
@@ -1083,15 +1364,10 @@ class DataLoader {
   }
 
   static groupBy(list, keyFn) {
-    const m = new Map();
-
-    if(!Array.isArray(list)){
-      console.log("Missing data to group by. Did the data need to be loaded?");
-      throw new TypeError(
-        `DataLoader.groupBy expected an array, got ${Object.prototype.toString.call(list)}`
-      );
+    if (!Array.isArray(list)) {
+      throw new TypeError(`groupBy expected array, got ${Object.prototype.toString.call(list)}`);
     }
-
+    const m = new Map();
     for (const item of list) {
       const k = keyFn(item);
       const arr = m.get(k) ?? [];
@@ -1100,50 +1376,41 @@ class DataLoader {
     }
     return m;
   }
-
-  async load() {
-    const entries = Object.entries(this.endpoints);
-
-    const results = await Promise.all(
-      entries.map(([_, url]) => this.fetchJSON(url))
-    );
-
-    // Rebuild object with same keys
-    return Object.fromEntries(
-      entries.map(([key], i) => [key, results[i]])
-    );
-  }
-
-  abort() {
-    this.controller.abort();
-  }
 }
 
 document.addEventListener('DOMContentLoaded', async ()=>{
   // Safe to query and manipulate DOM elements
-
-  const loader = new DataLoader({
-    cabinets: "/wp-json/wp/v2/cabinets.json?per_page=100&_fields=id,slots,location",
-    flavors:  "/wp-json/wp/v2/flavors.json?per_page=100&_fields=id,title,tubs",
-    slots:    "/wp-json/wp/v2/slots.json?per_page=100&_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet",
-    location: "/wp-json/wp/v2/location.json?per_page=100",
-    locations:"/wp-json/wp/v2/locations.json?per_page=100",
-    tubs:     "/wp-json/wp/v2/tubs.json?per_page=100&_fields=id,title,flavor,location,state,index,date"
+  
+  const loader = new ScoopAPI({
+    cabinets: "/wp-json/wp/v2/cabinet?per_page=100&_fields=id,slots,location",
+    flavors:  "/wp-json/wp/v2/flavor?per_page=100&_fields=id,title,tubs",
+    slots:    "/wp-json/wp/v2/slot?per_page=100&_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet",
+    location: "/wp-json/wp/v2/location?per_page=100",
+    locations:"/wp-json/wp/v2/location?per_page=100",
+    tubs:     "/wp-json/wp/v2/tub?per_page=100&_fields=id,title,flavor,location,state,index,date"
   });
 
-  const raw = await loader.load();
-  const D   = DoNorm.normalize(raw);
+  const batchs = new Grid(document.getElementById('wpbody-content'), 'batchs', 
+    {api:loader, formCodec:FormCodec, domainCodec:DomainCodec});
+  const grid = new Grid(document.getElementById('wpbody-content'), 'planning', 
+    {api:loader, formCodec:FormCodec, domainCodec:DomainCodec});
+  const tub = new Grid(document.getElementById('wpbody-content'), 'tubs' );
 
-
-
+  const raw = {
+    cabinets:  await loader.getAllPages("/wp-json/wp/v2/cabinets.json?_fields=id,slots,location"),
+    flavors:   await loader.getAllPages("/wp-json/wp/v2/flavors.json?_fields=id,title,tubs"),
+    slots:     await loader.getAllPages("/wp-json/wp/v2/slots.json?_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet"),
+    tubs:      await loader.getAllPages("/wp-json/wp/v2/tubs.json?_fields=id,title,flavor,location,state,index,date"),
+    locations: await loader.getAllPages("/wp-json/wp/v2/locations.json"),
+  };
+  const D   = DomainCodec.decode(raw);
 
   const CGM = new CabinetGridModel(D);
   const FTM = new FlavorTubsGridModel(D);
+  const BGM = new BatchGridModel(D);
 
-  const grid = new Grid(document.getElementById('wpbody-content'), CGM, 'planning' );
-  grid.init();
+  batchs.init(BGM);
+  grid.init(CGM);
+  tub.init(FTM);
 
-  const tub = new Grid(document.getElementById('wpbody-content'), FTM, 'tubs' );
-  tub.init();
-  
 });

@@ -208,6 +208,8 @@ class FindIt{
     this.INP.value = this.display;
 
     this.onSelect?.(op);
+    
+    this.HDN.dispatchEvent(new Event("fi_change", { bubbles: true }));
 
     this._close();
   }
@@ -436,8 +438,18 @@ class Grid {
 
     this.state = null;
     this.name = name;
-    this.FORM = null;
+    this.FORM = this._el('form', 'zGRID-form');
     this.postUrl = api.baseUrl;
+    
+    this.baseline = new Map();   // key -> value
+    this.dirtySet = new Set();   // key
+    
+    const { flat } = this.formCodec.extractGridChanges(this.FORM, this.name);
+    for (const f of flat) {
+      const k = `${f.rowId}|${f.colKey}`;
+      this.baseline.set(k, f.value);
+    }
+
   }
   
   init(state = this.state) {
@@ -446,28 +458,89 @@ class Grid {
     this.bindEvents();
   }
 
+  _buildDirtyPayload() {
+    const changes = { cells: {} };
+
+    for (const k of this.dirtySet) {
+      const [rowIdStr, colKey] = k.split("|");
+      const rowId = Number(rowIdStr);
+
+      const input = this.FORM.querySelector(
+        `input[type="hidden"][name="${this.name}[cells][${rowId}][${colKey}]"]`
+      );
+      if (!input) continue;
+
+      const value = this.formCodec.normalizeScalar(input.value ?? "");
+      if (!changes.cells[rowId]) changes.cells[rowId] = {};
+      changes.cells[rowId][colKey] = value;
+    }
+
+    return changes;
+  }
+  
+  _captureBaseline() {
+    const { flat } = this.formCodec.extractGridChanges(this.FORM, this.name);
+
+    this.baseline = new Map();
+    this.dirtySet = new Set();
+
+    for (const f of flat) {
+      const k = `${f.rowId}|${f.colKey}`;
+      this.baseline.set(k, f.value);
+    }
+
+    this._updateDirtyIndicator(0);
+  }
+
+  _updateDirtyIndicator(n) {
+    if (!this.DIRTY_IND) return;
+    this.DIRTY_IND.textContent = `${n} change${n === 1 ? "" : "s"}`;
+  }
+
+  _commitPosted(changes) {
+    for (const [rowId, row] of Object.entries(changes.cells ?? {})) {
+      for (const [colKey, val] of Object.entries(row ?? {})) {
+        const k = `${rowId}|${colKey}`;
+        this.baseline.set(k, val);
+        this.dirtySet.delete(k);
+      }
+    }
+    this._updateDirtyIndicator(this.dirtySet.size);
+  }
+  
+  _commitPosted(changes) {
+    for (const [rowId, row] of Object.entries(changes.cells ?? {})) {
+      for (const [colKey, val] of Object.entries(row ?? {})) {
+        const k = `${rowId}|${colKey}`;
+        this.baseline.set(k, val);
+        this.dirtySet.delete(k);
+      }
+    }
+    this._updateDirtyIndicator(this.dirtySet.size);
+  }
+  
+  _el(tag, ...classes){
+    const n = document.createElement(tag);
+    if (classes.length) n.classList.add(...classes);
+    return n;      
+  }
+
   render() { 
     const groupByStart = new Map();
     for (const g of (this.state.rowGroups ?? [])) {
       groupByStart.set(g.startIndex, g);
     }
 
-    const el = (tag, ...classes) => {
-      const n = document.createElement(tag);
-      if (classes.length) n.classList.add(...classes);
-      return n;
-    }
+    const el = this._el;
 
     const { columns, rows,  minCount } = this.state;
     
-    const FORM   = el('form', 'zGRID-form');
+    const FORM   = this.FORM;
     const SUBMIT = el('button');
     const TABLE  = el('table', 'zGRID');
     const THEAD  = el("thead");
     const TRH    = el("tr");
-
-    this.FORM = FORM;
-
+    
     SUBMIT.setAttribute('type','submit');
     SUBMIT.append('Submit');
 
@@ -527,7 +600,6 @@ class Grid {
         if(col.write){
           
           if(col.control === "text"){
-            console.log('col',col);
             new TextIt(CELL, data, this.name);
           }
           else new FindIt(CELL, data, this.name);
@@ -552,6 +624,28 @@ class Grid {
 
   bindEvents() {
     if (!this.FORM) return;
+    
+    this.FORM.addEventListener("fi_change", (e) => {
+      const h = e.target.closest('input[type="hidden"][name]');
+      if (!h) return;
+    
+      const parsed = this.formCodec.parseBracketName(h.name);
+      if (!parsed || parsed.length < 4) return;
+      if (parsed[0] !== this.name || parsed[1] !== "cells") return;
+    
+      const rowId = Number(parsed[2]);
+      const colKey = parsed[3];
+      const k = `${rowId}|${colKey}`;
+    
+      const v = this.formCodec.normalizeScalar(h.value ?? "");
+      const before = this.baseline.get(k);
+    
+      if (before === v) this.dirtySet.delete(k);
+      else this.dirtySet.add(k);
+    
+      // Display count wherever you want
+      this._updateDirtyIndicator(this.dirtySet.size);
+    });
 
     this.FORM.addEventListener("mousedown", (e) => {
         if (e.target.closest(".findIt")) return;
@@ -560,13 +654,13 @@ class Grid {
       true // capture
     );
 
-    console.log('this grid',this);
     // Only validate the planning grid posts
     //if (this.name !== "planning") return;
 
     this.FORM.addEventListener("submit", async (e) => {
       
       e.preventDefault();
+      console.log('FORM POST URL',this.postUrl);
 
       if (!this.api) throw new Error('Grid submit: missing this.api');
       if (!this.postUrl) throw new Error('Grid submit: missing this.postUrl');
@@ -575,9 +669,7 @@ class Grid {
       if (submitBtn) submitBtn.disabled = true;
 
       try {
-        const { changes, flat } = this.formCodec.extractGridChanges(this.FORM, this.name);
-        console.log(flat);
-        console.log(this.formCodec);
+        const changes = this._buildDirtyPayload();
 
         // OPTIONAL: no-op submit guard
         if (!Object.keys(changes.cells).length) {
@@ -586,9 +678,11 @@ class Grid {
           console.log("No Object to submit.", Object);
           return;
         }
-
-        const r = await this.api.postPlanningChanges(this.postUrl, changes);
-        console.log("POST result:", r);
+        
+        const r = await this.api.postPlanningChanges(changes, {
+          // optional escape hatch:
+          // url: this.postUrlOverride
+        });
 
         if (!r.ok) {
           Toast.addMessage({title:'no POST', message:`HTTP ${r.status}`});
@@ -601,8 +695,15 @@ class Grid {
           Toast.addMessage({title:'bad post', message:JSON.stringify(r.data, null)});
           return;
         }
-
+        if (r.ok && r.data?.ok) {
+          console.log("COMMIT! result:", r);
+        
+          this._commitPosted(changes);
+          Toast.addMessage({title:'Update saved', message:r.data.updated});
+        }
         // TODO: mark successful cells as clean (e.g., store baseline values)
+        
+        
       } catch (err) {
         console.error("POST exception:", err);
       } finally {
@@ -728,7 +829,6 @@ class BaseGridModel {
     const id = fieldKey
       ? objOrId?.[fieldKey]
       : objOrId;
-
     if (!id) return null;
 
     const item = map?.get?.(id);
@@ -888,13 +988,9 @@ class BatchGridModel extends BaseGridModel{
 class CabinetGridModel extends BaseGridModel{
   constructor(domain, { location = 935 } = {}) {
     super(domain, { location });
-
+    
     this._cabinetsById = Indexer.byId(domain.cabinets);
-    //this._flavorsById  = Indexer.byId(domain.flavors);
-
     this._slotsByCabinetId = Indexer.groupBy(domain.slots, s => s.cabinet);
-
-
 
     this.build();
   }
@@ -964,33 +1060,104 @@ class FlavorTubsGridModel extends BaseGridModel{
 //////////////////////////////
 
 class ScoopAPI {
-  constructor({ nonce, base = "/" } = {}) {
-    this.nonce      = nonce ?? null;
-    this.base       = base;
-    this.baseUrl    = this._absUrl(base);
+  constructor({ nonce, base = "/", routes = {} } = {}) {
+    this.nonce = nonce ?? null;
+    this.baseUrl = this._absUrl(base);
+    this.routes = {};
+
+    for (const [k, v] of Object.entries(routes)) {
+      this.routes[k] = this._absUrl(v);
+    }
+
     this.controller = new AbortController();
   }
 
   abort() { this.controller.abort(); }
-
-  _absUrl(pathOrUrl) {
-    if (!pathOrUrl) return new URL(window.location.origin);
-
-    try{ 
-      return new URL(pathOrUrl);
-    }
-    catch {
-      return new URL(pathOrUrl, window.location.origin);
-    }
+  
+  findGridHosts(root = document) {
+    return [...root.querySelectorAll(".scoop-grid[data-grid-type]")];
   }
 
-  async _fetch(url = this.baseUrl, { method = "GET", headers = {}, body = null, useNonce = false } = {}) {
-    const res = await fetch(this._absUrl(url), {
+  _absUrl(pathOrUrl) {
+    if (pathOrUrl instanceof URL) return pathOrUrl;
+    if (!pathOrUrl) return new URL(window.location.origin);
+    try { return new URL(pathOrUrl); }
+    catch { return new URL(pathOrUrl, window.location.origin); }
+  }
+  
+  bundleSpecForGridTypes(types) {
+    const need = new Set();
+
+    if (types.has("planning")) {
+      need.add("cabinets"); need.add("slots"); need.add("flavors"); need.add("locations"); need.add("tubs");
+    }
+    if (types.has("tubs")) {
+      need.add("tubs"); need.add("flavors"); need.add("locations");
+    }
+    if (types.has("batchs")) {
+      // adjust based on BatchGridModel's real needs
+      need.add("flavors"); need.add("locations");
+    }
+
+    const spec = {};
+    if (need.has("cabinets"))  spec.cabinets  = { url: "/wp-json/wp/v2/cabinet?_fields=id,title,slots,location", paged: true };
+    if (need.has("flavors"))   spec.flavors   = { url: "/wp-json/wp/v2/flavor?_fields=id,title,tubs", paged: true };
+    if (need.has("slots"))     spec.slots     = { url: "/wp-json/wp/v2/slot?_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet", paged: true };
+    if (need.has("locations")) spec.locations = { url: "/wp-json/wp/v2/location?_fields=id,title", paged: true };
+    if (need.has("tubs"))      spec.tubs      = { url: "/wp-json/wp/v2/tub?_fields=id,title,flavor,location,state,index,date", paged: true };
+
+    return spec;
+  }
+
+  makeModel(type, domain, { location = 0 } = {}) {
+    if (type === "planning") return new CabinetGridModel(domain, { location });
+    if (type === "tubs")     return new FlavorTubsGridModel(domain, { location });
+    if (type === "batchs")   return new BatchGridModel(domain, { location });
+    return null;
+  }
+
+  async mountAllGrids({
+    root = document,
+    domainCodec = DomainCodec,
+    formCodec = FormCodec,
+  } = {}) 
+  {
+    const hosts = this.findGridHosts(root);
+    if (!hosts.length) return;
+
+    const types = new Set(hosts.map(h => h.dataset.gridType));
+    const raw   = await this.loadBundle(this.bundleSpecForGridTypes(types));
+    const D     = domainCodec.decode(raw);
+
+    for (const el of hosts) {
+      const type = el.dataset.gridType;
+      const location = Number(el.dataset.location || 0);
+
+      const model = this.makeModel(type, D, { location });
+      if (!model) {
+        el.textContent = `Unknown grid type: ${type}`;
+        continue;
+      }
+
+      const grid = new Grid(el, type, { api: this, formCodec, domainCodec });
+
+      // If you want per-grid override later, keep it here:
+      if (type === "planning") grid.postUrl = this.routes.planning;
+
+      grid.init(model);
+    }
+  }
+  
+
+  async _fetch(url, { method="GET", headers={}, body=null, useNonce=false } = {}) {
+    const u = (url instanceof URL) ? url : this._absUrl(url);
+
+    const res = await fetch(u, {
       method,
       credentials: "same-origin",
       signal: this.controller.signal,
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
         ...headers,
         ...(useNonce && this.nonce ? { "X-WP-Nonce": this.nonce } : {}),
       },
@@ -1004,7 +1171,7 @@ class ScoopAPI {
 
     return { ok: res.ok, status: res.status, data, res };
   }
-
+  
   async getJson(url = this.baseUrl) {
     const r = await this._fetch(url, { method: "GET" });
     return r.data;
@@ -1038,7 +1205,7 @@ class ScoopAPI {
   }
 
   async postJson(url, payload, { useNonce = true } = {}) {
-    const r = await this._fetch(url = this.baseUrl, {
+    const r = await this._fetch(url, {
       method: "POST",
       useNonce,
       headers: { "Content-Type": "application/json" },
@@ -1064,12 +1231,16 @@ class ScoopAPI {
   }
 
   // Generic: post planning to a provided endpoint
-  async postPlanningChanges(planningUrl, planningPayload) {
-    if (!planningUrl) throw new Error("postPlanningChanges(planningUrl, payload): missing planningUrl");
-    if (!planningPayload || typeof planningPayload !== "object") {
-      throw new TypeError("postPlanningChanges(planningUrl, payload): payload must be an object");
-    }
-    return this.postJson(planningUrl, { planning: planningPayload }, { useNonce: true });
+  route(name) {
+    const u = this.routes?.[name];
+    if (!u) throw new Error(`ScoopAPI.route("${name}") missing`);
+    return u;
+  }
+
+  // Planning post (Option B)
+  async postPlanningChanges(planningPayload, { url = null } = {}) {
+    const u = url ?? this.route("planning");
+    return this.postJson(u, { planning: planningPayload }, { useNonce: true });
   }
 }
 
@@ -1298,7 +1469,6 @@ class FormCodec {
     const inputs = form.querySelectorAll(
       `input[type="hidden"][name^="${FormCodec.cssEscape(prefix)}"]`
     );
-console.log(inputs);
     for (const input of inputs) {
       const name = input.getAttribute("name") || "";
       const parsed = FormCodec.parseBracketName(name);
@@ -1306,7 +1476,6 @@ console.log(inputs);
       if (!parsed || parsed.length < 4) continue;
       if (parsed[0] !== formKey) continue;
       if (parsed[1] !== "cells") continue;
-console.log('parsed',parsed);
       const rowId = Number(parsed[2]);
       const colKey = parsed[3];
 
@@ -1378,39 +1547,12 @@ class Indexer {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async ()=>{
-  // Safe to query and manipulate DOM elements
-  
-  const loader = new ScoopAPI({
-    cabinets: "/wp-json/wp/v2/cabinet?per_page=100&_fields=id,slots,location",
-    flavors:  "/wp-json/wp/v2/flavor?per_page=100&_fields=id,title,tubs",
-    slots:    "/wp-json/wp/v2/slot?per_page=100&_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet",
-    location: "/wp-json/wp/v2/location?per_page=100",
-    locations:"/wp-json/wp/v2/location?per_page=100",
-    tubs:     "/wp-json/wp/v2/tub?per_page=100&_fields=id,title,flavor,location,state,index,date"
+document.addEventListener("DOMContentLoaded", async () => {
+  const api = new ScoopAPI({
+    nonce: SCOOP.nonce,
+    base: "/",
+    routes: { planning: SCOOP.restUrl },
   });
 
-  const batchs = new Grid(document.getElementById('wpbody-content'), 'batchs', 
-    {api:loader, formCodec:FormCodec, domainCodec:DomainCodec});
-  const grid = new Grid(document.getElementById('wpbody-content'), 'planning', 
-    {api:loader, formCodec:FormCodec, domainCodec:DomainCodec});
-  const tub = new Grid(document.getElementById('wpbody-content'), 'tubs' );
-
-  const raw = {
-    cabinets:  await loader.getAllPages("/wp-json/wp/v2/cabinets.json?_fields=id,slots,location"),
-    flavors:   await loader.getAllPages("/wp-json/wp/v2/flavors.json?_fields=id,title,tubs"),
-    slots:     await loader.getAllPages("/wp-json/wp/v2/slots.json?_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet"),
-    tubs:      await loader.getAllPages("/wp-json/wp/v2/tubs.json?_fields=id,title,flavor,location,state,index,date"),
-    locations: await loader.getAllPages("/wp-json/wp/v2/locations.json"),
-  };
-  const D   = DomainCodec.decode(raw);
-
-  const CGM = new CabinetGridModel(D);
-  const FTM = new FlavorTubsGridModel(D);
-  const BGM = new BatchGridModel(D);
-
-  batchs.init(BGM);
-  grid.init(CGM);
-  tub.init(FTM);
-
+  await api.mountAllGrids({ domainCodec: DomainCodec, formCodec: FormCodec });
 });

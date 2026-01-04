@@ -3,11 +3,25 @@
     <head>
         <title>LOCAL Scoop-tracker</title>
         <link href="css/css.css" rel="stylesheet" />
+        <script>
+        // Local/dev fallback. WP will overwrite this in real pages.
+        window.SCOOP = window.SCOOP || {
+            nonce: "dev-nonce-not-used",
+            restUrl: "http://localhost/wp-json/scoop/v1/planning",
+            routes: {
+                planning: "http://localhost/wp-json/scoop/v1/planning",
+            }
+        };
+        </script>
         <script type="module" src="./js/app.js" defer></script>
     </head>
     <body>
 
-        <h1>Local Scoop-tracker</h1>
-        <div id="wpbody-content"></div>
+        <h1>Local Scoop-tracker!!!</h1>
+        <div id="wpbody-content">
+            <div class="scoop-grid batches" data-grid-type="batches" data-location="935"></div>
+            <div class="scoop-grid" data-grid-type="planning" data-location="935"></div>
+            <div class="scoop-grid" data-grid-type="tubs" data-location="935"></div>
+        </div>
     </body>
 </html>

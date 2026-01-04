@@ -1,40 +1,95 @@
 <?php
-/**
- * Plugin Name: Scoop Rest
- * Description: Minimal REST endpoint to receive planning grid commands.
- */
+    /**
+     * Plugin Name: Scoop Rest
+     * Description: Minimal REST endpoint to receive planning grid commands.
+     */
+    
+    if ( ! defined( 'ABSPATH' ) ) exit;
 
-if ( ! defined( 'ABSPATH' ) ) exit;
+    /**
+     * Enqueue Scoop assets (CSS/JS) and inject SCOOP config.
+     * Call this from both front-end and admin (when appropriate).
+     */
+    function scoop_enqueue_assets() {
+      $base_url  = plugin_dir_url(__FILE__);
+      $base_path = plugin_dir_path(__FILE__);
+    
+      // CSS
+      wp_enqueue_style(
+        'scoop-grid',
+        $base_url . 'assets/css.css',
+        [],
+        filemtime($base_path . 'assets/css.css')
+      );
+    
+      // JS
+      wp_enqueue_script(
+        'scoop-grid',
+        $base_url . 'assets/app.js',
+        [], // add deps if you need (e.g. ['wp-api-fetch'])
+        filemtime($base_path . 'assets/app.js'),
+        true
+      );
+    
+      // One stable object shape
+      wp_localize_script('scoop-grid', 'SCOOP', [
+        'nonce'  => wp_create_nonce('wp_rest'),
+        'isAdmin'=> current_user_can('edit_posts'),
+        'routes' => [
+          'planning' => rest_url('scoop/v1/planning'),
+          'batches'  => rest_url('scoop/v1/batches'), // will 404 until you register it (as you saw)
+        ],
+      ]);
+    }
 
-add_action('admin_enqueue_scripts', function ($hook) {
-  // Matches add_menu_page() slug: 'scoop-command-test'
-  if ($hook !== 'toplevel_page_scoop-command-test') return;
+    /**
+     * Shortcode: [scoop_grid type="planning" location="935"]
+     */
+    add_shortcode('scoop_grid', function ($atts) {
+      $atts = shortcode_atts([
+        'type'     => 'planning', // planning | tubs | etc
+        'location' => null,
+      ], $atts, 'scoop_grid');
+    
+      if (!is_user_logged_in()) {
+        return '<p>You must be logged in to view this.</p>';
+      }
+    
+      $id = 'scoop-grid-' . uniqid();
+    
+      ob_start();
+      ?>
+      <div
+        id="<?php echo esc_attr($id); ?>"
+        class="scoop-grid"
+        data-grid-type="<?php echo esc_attr($atts['type']); ?>"
+        data-location="<?php echo esc_attr($atts['location']); ?>"
+      ></div>
+      <?php
+      return ob_get_clean();
+    });
 
-  $base_url  = plugin_dir_url(__FILE__);
-  $base_path = plugin_dir_path(__FILE__);
 
-  // --- CSS ---
-  wp_enqueue_style(
-    'scoop-planning-grid',
-    $base_url . 'assets/css.css',
-    [],
-    filemtime($base_path . 'assets/cssd.css')
-  );
-
-  // --- JS ---
-  wp_enqueue_script(
-    'scoop-planning-grid',
-    $base_url . 'assets/app.js',
-    [],   // add deps if needed
-    filemtime($base_path . 'assets/papp.js'),
-    true
-  );
-
-  wp_localize_script('scoop-planning-grid', 'SCOOP', [
-    'restUrl' => rest_url('scoop/v1/planning'),
-    'nonce'   => wp_create_nonce('wp_rest'),
-  ]);
-});
+    /**
+     * Front-end: enqueue only on posts/pages that contain the shortcode.
+     */
+    add_action('wp_enqueue_scripts', function () {
+      if (!is_singular()) return;
+    
+      global $post;
+      if (!$post) return;
+      if (!has_shortcode($post->post_content, 'scoop_grid')) return;
+    
+      scoop_enqueue_assets();
+    });
+    
+    /**
+     * Admin: enqueue only on your plugin admin page.
+     */
+    add_action('admin_enqueue_scripts', function ($hook) {
+      if ($hook !== 'toplevel_page_scoop-command-test') return;
+      scoop_enqueue_assets();
+    });
 
 
 
@@ -44,136 +99,257 @@ add_action('admin_enqueue_scripts', function ($hook) {
 function scoop_planning_allowed_slot_fields(): array {
   return [ 'current_flavor', 'immediate_flavor', 'next_flavor' ];
 }
+function scoop_batches_allowed_fields(): array {
+  return [ 'count', 'flavor' ];
+}
+
 
 /**
  * REST: /wp-json/scoop/v1/planning
  * - GET: health/info (optional)
  * - POST: apply planning[cells][slotId][field] = value
  */
-add_action( 'rest_api_init', function () {
+add_action('rest_api_init', function () {
 
-  register_rest_route( 'scoop/v1', '/planning', [
-    'methods'  => [ 'GET', 'POST' ],
-    'callback' => 'scoop_handle_planning_request',
-    'permission_callback' => function ( \WP_REST_Request $req ) {
-      // Simplest: require logged-in user who can edit posts
-      return is_user_logged_in() && current_user_can( 'edit_posts' );
-    },
-    'args' => [
-      // For POST, but leaving it here is fine; GET will just ignore it.
-      'planning' => [
-        'required' => false,
-      ],
+  $routes = [
+    'planning' => [
+      'path'         => '/planning',
+      'methods'      => ['GET','POST'],
+      'mode'         => 'update',
+      'envelope_key' => 'planning',
+      'post_type'    => 'slot',
+      'pod_name'     => 'slot',
+      'allowed_fields_cb' => 'scoop_planning_allowed_slot_fields',
     ],
-  ] );
 
-} );
+    'batches' => [
+      'path'         => '/batches',
+      'methods'      => ['GET','POST'],
+      'mode'         => 'create',
+      'envelope_key' => 'batches',
+      'post_type'    => 'batch',
+      'pod_name'     => 'batch',
+      'allowed_fields_cb' => 'scoop_batches_allowed_fields',
+    ],
+  ];
+
+  foreach ($routes as $key => $cfg) {
+    register_rest_route('scoop/v1', $cfg['path'], [
+      'methods'  => $cfg['methods'],
+      'callback' => function(\WP_REST_Request $req) use ($cfg, $key) {
+        return scoop_handle_request($req, $cfg, $key);
+      },
+      'permission_callback' => function(\WP_REST_Request $req) {
+        return is_user_logged_in() && current_user_can('edit_posts');
+      },
+    ]);
+  }
+});
 
 /**
  * Combined handler for GET/POST.
  */
-function scoop_handle_planning_request( \WP_REST_Request $req ) {
+function scoop_handle_request(\WP_REST_Request $req, array $cfg, string $route_key) {
 
-  if ( $req->get_method() === 'GET' ) {
-    return new WP_REST_Response( [
-      'ok'      => true,
-      'message' => 'scoop/v1/planning alive',
-      'allowed_fields' => scoop_planning_allowed_slot_fields(),
-      'time'    => current_time( 'mysql' ),
-    ], 200 );
+  $allowed_fields = [];
+  if (!empty($cfg['allowed_fields_cb']) && is_callable($cfg['allowed_fields_cb'])) {
+    $allowed_fields = call_user_func($cfg['allowed_fields_cb']);
   }
 
-  // --- POST ---
-  return scoop_handle_planning_post( $req );
+  if ($req->get_method() === 'GET') {
+    return new \WP_REST_Response([
+      'ok'            => true,
+      'route'         => $route_key,
+      'message'       => "scoop/v1/{$route_key} alive",
+      'allowed_fields'=> array_values($allowed_fields),
+      'time'          => current_time('mysql'),
+    ], 200);
+  }
+
+  if ($cfg['mode'] === 'create') 
+    return scoop_handle_create_post($req, $cfg, $allowed_fields);
+  else
+    return scoop_handle_cells_post( $req, $cfg, $allowed_fields);
 }
+
 
 /**
  * POST handler.
  */
-function scoop_handle_planning_post( \WP_REST_Request $req ) {
+function scoop_handle_create_post(\WP_REST_Request $req, array $cfg, array $allowed_fields) {
 
-  $planning = $req->get_param( 'planning' );
-
-  if ( ! is_array( $planning ) ) {
-    return new WP_REST_Response( [
-      'ok'    => false,
-      'error' => 'Missing or invalid planning payload (expected planning[...] array).',
-    ], 400 );
+  $envelope_key = $cfg['envelope_key'] ?? null;
+  if (!$envelope_key) {
+    return new \WP_REST_Response(['ok'=>false,'error'=>'Misconfigured endpoint (missing envelope_key).'], 500);
   }
 
-  $cells = $planning['cells'] ?? null;
-  if ( ! is_array( $cells ) ) {
-    return new WP_REST_Response( [
-      'ok'    => false,
-      'error' => 'Missing planning[cells].',
-    ], 400 );
+  $payload = $req->get_param($envelope_key);
+  if (!is_array($payload)) {
+    return new \WP_REST_Response(['ok'=>false,'error'=>"Missing or invalid {$envelope_key} payload."], 400);
   }
 
-  $allowed = array_flip( scoop_planning_allowed_slot_fields() );
+  $cells = $payload['cells'] ?? null;
+  if (!is_array($cells)) {
+    return new \WP_REST_Response(['ok'=>false,'error'=>"Missing {$envelope_key}[cells]."], 400);
+  }
 
-  // Group results by slot_id (easier for your GUI)
-  $updated = [];  // $updated[slot_id][field] = value
-  $errors  = [];  // $errors[slot_id][] = {field, error}
+  $allowed = array_flip($allowed_fields);
 
-  foreach ( $cells as $slot_id_raw => $row ) {
+  $post_type = $cfg['post_type'] ?? '';
+  $pod_name  = $cfg['pod_name'] ?? '';
+  $mode      = $cfg['mode'] ?? 'update';
 
-    $slot_id = (int) $slot_id_raw;
-    if ( $slot_id <= 0 || ! is_array( $row ) ) {
-      continue;
-    }
+  $updated   = [];
+  $errors    = [];
+  
+  if($mode === 'create'){
+    if(count($cells) !== 1) return 
+        new WP_REST_Response(['ok' => false, 'error' => 'Create expects exactly one row in cells.'], 400);
 
-    // Confirm this is actually a Slot post
-    $post = get_post( $slot_id );
-    if ( ! $post ) {
-      $errors[$slot_id][] = [ 'field' => null, 'error' => 'get_post() not found' ];
-      continue;
-    }
-    if ( $post->post_type !== 'slot' ) {
-      $errors[$slot_id][] = [ 'field' => null, 'error' => "ID is post_type={$post->post_type}, not slot" ];
-      continue;
-    }
-
-    // Load pod once per slot (performance + consistency)
-    if ( ! function_exists( 'pods' ) ) {
-      $errors[$slot_id][] = [ 'field' => null, 'error' => 'Pods not available.' ];
-      continue;
-    }
-
-    $pod = pods( 'slot', $slot_id );
-    if ( ! $pod || ! $pod->exists() ) {
-      $errors[$slot_id][] = [ 'field' => null, 'error' => "pods('slot', {$slot_id}) => not found / exists() false" ];
-      continue;
-    }
-
-    // Save any whitelisted fields present in this row
-    foreach ( $row as $field => $value ) {
-      if ( ! isset( $allowed[$field] ) ) {
-        continue;
-      }
-
-      $flavor_id = (int) $value;
-
-      $result = scoop_save_pod_field( $pod, $field, $flavor_id );
-
-      if ( $result === true ) {
-        if ( ! isset( $updated[$slot_id] ) ) $updated[$slot_id] = [];
-        $updated[$slot_id][$field] = $flavor_id;
+    $row = reset($cells);
+    if (!is_array($row)) return 
+        new WP_REST_Response(['ok'=>false,'error'=>'Invalid row'], 400);
+  
+    $new_id = scoop_create_pod_item($pod_name, $allowed_fields, $row);
+    
+    if (is_wp_error($new_id)) return 
+        new WP_REST_Response(['ok' => false, 'errors' => [ ['field'=>null,'error'=>$new_id->get_error_message()] ]], 400);
+  
+    return new WP_REST_Response([
+        'ok' => true,
+        'type' => $pod_name,
+        'created' => [ 'id' => (int)$new_id ],
+    ], 200);
+  } 
+  
+  foreach ($cells as $id_raw => $row) {
+    $id = (int)$id_raw;
+    
+    if ($id === 0){
+      $result = create_pod_item($pod, $field, $v);
+      if ($result === true) {
+        if (!isset($updated[$id])) $updated[$id] = [];
+        $updated[$id][$field] = $v;
       } else {
-        $errors[$slot_id][] = [
-          'field' => $field,
-          'error' => is_string( $result ) ? $result : 'Unknown error',
-        ];
+          $errors[$id][] = ['field'=>$field,'error'=> is_string($result) ? $result : 'Unknown error'];
+      }
+    }
+    
+    if ($id <= 0 || !is_array($row)) continue;
+
+    $post = get_post($id);
+    if (!$post) { $errors[$id][] = ['field'=>null,'error'=>'get_post() not found']; continue; }
+    if ($post->post_type !== $post_type) {
+      $errors[$id][] = ['field'=>null,'error'=>"ID is post_type={$post->post_type}, not {$post_type}"];
+      continue;
+    }
+
+    if (!function_exists('pods')) {
+      $errors[$id][] = ['field'=>null,'error'=>'Pods not available.'];
+      continue;
+    }
+
+    $pod = pods($pod_name, $id);
+    if (!$pod || !$pod->exists()) {
+      $errors[$id][] = ['field'=>null,'error'=>"pods('{$pod_name}', {$id}) => not found / exists() false"];
+      continue;
+    }
+
+    foreach ($row as $field => $value) {
+      if (!isset($allowed[$field])) continue;
+
+      // Default coercion: int (fits your flavor fields). You can override per endpoint later.
+      $v = (int)$value;
+
+      $result = scoop_save_pod_field($pod, $field, $v);
+
+      if ($result === true) {
+        if (!isset($updated[$id])) $updated[$id] = [];
+        $updated[$id][$field] = $v;
+      } else {
+        $errors[$id][] = ['field'=>$field,'error'=> is_string($result) ? $result : 'Unknown error'];
       }
     }
   }
 
-  $ok = empty( $errors );
-
-  return new WP_REST_Response( [
+  $ok = empty($errors);
+  return new \WP_REST_Response([
     'ok'      => $ok,
     'updated' => $updated,
     'errors'  => $errors,
-  ], $ok ? 200 : 400 );
+  ], $ok ? 200 : 400);
+}
+
+function scoop_handle_cells_post(\WP_REST_Request $req, array $cfg, array $allowed_fields) {
+
+  $envelope_key = $cfg['envelope_key'] ?? null;
+  if (!$envelope_key) {
+    return new \WP_REST_Response(['ok'=>false,'error'=>'Misconfigured endpoint (missing envelope_key).'], 500);
+  }
+
+  $payload = $req->get_param($envelope_key);
+  if (!is_array($payload)) {
+    return new \WP_REST_Response(['ok'=>false,'error'=>"Missing or invalid {$envelope_key} payload."], 400);
+  }
+
+  $cells = $payload['cells'] ?? null;
+  if (!is_array($cells)) {
+    return new \WP_REST_Response(['ok'=>false,'error'=>"Missing {$envelope_key}[cells]."], 400);
+  }
+
+  $allowed = array_flip($allowed_fields);
+
+  $post_type = $cfg['post_type'] ?? '';
+  $pod_name  = $cfg['pod_name'] ?? '';
+
+  $updated = [];
+  $errors  = [];
+
+  foreach ($cells as $id_raw => $row) {
+    $id = (int)$id_raw;
+    if ($id <= 0 || !is_array($row)) continue;
+
+    $post = get_post($id);
+    if (!$post) { $errors[$id][] = ['field'=>null,'error'=>'get_post() not found']; continue; }
+    if ($post->post_type !== $post_type) {
+      $errors[$id][] = ['field'=>null,'error'=>"ID is post_type={$post->post_type}, not {$post_type}"];
+      continue;
+    }
+
+    if (!function_exists('pods')) {
+      $errors[$id][] = ['field'=>null,'error'=>'Pods not available.'];
+      continue;
+    }
+
+    $pod = pods($pod_name, $id);
+    if (!$pod || !$pod->exists()) {
+      $errors[$id][] = ['field'=>null,'error'=>"pods('{$pod_name}', {$id}) => not found / exists() false"];
+      continue;
+    }
+
+    foreach ($row as $field => $value) {
+      if (!isset($allowed[$field])) continue;
+
+      // Default coercion: int (fits your flavor fields). You can override per endpoint later.
+      $v = (int)$value;
+
+      $result = scoop_save_pod_field($pod, $field, $v);
+
+      if ($result === true) {
+        if (!isset($updated[$id])) $updated[$id] = [];
+        $updated[$id][$field] = $v;
+      } else {
+        $errors[$id][] = ['field'=>$field,'error'=> is_string($result) ? $result : 'Unknown error'];
+      }
+    }
+  }
+
+  $ok = empty($errors);
+  return new \WP_REST_Response([
+    'ok'      => $ok,
+    'updated' => $updated,
+    'errors'  => $errors,
+  ], $ok ? 200 : 400);
 }
 
 /**
@@ -188,6 +364,26 @@ function scoop_save_pod_field( $pod, string $field, int $value ) {
     return $e->getMessage();
   }
 }
+
+function scoop_create_pod_item( string $pod_name, array $allowed_fields, array $data ){
+  if (!function_exists('pods_api'))  return 'Pods API not available.';
+  
+  $allowed = array_flip($allowed_fields);
+  //TODO: I should evaluate my fields!!!!
+
+  $params = [
+    'pod'  => $pod_name,
+    'data' => $data,
+  ];
+  $id = pods_api()->save_pod_item($params);
+
+  if (is_wp_error($id)) return $id->get_error_message();
+  $id = (int)$id;
+  if ($id <= 0) return 'Create failed (no id returned).';
+
+  return $id;
+}
+
 
 /**
  * Admin test page (minimal): lets you POST multiple slot IDs at once
@@ -252,7 +448,10 @@ function scoop_render_command_test_page() {
   ?>
   <div class="wrap">
     <h1>Scoop Command Test</h1>
-
+    <?php
+echo shortcode_exists('scoop_grid') ? 'SHORTCODE: yes' : 'SHORTCODE: no';
+    
+    ?>
     <h3>Registered Pods</h3>
     <pre><?php
       foreach ( $all_pods as $pod ) {

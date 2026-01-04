@@ -83,6 +83,7 @@ class TextIt {
     // Keep hidden input authoritative
     INP.addEventListener("input", () => {
       HDN.value = INP.value;
+      HDN.dispatchEvent(new Event("fi_change", { bubbles: true }));
     });
 
     const BTN = document.createElement("button");
@@ -94,6 +95,7 @@ class TextIt {
       INP.value = "";
       HDN.value = "";
       INP.focus();
+      HDN.dispatchEvent(new Event("fi_change", { bubbles: true }));
     });
 
     const BASE = document.createElement("div");
@@ -107,7 +109,43 @@ class TextIt {
   }
 }
 
+
 // TYPE TO COMPLETE ----------------
+class Find{
+   
+  static norm(s) {
+    return (s ?? "").toString().trim().toLowerCase();
+  }
+
+  /**
+   * Match items against a query.
+   * items: array of objects
+   * getText: fn(item) => string
+   */
+  static match(query, items, getText) {
+    const q = Find.norm(query);
+    if (!q) return items;
+
+    const scored = [];
+
+    for (const item of items) {
+      const text = Find.norm(getText(item));
+      if (!text) continue;
+
+      if (text.startsWith(q)) {
+        scored.push({ item, score: 0 });
+      } else {
+        const i = text.indexOf(q);
+        if (i >= 0) scored.push({ item, score: 10 + i });
+      }
+    }
+
+    scored.sort((a, b) => a.score - b.score);
+    return scored.map(x => x.item);
+  }
+
+}
+
 class FindIt{
   constructor(
     target,
@@ -214,29 +252,12 @@ class FindIt{
     this._close();
   }
 
-  _norm(s) {
-    return (s ?? "").toString().trim().toLowerCase();
-  }
-
   _matchOptions(query) {
-    const q = this._norm(query);
-    const opts = Array.isArray(this.options) ? this.options : [];
-    if (!q) return opts;
-
-    const scored = [];
-    for (const op of opts) {
-      const label = this._norm(op.label);
-      if (!label) continue;
-
-      if (label.startsWith(q)) scored.push({ op, score: 0 });
-      else {
-        const i = label.indexOf(q);
-        if (i >= 0) scored.push({ op, score: 10 + i });
-      }
-    }
-
-    scored.sort((a, b) => a.score - b.score);
-    return scored.map(x => x.op);
+    return Find.match(
+      query,
+      this.options ?? [],
+      op => op.label
+    );
   }
 
   _renderOptions() {
@@ -560,36 +581,47 @@ class Grid {
     for(let y = 0; y < rows.length; y++){
       const g = groupByStart.get(y);
       if (g) {
-        TBODY = el("tbody", "groupBody");
+        TBODY = el("tbody", "groupBody", (g.collapsible?'collapsible':'static'), (g.collapsed?'closed':'opened') );
         TABLE.append(TBODY);
         const GR = el("tr",    "group");
         const GD = el("td",    "groupCell");
+        const SP = el("b");
+        const OC = (g.collapsible)? el('button', "oc"):null;
         GD.colSpan = columns.length;
-
-        const label = el("span", "groupLabel");
-        label.textContent = g.label;
-        GD.append(label);
-
+        GR.dataset.rowId = g.groupId;
+        GR.dataset.groupType = g.groupType;
+        GR.dataset.groupLabel = g.label;
+        TBODY.dataset.rowType = g.rowType;
+        const LB = el("span", "groupLabel");
+        LB.textContent = g.label;
+        if(g.collapsible) {
+            OC.append('!!!');
+            SP.append(OC);
+        }
+        SP.append(LB);
+        
+        
         // badges (from getGroupBadges)
         const BDGs = el("span", "badges");
         for (const b of (g.badges ?? [])) {
-          console.log('b',b);
           const B = el("span", "badge", b.key);
           B.textContent = b.text;      // e.g. "U:3"
           if (b.title) B.title = b.title;
           BDGs.append(B);
         }
-        GD.append(BDGs);
+        SP.append(BDGs);
+        GD.append(SP);
         GR.append(GD);
         TBODY.append(GR);
       }
       
       const ROW = el('tr','row');
+      ROW.dataset.rowId = rows[y].id.rowId;
+      //ROW.dataset.rowLabel = rows[y].flavor.display;
       for(let x = 0; x < columns.length; x++){
         const col = this.state.columns[x];
         const data = rows[y]?.[columns[x].key] ?? "";
         const BDGs = el("span", "badges"); 
-        
         for(const b of data?.badges ?? []){
           const B = el('span', 'badge', b.key);
           B.append(b.text);
@@ -649,6 +681,12 @@ class Grid {
     });
 
     this.FORM.addEventListener("mousedown", (e) => {
+        if(e.target.closest(".oc")){
+            const TB = e.target.closest("TBODY");
+            TB.classList.toggle('opened');
+            TB.classList.toggle('closed');
+        }
+        
         if (e.target.closest(".findIt")) return;
         this.FORM.dispatchEvent(new Event("grid:close-findits"));
       },
@@ -661,6 +699,7 @@ class Grid {
     this.FORM.addEventListener("submit", async (e) => {
       
       e.preventDefault();
+      if(e.submitter.classList.contains('oc')) return false;
       console.log('FORM POST URL',this.postUrl);
 
       if (!this.api) throw new Error('Grid submit: missing this.api');
@@ -671,7 +710,7 @@ class Grid {
 
       try {
         const changes = this._buildDirtyPayload();
-
+        console.log("try changes", changes);
         // OPTIONAL: no-op submit guard
         if (!Object.keys(changes.cells).length) {
           console.log("No changes to submit.", changes);
@@ -680,10 +719,7 @@ class Grid {
           return;
         }
         
-        const r = await this.api.postPlanningChanges(changes, {
-          // optional escape hatch:
-          // url: this.postUrlOverride
-        });
+        const r = await this.api.postJson(changes, this.name);
 
         if (!r.ok) {
           Toast.addMessage({title:'no POST', message:`HTTP ${r.status}`});
@@ -706,7 +742,6 @@ class Grid {
         
         
       } catch (err) {
-        Toast.addMessage({title:'total Error!', message:err.message});
         console.error("POST exception:", err);
       } finally {
         if (submitBtn) submitBtn.disabled = false;
@@ -714,7 +749,7 @@ class Grid {
     });
 
   }
-
+  
   destroy() {
     //TODO: this doesn't exist
     console.log("I am here to create not distroy");
@@ -777,6 +812,7 @@ class BaseGridModel {
   constructor(domain, { location } = {}) {
     this.domain = domain;
     this.location = Number(location);
+    this.modelType = "base";
 
     // --- grid contract ---
     this.columns = [];
@@ -807,6 +843,7 @@ class BaseGridModel {
   }
 
   titleById(map, id, fallback = "") {
+    if(typeof map === 'undefined') return fallback || id;
     if (!id) return "";
     return map.get(Number(id))?._title ?? fallback;
   }
@@ -858,6 +895,11 @@ class BaseGridModel {
     getGroupBadges,       // optional callback to get meta info on groups
     makeRowId,            // (item) => any
     fillRow,              // (row, item) => void
+    groupType  = 'na',    // flavor, location, 
+    rowType    = 'na',
+    rowLabel   = 'na',
+    collapsible= true, 
+    collapsed  = false,
     groupIdKey = "groupId"// key name stored in rowGroups entries
   }) {
     this.rows = [];
@@ -873,7 +915,12 @@ class BaseGridModel {
         startIndex  : this.rows.length,
         label       : getGroupLabel ? getGroupLabel(groupId) : String(groupId),
         [groupIdKey]: groupId,
-        badges
+        groupType,
+        rowType,
+        rowLabel,
+        badges,
+        collapsible,
+        collapsed
       });
 
       for (const item of (items ?? [])) {
@@ -895,7 +942,18 @@ class BaseGridModel {
   }
 
   getOptions( type, fieldName, id){
-    return this.flavorMeta.optionsAll;
+    // TODO: This is just a brute force return of the Flavors list
+    // TODO: This should all go in the appropriate models, not options in the parent model
+    // key and label are the properties the listed objects need
+    if(type === 'flavor') return this.flavorMeta.optionsAll;
+    if(type === 'state') return [
+        {key:'__override__', label:'__override__'},
+        {key:'Hardening',    label:'Hardening'},
+        {key:'Freezing',     label:'Freezing'},
+        {key:'Tempering',    label:'Tempering'},
+        {key:'Opened',       label:'Opened'},
+        {key:'Emptied',      label:'Emptied'}
+    ];
   }
 
   fillRowFromColumns(
@@ -905,34 +963,26 @@ class BaseGridModel {
   ) 
   {
     for (const col of this.columns) {
+        
       const key = col?.key;
       if (!key) continue;
       const id = Number(obj?.[key] ?? 0);
-    
-      if(col.type && Number.isInteger(obj?.[key] ?? null)){
-        if(col.type === 'flavor'){
-          row[key] = {
-            id      : id,
-            rowId   : obj['id'] || i,
-            display : this.titleById(this._flavorsById, obj[key]),
-            type    : col.type,
-            colKey  : col.key,
-            options : this.getOptions( col.type, col.key, id ),
-            badges  : this.getBadges( col.type, col.key, id ),
-          }
-        } 
-        else row[key] = { 
+      if(typeof col.type === 'undefined') col.type = key; 
+
+      if(col.write || (col.type && Number.isInteger(obj?.[key] ?? null) )){
+        row[key] = { 
           id      : obj[key],
           rowId   : obj['id'] || i,
-          display : this.titleById(this._flavorsById, obj[key]),
+          display : this.titleById(this[('_'+ col.type +'sById')], obj[key], obj[key]),
           type    : col.type,
           colKey  : col.key,
           options : this.getOptions( col.type, col.key, id ),
           badges  : this.getBadges( col.type, col.key, id ),
         };
       }
-      else row[key] = { rowId: obj['id'] || i, display: obj?.[key] ?? null, type: col.type, colKey: col.key}
-
+      else{ 
+          row[key] = { rowId: obj['id'] || i, display: obj?.[key] ?? null, type: col.type, colKey: col.key}
+      }
     }
   }
 
@@ -941,11 +991,11 @@ class BaseGridModel {
 
 class BatchGridModel extends BaseGridModel{
 
-  constructor(domain, { location = 935 } = {} ) 
+  constructor(domain, { location = 935, type = 'base' } = {} ) 
   {
     super(domain, { location });
       this._flavorsById  = Indexer.byId(domain.flavors) || {};
-
+      this.modelType = { type };
       this.build();
   }
 
@@ -992,9 +1042,9 @@ class BatchGridModel extends BaseGridModel{
 }
 
 class FlavorTubsGridModel extends BaseGridModel{
-  constructor(domain, {location = 935} = {} ){
+  constructor(domain, {location = 935, type = 'na'} = {} ){
     super(domain, { location });
-
+    this.modelType = { type };
     this.build();
   }
 
@@ -1016,22 +1066,25 @@ class FlavorTubsGridModel extends BaseGridModel{
                    
     return this.buildGroupedRows({
       groupsMap     : tubsByFlavorId,
-      groupIdKey    : "flavor",
       includeGroupId: (id)   => Number(id) > 0,
       getGroupLabel : (id)   => this.labelFromMap(id, this._flavorsById),
       makeRowId     : (item) => item.id,
       getGroupBadges: (items, flavorId) => this.flavorMeta.badges(flavorId, this.fBadgeSpecs), // optional hide-zero
-      fillRow       : (row, items, i) => { this.fillRowFromColumns(row, items, i); }
+      fillRow       : (row, items, i) => { this.fillRowFromColumns(row, items, i); },
+      collapsed     : true,
+      groupType     :'flavor',
+      rowType       :'tub',
+      rowLabel      :'tub',
     });
   }
 
 }
 
 class CabinetGridModel extends BaseGridModel{
-  constructor(domain, { location = 935 } = {} ) 
+  constructor(domain, { location = 935, type = 'na' } = {} ) 
   {
     super( domain, { location } );
-    
+    this.modelType = { type };
     this._cabinetsById = Indexer.byId(domain.cabinets);
     this._slotsByCabinetId = Indexer.groupBy(domain.slots, s => s.cabinet);
 
@@ -1053,10 +1106,11 @@ class CabinetGridModel extends BaseGridModel{
     const cabinetIds = this.getIdsForLocation(this.domain.cabinets);
     return this.buildGroupedRows({
       groupsMap     : this._slotsByCabinetId,
-      groupIdKey    : "cabinetId",
       includeGroupId: (id) => cabinetIds.has(Number(id)),      
       getGroupLabel : (id) => this.labelFromMap(id, this._cabinetsById),
-      fillRow       : (row, item, i) => { this.fillRowFromColumns(row, item, i); }
+      fillRow       : (row, item, i) => { this.fillRowFromColumns(row, item, i); },
+      groupType     : 'cabinet',
+      rowType       : 'slot'
     });
   }
 
@@ -1107,19 +1161,19 @@ class ScoopAPI {
     }
 
     const spec = {};
-    if (need.has("cabinets"))  spec.cabinets  = { url: "/wp-json/wp/v2/cabinets.json?_fields=id,title,slots,location", paged: true };
-    if (need.has("flavors"))   spec.flavors   = { url: "/wp-json/wp/v2/flavors.json?_fields=id,title,tubs", paged: true };
-    if (need.has("slots"))     spec.slots     = { url: "/wp-json/wp/v2/slots.json?_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet", paged: true };
-    if (need.has("locations")) spec.locations = { url: "/wp-json/wp/v2/locations.json?_fields=id,title", paged: true };
-    if (need.has("tubs"))      spec.tubs      = { url: "/wp-json/wp/v2/tubs.json?_fields=id,title,flavor,location,state,index,date", paged: true };
+    if (need.has("cabinets"))  spec.cabinets  = { url: "/wp-json/wp/v2/cabinet?_fields=id,title,slots,location", paged: true };
+    if (need.has("flavors"))   spec.flavors   = { url: "/wp-json/wp/v2/flavor?_fields=id,title,tubs", paged: true };
+    if (need.has("slots"))     spec.slots     = { url: "/wp-json/wp/v2/slot?_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet", paged: true };
+    if (need.has("locations")) spec.locations = { url: "/wp-json/wp/v2/location?_fields=id,title", paged: true };
+    if (need.has("tubs"))      spec.tubs      = { url: "/wp-json/wp/v2/tub?_fields=id,title,flavor,location,state,index,date", paged: true };
 
     return spec;
   }
 
   makeModel(type, domain, { location = 0 } = {}) {
-    if (type === "planning") return new CabinetGridModel(domain, { location });
-    if (type === "tubs")     return new FlavorTubsGridModel(domain, { location });
-    if (type === "batches")  return new BatchGridModel(domain, { location });
+    if (type === "planning") return new CabinetGridModel(domain, { location, type });
+    if (type === "tubs")     return new FlavorTubsGridModel(domain, { location, type  });
+    if (type === "batches")  return new BatchGridModel(domain, { location, type  });
     return null;
   }
 
@@ -1158,7 +1212,6 @@ class ScoopAPI {
 
   async _fetch(url, { method="GET", headers={}, body=null, useNonce=false } = {}) {
     const u = (url instanceof URL) ? url : this._absUrl(url);
-
     const res = await fetch(u, {
       method,
       credentials: "same-origin",
@@ -1211,13 +1264,21 @@ class ScoopAPI {
     return all;
   }
 
-  async postJson(url, payload, { useNonce = true } = {}) {
+  async postJson(payload, type = "planning", { useNonce = true } = {}) {
+    const url = this.route(type);
+    if (!url) throw new Error(`postJson: missing route for type="${type}"`);
+
+    const bodyObj = { [type]: payload };   // <-- THE RULE
+
+    console.log("postJson", url, bodyObj);
+
     const r = await this._fetch(url, {
       method: "POST",
       useNonce,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload ?? {}),
+      body: JSON.stringify(bodyObj),
     });
+
     return { ok: r.ok, status: r.status, data: r.data };
   }
 
@@ -1244,11 +1305,6 @@ class ScoopAPI {
     return u;
   }
 
-  // Planning post (Option B)
-  async postPlanningChanges(planningPayload, { url = null } = {}) {
-    const u = url ?? this.route("planning");
-    return this.postJson(u, { planning: planningPayload }, { useNonce: true });
-  }
 }
 
 class DomainCodec {
@@ -1558,7 +1614,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const api = new ScoopAPI({
     nonce: SCOOP.nonce,
     base: "/",
-    routes: { planning: SCOOP.restUrl },
+    routes: SCOOP.routes,
   });
 
   await api.mountAllGrids({ domainCodec: DomainCodec, formCodec: FormCodec });

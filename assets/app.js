@@ -363,7 +363,15 @@ class FindIt{
       LI.append(A);
       this.UL.append(LI);
     }
-}
+  }
+
+  _showAllOptions({ resetIndex = false } = {}) {
+    if (!this.isOpen) this._open();
+    this.filtered = this.options ?? [];
+    if (resetIndex) this.activeIndex = this.filtered.length ? 0 : -1;
+    else if (this.activeIndex < 0) this.activeIndex = this.filtered.length ? 0 : -1;
+  }
+
 
   // --- RENDER ---
   render() {
@@ -473,9 +481,13 @@ class FindIt{
       if (k === "ArrowDown" || k === "ArrowUp") {
         e.preventDefault();
 
-        if (!this.isOpen) this._open();
-        if (!this.filtered?.length) return;
+        if (!this.isOpen || this.filtered !== this.options) {
+          this._showAllOptions({ resetIndex: false });
+        }
+
         const dir = (k === "ArrowDown") ? 1 : -1;
+
+        if (!this.filtered?.length) return;
         const n = this.filtered.length;
 
         if (this.activeIndex < 0) this.activeIndex = 0;
@@ -483,7 +495,6 @@ class FindIt{
 
         this._renderOptions();
 
-        // keep highlighted option visible
         const activeEl = this.UL.querySelector(".active");
         activeEl?.scrollIntoView({ block: "nearest" });
 
@@ -493,13 +504,10 @@ class FindIt{
       if (!this.isOpen) return;
 
       if (k === "Enter" || k === " ") {
-        if (!this.isOpen) return;              // allow normal typing behavior when closed
         e.preventDefault();
         this._commitActive();
         return;
       }
-
-
     });
 
     // click selection
@@ -620,6 +628,17 @@ class Grid {
     this._updateDirtyIndicator(this.dirtySet.size);
   }
   
+  _showHide(e, el=e.target){
+    if(el.closest(".oc")){
+        const TB = e.target.closest("TBODY");
+        TB.classList.toggle('opened');
+        TB.classList.toggle('closed');
+    }
+    
+    if (el.closest(".findIt")) return;
+    this.FORM.dispatchEvent(new Event("grid:close-findits"));
+  }
+
   _el(tag, ...classes){
     const n = document.createElement(tag);
     if (classes.length) n.classList.add(...classes);
@@ -643,7 +662,7 @@ class Grid {
     const TRH    = el("tr");
     
     SUBMIT.setAttribute('type','submit');
-    SUBMIT.append('Submit');
+    SUBMIT.append('Save');
 
     for (const col of columns) {
       const TH = el("th", col.key, col.type);
@@ -664,7 +683,7 @@ class Grid {
         TBODY = el("tbody", "groupBody", (g.collapsible?'collapsible':'static'), (g.collapsed?'closed':'opened') );
         TABLE.append(TBODY);
         const GR = el("tr",    "group");
-        const GD = el("td",    "groupCell");
+        const GD = el("th",    "groupCell");
         const SP = el("b");
         const OC = (g.collapsible)? el('button', "oc"):null;
         GD.colSpan = columns.length;
@@ -675,11 +694,9 @@ class Grid {
         const LB = el("span", "groupLabel");
         LB.textContent = g.label;
         if(g.collapsible) {
-            OC.append('!!!');
             SP.append(OC);
         }
         SP.append(LB);
-        
         
         // badges (from getGroupBadges)
         const BDGs = el("span", "badges");
@@ -689,7 +706,7 @@ class Grid {
           if (b.title) B.title = b.title;
           BDGs.append(B);
         }
-        SP.append(BDGs);
+        GD.append(BDGs);
         GD.append(SP);
         GR.append(GD);
         TBODY.append(GR);
@@ -707,8 +724,8 @@ class Grid {
           B.append(b.text);
           BDGs.append(B);
         }
-
-        const CELL = el('td','cell', columns[x].key, columns[x].type);
+        
+        const CELL = el('td','cell', columns[x].key, columns[x].type, data.alertCase );
         
         if(col.write){
           
@@ -765,26 +782,47 @@ class Grid {
       this._updateDirtyIndicator(this.dirtySet.size);
     });
 
-    this.FORM.addEventListener("mousedown", (e) => {
-        if(e.target.closest(".oc")){
-            const TB = e.target.closest("TBODY");
-            TB.classList.toggle('opened');
-            TB.classList.toggle('closed');
-        }
-        
-        if (e.target.closest(".findIt")) return;
-        this.FORM.dispatchEvent(new Event("grid:close-findits"));
-      },
-      true // capture
-    );
+    this.FORM.addEventListener("keydown", (e) => {
 
-    // Only validate the planning grid posts
-    //if (this.name !== "planning") return;
+      // Spacebar activates focused buttons (including group toggles)
+      if (e.key === " "){
+        const el = document.activeElement;
+        if (!el) return;
+        if (!this.FORM.contains(el)) return;
+
+        const isButton = el.matches("button, [role='button']");
+        if (!isButton) return;
+        
+        // Avoid interfering with typing in inputs/textareas
+        if (el.matches("input, textarea, [contenteditable='true']")) return;
+
+        e.preventDefault();
+        this._showHide(e,el);
+      }
+
+      // Ctrl+s to save the form
+      if(
+        (e.key === "Enter" && (e.ctrlKey || e.metaKey)) ||
+        (e.key.toLowerCase() === "s" && (e.ctrlKey || e.metaKey))
+      ){
+        const el = document.activeElement;
+        if (!el || !this.FORM.contains(el)) return;
+
+        // Don't interfere with IME / composition
+        if (e.isComposing) return;
+
+        e.preventDefault();
+        this.FORM.requestSubmit();
+      }
+
+    }, true);
+
+    this.FORM.addEventListener("mousedown", (e)=>{this._showHide(e)}, true);
 
     this.FORM.addEventListener("submit", async (e) => {
       
       e.preventDefault();
-      if(e.submitter.classList.contains('oc')) return false;
+      if(e.submitter && e.submitter.classList.contains('oc')) return false;
       console.log('FORM POST URL',this.postUrl);
 
       if (!this.api) throw new Error('Grid submit: missing this.api');
@@ -822,6 +860,7 @@ class Grid {
         
           this._commitPosted(changes);
           Toast.addMessage({title:'Update saved', message:r.data.updated});
+          this.FORM.dispatchEvent(new Event("fi_submit", { bubbles: true }));
         }
         // TODO: mark successful cells as clean (e.g., store baseline values)
         
@@ -850,44 +889,79 @@ class Grid {
 class Flavor {
   constructor({ flavorsById, tubs, location }) {
     this.flavorsById = flavorsById;
-    this.location = location;
+    this.location = Number(location);
 
-    const isAvail = t => t.state !== "Opened" && t.state !== "Emptied";
+    const notEmpty = (tubs ?? []).filter(t => 
+                                            t.state !== "Emptied" && 
+                                            ( t.use == false || t.use[0] === 'Front-of-house')
+                                          );
 
-    const allAvail = (tubs ?? []).filter(isAvail);
-    const locAvail = allAvail.filter(t => t.location === location);
-    const rmtAvail = allAvail.filter(t => t.location !== location);
+    const hereNotEmpty = notEmpty.filter(t => t.location  === location);
+    const hereOpened   = hereNotEmpty.filter(t => t.state === "Opened");
+    const hereFresh    = hereNotEmpty.filter(t => t.state !== "Opened");
+    const remoteAll    = notEmpty.filter(t => t.location  !== location);
 
-    this.availAll = Indexer.groupBy(allAvail, t => t.flavor);
-    this.availLoc = Indexer.groupBy(locAvail, t => t.flavor);
-    this.availRmt = Indexer.groupBy(rmtAvail, t => t.flavor);
+    this.notEmptyByFlavor = Indexer.groupBy(hereNotEmpty, t => Number(t.flavor));
+    this.openedByFlavor   = Indexer.groupBy(hereOpened,   t => Number(t.flavor));
+    this.freshByFlavor    = Indexer.groupBy(hereFresh,    t => Number(t.flavor));
+    this.remoteByFlavor   = Indexer.groupBy(remoteAll,    t => Number(t.flavor));
 
     this.optionsAll = [...flavorsById.entries()]
       .map(([id, f]) => ({ key: id, label: f._title }))
       .sort((a, b) => a.label.localeCompare(b.label));
   }
-  
+
   badges(id, specs) {
     if (!id) return [];
     return (specs ?? [])
       .map(s => {
         const n = s.count(id, this);
         if (s.hideZero && !n) return null;
-        return { key: s.key, text: s.format(n), title: s.title ?? "" };
+        return { key: s.key, text: s.format(n,id), title: s.title ?? "" };
       })
       .filter(Boolean);
+  }
+
+  alertCase(type, flavorId) {
+    if (type !== "flavor") return "n";
+    const id = Number(flavorId);
+    if (!id) return "n";
+    
+
+    const nTotal  = this.notEmptyByFlavor.get(id)?.length ?? 0;
+    const nOpened = this.openedByFlavor.get(id)?.length ?? 0;
+    const nFresh  = this.freshByFlavor.get(id)?.length ?? 0;
+
+    if(id === 944){
+      console.log('basil', nTotal); 
+      console.log(nOpened); 
+    }
+
+    if (nTotal  === 0)      return "none-left";
+    if (nOpened === nTotal) return "only-opened";
+    if (nFresh  === 1)      return "last-unopened";
+    return 'ok';
   }
 
 
   getFlavorBadgeSpecs() {
     return [
       { key:"loc", title:"Available here", hideZero:true,
-        count:(flavorId, m) => m.availLoc.get(flavorId)?.length ?? 0,
+        count:(flavorId, flvModel) => flvModel.notEmptyByFlavor.get(Number(flavorId))?.length ?? 0,
         format:n => `${n}` },
 
       { key:"rmt", title:"Available elsewhere", hideZero:true,
-        count:(flavorId, m) => m.availRmt.get(flavorId)?.length ?? 0,
+        count:(flavorId, flvModel) => flvModel.remoteByFlavor.get(Number(flavorId))?.length ?? 0,
         format:n => `${n}` },
+/*
+        TODO: I don't really want a badge for these almost out cases.
+        I was shoehroning it in for no good reason.
+
+        { key:"other", title:"Tub status", hideZero:true,
+        count:() => 0, //(flavorId, flvModel) => flvModel.freshByFlavor.get(Number(flavorId))?.length ?? 0,
+        format:(n,f) => this.alertCase(f) },*/
+
+      
     ];
   }
 }
@@ -915,8 +989,8 @@ class BaseGridModel {
 
     this.flavorMeta = new Flavor({
       flavorsById: this._flavorsById,
-      tubs: domain.tubs,
-      location: this.location
+      location:    this.location,
+      tubs:        domain.tubs
     });
 
     this.fBadgeSpecs = this.flavorMeta.getFlavorBadgeSpecs();
@@ -1032,12 +1106,19 @@ class BaseGridModel {
     // key and label are the properties the listed objects need
     if(type === 'flavor') return this.flavorMeta.optionsAll;
     if(type === 'state') return [
-        {key:'__override__', label:'__override__'},
-        {key:'Hardening',    label:'Hardening'},
-        {key:'Freezing',     label:'Freezing'},
-        {key:'Tempering',    label:'Tempering'},
-        {key:'Opened',       label:'Opened'},
-        {key:'Emptied',      label:'Emptied'}
+        {key:'__override__',   label:'__override__'},
+        {key:'Hardening',      label:'Hardening'},
+        {key:'Freezing',       label:'Freezing'},
+        {key:'Tempering',      label:'Tempering'},
+        {key:'Opened',         label:'Opened'},
+        {key:'Emptied',        label:'Emptied'}
+    ];
+    if(type === 'use') return [
+        {key:'Front-of-house', label:'Front-of-house'},
+        {key:'Pints',          label:'Pints'},
+        {key:'Cakes-pies',     label:'Cakes-pies'},
+        {key:'Novelties',      label:'Novelties'},
+        {key:'Events',         label:'Events'}
     ];
   }
 
@@ -1056,13 +1137,14 @@ class BaseGridModel {
 
       if(col.write || (col.type && Number.isInteger(obj?.[key] ?? null) )){
         row[key] = { 
-          id      : obj[key],
-          rowId   : obj['id'] || i,
-          display : this.titleById(this[('_'+ col.type +'sById')], obj[key], obj[key]),
-          type    : col.type,
-          colKey  : col.key,
-          options : this.getOptions( col.type, col.key, id ),
-          badges  : this.getBadges( col.type, col.key, id ),
+          id        : obj[key],
+          rowId     : obj['id'] || i,
+          display   : this.titleById(this[('_'+ col.type +'sById')], obj[key], obj[key]),
+          type      : col.type,
+          colKey    : col.key,
+          options   : this.getOptions( col.type, col.key, id ),
+          badges    : this.getBadges( col.type, col.key, id ),
+          alertCase : this.flavorMeta.alertCase( col.type, id ),
         };
       }
       else{ 
@@ -1138,7 +1220,9 @@ class FlavorTubsGridModel extends BaseGridModel{
     this.columns = [
       {key:'id',              label:'id'},
       {key:'state',           label:'state',   write:true},
-      {key:'flavor',          label:'flavor',  type:"flavor"},
+      {key:'use',             label:'use',     write:true},
+      {key:'amount',          label:'amount'},//  write:true,  type:'number',  control: "text"    },
+      //{key:'flavor',          label:'flavor',  type:"flavor"},
       {key:'date',            label:'date'},
       {key:'index',           label:'index'},
     ]
@@ -1147,7 +1231,8 @@ class FlavorTubsGridModel extends BaseGridModel{
   }
 
   builRows(){
-    const locationTubIds = this.filterByLocation(this.domain.tubs);
+    const locationTubIds = this.filterByLocation(this.domain.tubs)
+      .filter(t => t.state !== "Emptied");
     const tubsByFlavorId = Indexer.groupBy(locationTubIds, t => t.flavor);
                    
     return this.buildGroupedRows({
@@ -1251,7 +1336,7 @@ class ScoopAPI {
     if (need.has("flavors"))   spec.flavors   = { url: "/wp-json/wp/v2/flavor?_fields=id,title,tubs", paged: true };
     if (need.has("slots"))     spec.slots     = { url: "/wp-json/wp/v2/slot?_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet", paged: true };
     if (need.has("locations")) spec.locations = { url: "/wp-json/wp/v2/location?_fields=id,title", paged: true };
-    if (need.has("tubs"))      spec.tubs      = { url: "/wp-json/wp/v2/tub?_fields=id,title,flavor,location,state,index,date", paged: true };
+    if (need.has("tubs"))      spec.tubs      = { url: "/wp-json/wp/v2/tub?_fields=id,title,use,amount,flavor,location,state,index,date", paged: true };
 
     return spec;
   }
@@ -1293,8 +1378,7 @@ class ScoopAPI {
 
       grid.init(model);
     }
-  }
-  
+  }  
 
   async _fetch(url, { method="GET", headers={}, body=null, useNonce=false } = {}) {
     const u = (url instanceof URL) ? url : this._absUrl(url);

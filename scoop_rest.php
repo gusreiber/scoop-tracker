@@ -62,7 +62,7 @@
       ?>
       <div
         id="<?php echo esc_attr($id); ?>"
-        class="scoop-grid"
+        class="scoop-grid <?php echo esc_attr($atts['type']); ?>"
         data-grid-type="<?php echo esc_attr($atts['type']); ?>"
         data-location="<?php echo esc_attr($atts['location']); ?>"
       ></div>
@@ -104,7 +104,7 @@ function scoop_batches_allowed_fields(): array {
   return [ 'count', 'flavor' ];
 }
 function scoop_tubs_allowed_fields(): array {
-  return [ 'state' ];
+  return [ 'state', 'use']; //'amount' 
 }
 
 

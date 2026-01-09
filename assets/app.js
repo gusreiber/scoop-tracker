@@ -1,6 +1,53 @@
 ////////////////////////////////////////
 // GUI CONTROLS
 /////////////////////////////
+class El{
+  el(tag, {
+      text,
+      html,
+      children,
+      attrs = {},
+      props = {},
+      classes = [],
+      data = {},
+      on = {},
+    } = {}
+  ) {
+    const n = document.createElement(tag);
+
+    // content (prefer text / children over html)
+    if (text != null) n.textContent = String(text);
+    if (html != null) n.innerHTML = String(html);
+
+    // classes
+    if (Array.isArray(classes) && classes.length) n.classList.add(...classes);
+
+    // attributes
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v == null) continue;
+      n.setAttribute(k, String(v));
+    }
+
+    // properties (safer for value/checked/disabled/etc.)
+    for (const [k, v] of Object.entries(props)) {
+      if (v === undefined) continue;
+      n[k] = v;
+    }
+
+    // dataset sugar
+    for (const [k, v] of Object.entries(data)) {
+      if (v == null) continue;
+      n.dataset[k] = String(v);
+    }
+
+    // events
+    for (const [evt, fn] of Object.entries(on)) {
+      if (typeof fn === "function") n.addEventListener(evt, fn);
+    }
+
+    return n;
+  }
+}
 class Toast {
   static _el(tag, text='', ...classes) {
     const n = document.createElement(tag);
@@ -60,8 +107,8 @@ class TextIt {
 
     this.value = this.data.value ?? this.data.display ?? "";
     this.rowId  = this.data.rowId ?? this.data.id ?? 0;
-    this.colKey = this.data.colKey ?? "";
-    this.type   = this.data.type ?? "text"; // "number" or "text"
+    this.colKey = this.data.colKey ?? this.data.key ?? '';
+    this.type   = (this.data.hidden)? "hidden" : this.data.type ?? "text"; // "number" or "text"
 
     this.fieldName = `${this.formKey}[cells][${this.rowId}][${this.colKey}]`;
 
@@ -225,73 +272,197 @@ class FindInGrid {
 }
 
 
-class FindIt{
+class FindIt extends El {
   constructor(
     target,
     data = { id: 0, rowId: 0, colKey: "", display: "", type: "", options: [], badges: [] },
-    formKey = ''
-    //{ formKey = "grid", includeDisplayName = false } = {}
+    formKey = "",
+    { resolve = value => value } = {}
   ) {
-    this.target = target;
-    this.data   = data ?? {};
-    this.formKey = formKey;
-
-    // Authoritative value + options
-    this.value   = this.data.id ?? 0;
-    this.display = this.data.display ?? "";
-    this.options = Array.isArray(this.data.options) ? this.data.options : [];
-
-    // Required for stable field names
-    this.rowId  = this.data.rowId ?? this.data.id ?? 0;
-    this.colKey = this.data.colKey ?? "";
-    this.type   = this.data.type ?? "";
-
-    // Name for the hidden input only (visible input can be nameless)
-    // Example: planning[cells][1181][current_flavor]
-    this.fieldName = `${this.formKey}[cells][${this.rowId}][${this.colKey}]`;
-
-    /* Optional: keep a display field in POST if you ever want it
-    this.displayName = includeDisplayName
-      ? `${this.formKey}[display][${this.rowId}][${this.colKey}]`
-      : null;
-    */
-    // Root elements
-    this.BASE = document.createElement("div");
-    this.UL   = document.createElement("ul");
-
-    this.render();
+    super();
+    this.target  = target;
+    this.formKey = String(formKey ?? "");
+    this.resolve = resolve;
+    this.load(data, formKey);
+    this.build();
+    this.bindEvents();
   }
 
-  // --- HELPERS ---
-  _el(tag, { text, html, attrs = {}, classes = [], on = {} } = {}) {
-    const n = document.createElement(tag);
+  load(data = {}, formKey = this.formKey, resolve = this.resolve) {
+    const d = data; // Assumes object due to default param
+    this.formKey = String(formKey ?? "");
+    this.resolve = resolve ?? (v => v);
+    
+    // Core State
+    this.value = d.id?.toString() ?? "";
+    this.display = d.display?.toString() ?? "";
+    this.options = Array.isArray(d.options) ? d.options : [];
 
-    if (text != null) n.textContent = text;
-    if (html != null) n.innerHTML = html;
-    if (classes?.length) n.classList.add(...classes);
-    for (const [k, v] of Object.entries(attrs)) if (v != null) n.setAttribute(k, v);
-    for (const [evt, fn] of Object.entries(on)) n.addEventListener(evt, fn);
+    // Metadata
+    this.rowId = Number(d.rowId ?? d.id ?? 0);
+    this.colKey = String(d.colKey ?? "");
+    this.type = String(d.type ?? "");
 
-    return n;
+    // Use nullish coalescing to allow manual fieldName overrides
+    this.fieldName = d.fieldName ?? `${this.formKey}[cells][${this.rowId}][${this.colKey}]`;
+
+    // Reset UI State
+    this.filtered = [];
+    this.activeIndex = -1;
+    this.isOpen = false;
+  }
+  
+  build(){
+    this.BASE = this.el("div",   { classes:["findIt", `type-${this.type}`,`col-${this.colKey}`] } );
+    this.UL   = this.el("ul",    { classes: ["options"], 
+            attrs: { role: "listbox" } } );
+    this.HDN  = this.el("input", {
+            attrs: { type: "hidden", name: this.fieldName }, 
+            props: { value: String(this.value ?? "") } } );
+    this.INP  = this.el("input", {
+            attrs: { type: "text", autocomplete: "off", "data-field": this.fieldName },
+            props: { value: String(this.display ?? "") } } );
+
+    // Compose
+    this.BASE.replaceChildren();
+    this.BASE.append(this.HDN, this.INP);
+
+    // Insert (idempotent)
+    if (!this.target.contains(this.BASE)) this.target.append(this.BASE);            
+  }
+  
+  bindEvents() {
+    if (this._eventsBound) return;
+    this._eventsBound = true;
+
+    // Listen on the closest form (scoped) or fall back to document (global)
+    const root = this.BASE.closest("form") ?? document;
+
+    root.addEventListener("grid:close-findits", () => this.close());
+
+    // DO NOT open on focus. (You want open on typing / arrows only.)
+
+    // Open + filter on user input
+    this.INP.addEventListener("input", () => {
+      if (this.suppressInput) return;
+      if (!this.isOpen) this.open();
+
+      this._applyFilter(this.INP.value);
+    });
+
+    // Keyboard navigation + commit
+    this.INP.addEventListener("keydown", (e) => {
+      const k = e.key;
+
+      if (k === "Escape") {
+        e.preventDefault();
+        this.clear();
+        this.close();
+        return;
+      }
+
+      if (k === "ArrowDown" || k === "ArrowUp") {
+        e.preventDefault();
+
+        if (!this.isOpen) this.open();
+        if (!this.filtered?.length) return;
+
+        // Special case:
+        // open + filtered is exactly one + already active -> ArrowDown expands to all options
+        // while keeping the same option active (by key)
+        if (
+          k === "ArrowDown" &&
+          this.isOpen &&
+          this.filtered.length === 1 &&
+          this.activeIndex === 0 &&
+          (this.options?.length ?? 0) > 1
+        ) {
+          const keepKey = this.filtered[0]?.key;
+
+          this.filtered = this.options ?? [];
+
+          const idx = this.filtered.findIndex(op => String(op.key) === String(keepKey));
+          this.activeIndex = idx >= 0 ? idx : 0;
+
+          this._renderOptions();
+          this._setActiveIndex(this.activeIndex, { updateInput: true });
+          return;
+        }
+
+        const dir = (k === "ArrowDown") ? 1 : -1;
+        const n = this.filtered.length;
+
+        const next = (this.activeIndex < 0)
+          ? 0
+          : (this.activeIndex + dir + n) % n;
+
+        this._setActiveIndex(next, { updateInput: true });
+        return;
+      }
+
+      // Let Tab behave normally (do not trap focus)
+      if (k === "Tab") return;
+
+      // Commit selection
+      if (k === "Enter") {
+        if (!this.isOpen) return;
+        e.preventDefault();
+        this._commitActive();
+        return;
+      }
+    });
+
+    // Prevent mousedown from stealing focus away from the input
+    this.UL.addEventListener("mousedown", (e) => e.preventDefault());
+
+    // Click selection (li-based, matches your new renderer)
+    this.UL.addEventListener("click", (e) => {
+      const li = e.target.closest('li[data-idx]');
+      if (!li) return;
+      e.preventDefault();
+      const op = this.filtered?.[Number(li.dataset.idx)];
+      if (op) this.select(op);
+    });
   }
 
-  _open() {
+  update(value = (this.value ?? ''), { refresh = true, resolve = this.resolve } = {}) {
+      // 1. Update internal state
+      this.value = value == null ? "" : String(value);
+      this.resolve = resolve;
+      this.display = this.resolve(this.value);
+
+      if (refresh) {
+          if (this.HDN) this.HDN.value = this.value;
+          if (this.INP) this.INP.value = this.display;
+      }
+      this.close();
+  }
+  
+  // --- RERENDER new model ---
+  refresh(data = null) {
+    if(data) this.load(data);
+
+    this.BASE.classList.remove(...this.BASE.classList); 
+    this.BASE.classList.add('findIt', `type-${this.type}`, `col-${this.colKey}`);
+
+    this.HDN.name       = this.fieldName;
+    this.HDN.value      = this.value;
+    this.INP.value      = this.display;
+    this.INP.dataset.field = this.fieldName;
+  }
+  
+  // semi public actions...
+  open() {
     if (this.isOpen) return;
-
-    // Nothing to show — never attach UL
     if (!this.options || this.options.length === 0) return;
 
     this.isOpen = true;
-
     if (!this.BASE.contains(this.UL)) this.BASE.append(this.UL);
 
-    this.filtered = this._matchOptions(this.INP.value);
-    this.activeIndex = this.filtered.length ? 0 : -1;
-    this._renderOptions();
+    this._applyFilter(this.INP.value);
   }
-
-
-  _close() {
+  
+  close() {
     if (!this.isOpen) return;
     this.isOpen = false;
     this.activeIndex = -1;
@@ -299,36 +470,40 @@ class FindIt{
     if (this.BASE.contains(this.UL)) this.UL.remove();
   }
 
-  _commitActive() {
-    const op = this.filtered?.[this.activeIndex];
-    if (!op) return false;
-    this._select(op);      // must accept option object
-    return true;
-  }
-
-  _clear() {
+  clear() {
     this.HDN.value = "";
     this.INP.value = "";
-    this.value = 0;
+    this.value = "";
     this.display = "";
-    this.filtered = this._matchOptions("");
-    this.activeIndex = this.filtered.length ? 0 : -1;
-    if (this.isOpen) this._renderOptions();
+    this._applyFilter("", { noPaint: !this.isOpen });
   }
 
-  _select(op) {
-    // authoritative value
-    this.value = op?.key ?? 0;
-    this.display = op?.label ?? "";
+  select(op) {
+    const key = op?.key;
 
-    this.HDN.value = String(this.value || "");
+    this.value   = key == null ? "" : String(key);
+    this.display = String(op?.label ?? "");
+
+    this.HDN.value = this.value;
     this.INP.value = this.display;
 
     this.onSelect?.(op);
-    
     this.HDN.dispatchEvent(new Event("fi_change", { bubbles: true }));
+    this.close();
+  }
 
-    this._close();
+  // --- HELPERS ---
+  _applyFilter(query, {noPaint = false} = {}) {
+    this.filtered = this._matchOptions(query);
+    this.activeIndex = this.filtered.length ? 0 : -1;
+    if (this.isOpen && !noPaint) this._renderOptions();
+  }
+
+  _commitActive() {
+    const op = this.filtered?.[this.activeIndex];
+    if (!op) return false;
+    this.select(op);      // must accept option object
+    return true;
   }
 
   _matchOptions(query) {
@@ -340,205 +515,60 @@ class FindIt{
   }
 
   _renderOptions() {
-    const el = this._el.bind(this);
-
     this.UL.replaceChildren();
 
-    const list = this.filtered ?? [];
-    for (let i = 0; i < list.length; i++) {
-      const op = list[i];
-
-      const A = el("a", {
-        text: op?.label ?? "",
-        attrs: {
-          href: "#",
-          "data-key": String(op?.key ?? ""),
-          tabindex: "-1",
-        }
-      });
-
-      const LI = el("li",{
-        classes: (i === this.activeIndex) ? ["active"] : []
-      });
-      LI.append(A);
-      this.UL.append(LI);
-    }
-  }
-
-  _showAllOptions({ resetIndex = false } = {}) {
-    if (!this.isOpen) this._open();
-    this.filtered = this.options ?? [];
-    if (resetIndex) this.activeIndex = this.filtered.length ? 0 : -1;
-    else if (this.activeIndex < 0) this.activeIndex = this.filtered.length ? 0 : -1;
-  }
-
-
-  // --- RENDER ---
-  render() {
-    const el = this._el.bind(this);
-
-    // Root
-    this.BASE.className = ""; // in case render() is ever re-called
-    this.BASE.classList.add("findIt");
-    if (this.type) this.BASE.classList.add(`type-${this.type}`);
-    if (this.colKey) this.BASE.classList.add(`col-${this.colKey}`);
-
-    // Hidden authoritative value
-    const HDN = el("input", {
-      attrs: { type: "hidden", name: this.fieldName, value: String(this.value ?? "") }
-    });
-
-    // Visible input is UI-only (no name by default)
-    const inpAttrs = {
-      type: "text",
-      value: this.display ?? "",
-      autocomplete: "off",
-      "data-field": this.fieldName
-    };
-    if (this.displayName) inpAttrs.name = this.displayName;
-
-    const INP = el("input", { attrs: inpAttrs });
-
-    // Clear button should not submit the parent form
-    const BTN = el("button", {
-      classes: ["clear"],
-      text: "X",
-      attrs: { type: "button" }
-    });
-    this.BTN = BTN;
-
-    // Options list (leave in place for now; you can lazy-fill later)
-    this.UL.className = "";
-    this.UL.classList.add("options");
-    this.UL.replaceChildren();
-
-    /*
-    for (const op of this.options) {
-      const A = el("a", {
+    for (let i = 0; i < (this.filtered?.length ?? 0); i++) {
+      const op = this.filtered[i];
+      const li = this.el("li", {
         text: op.label ?? "",
+        classes: i === this.activeIndex ? ["active"] : [],
+        data: { idx: i, key: op.key }, // keep key if you want it for debugging/click
         attrs: {
-          href: "#",
-          "data-key": op.key,
-          tabindex: -1
-        }
+          role: "option",
+          "aria-selected": i === this.activeIndex ? "true" : "false",
+        },
       });
 
-      const LI = el("li");
-      LI.append(A);
-      this.UL.append(LI);
+      this.UL.append(li);
     }
-    */
-    // Compose
-    this.BASE.replaceChildren();
-    this.BASE.append(HDN, INP, BTN);
-
-    this.target.append(this.BASE);
-
-    // Cache references for other methods (bindEvents/_select/etc.)
-    this.HDN = HDN;
-    this.INP = INP;
-
-    this.bindEvents();
   }
 
-  // --- bindEvents refactored to use the helpers ---
-  bindEvents() {
-    this.filtered = [];
-    this.activeIndex = -1;
-    this.isOpen = false;
+  _setActiveIndex(i, { updateInput = true } = {}) {
+    if (!this.filtered?.length) return;
 
-    
-    // Listen on the closest form (scoped) or fall back to document (global)
-    const root = this.BASE.closest("form") ?? document;
+    const prev = this.UL.querySelector(".active");
+    if (prev) prev.classList.remove("active");
 
-    root.addEventListener("grid:close-findits", () => {
-      this._close();
-    });
+    this.activeIndex = i;
 
+    const li = this.UL.querySelector(`li[data-idx="${i}"]`);
+    if (li) li.classList.add("active");
+    if (prev) prev.setAttribute("aria-selected", "false");
+    if (li)  li.setAttribute("aria-selected", "true");
 
-    // open on focus
-    this.INP.addEventListener("focus", () => this._open());
-
-    // filter on input
-    this.INP.addEventListener("input", () => {
-      if (!this.isOpen) this._open();                 // typing means filter mode
-      this.filtered = this._matchOptions(this.INP.value);
-      this.activeIndex = this.filtered.length ? 0 : -1;
-      this._renderOptions();
-    });
-
-    // keyboard navigation + commit
-    this.INP.addEventListener("keydown", (e) => {
-      const k = e.key;
-
-      if (k === "Escape") {
-        e.preventDefault();
-        this._clear();   // your requested behavior: ESC clears
-        this._close();
-        return;
+    if (updateInput) {
+      const op = this.filtered[i];
+      if (op) {
+        this.suppressInput = true;
+        this.INP.value = op.label ?? "";
+        this.suppressInput = false;
       }
+    }
 
-      if (k === "ArrowDown" || k === "ArrowUp") {
-        e.preventDefault();
-
-        if (!this.isOpen || this.filtered !== this.options) {
-          this._showAllOptions({ resetIndex: false });
-        }
-
-        const dir = (k === "ArrowDown") ? 1 : -1;
-
-        if (!this.filtered?.length) return;
-        const n = this.filtered.length;
-
-        if (this.activeIndex < 0) this.activeIndex = 0;
-        else this.activeIndex = (this.activeIndex + dir + n) % n;
-
-        this._renderOptions();
-
-        const activeEl = this.UL.querySelector(".active");
-        activeEl?.scrollIntoView({ block: "nearest" });
-
-        return;
-      }
-
-      if (!this.isOpen) return;
-
-      if (k === "Enter" || k === " ") {
-        e.preventDefault();
-        this._commitActive();
-        return;
-      }
-    });
-
-    // click selection
-    this.UL.addEventListener("click", (e) => {
-      const a = e.target.closest("a[data-key]");
-      if (!a) return;
-      e.preventDefault();
-      const op = this.filtered?.find(x => String(x.key) === String(a.dataset.key));
-      if (op) this._select(op);
-    });
-
-    // clear button
-    this.BTN.addEventListener("click", (e) => {
-      e.preventDefault();
-      this._clear();
-      this.INP.focus();
-    });
+    li?.scrollIntoView({ block: "nearest" });
   }
 
-
-  
 } 
 
 // GRID ---------------------------
-class Grid {
+class Grid extends El{
   constructor(target, name="", {
                 api = {baseUrl:'/'},
                 formCodec = FormCodec,
                 domainCodec = DomainCodec,
               } = {}) 
   {
+    super();
     this.target = target;
     this.api = api;
     this.formCodec = formCodec;
@@ -564,12 +594,33 @@ class Grid {
     this.state = state;
     this.render();
     this.bindEvents();
-    console.log(this.state);
+  }
+
+  _buildAllPayload() {
+    const changes = { cells: {} };
+
+    const inputs = this.FORM.querySelectorAll(
+      `input[type="hidden"][name^="${this.name}[cells]"]`
+    );
+
+    for (const input of inputs) {
+      const parsed = this.formCodec.parseBracketName(input.name);
+      if (!parsed || parsed.length < 4) continue;
+      if (parsed[0] !== this.name || parsed[1] !== "cells") continue;
+
+      const rowId = Number(parsed[2]);      // allow 0
+      const colKey = parsed[3];
+
+      const value = this.formCodec.normalizeScalar(input.value ?? "");
+      if (!changes.cells[rowId]) changes.cells[rowId] = {};
+      changes.cells[rowId][colKey] = value;
+    }
+
+    return changes;
   }
 
   _buildDirtyPayload() {
     const changes = { cells: {} };
-
     for (const k of this.dirtySet) {
       const [rowIdStr, colKey] = k.split("|");
       const rowId = Number(rowIdStr);
@@ -580,7 +631,7 @@ class Grid {
       if (!input) continue;
 
       const value = this.formCodec.normalizeScalar(input.value ?? "");
-      if (!changes.cells[rowId]) changes.cells[rowId] = {};
+      if (!changes.cells[rowId] ) changes.cells[rowId] = {};
       changes.cells[rowId][colKey] = value;
     }
 
@@ -606,17 +657,6 @@ class Grid {
     this.DIRTY_IND.textContent = `${n} change${n === 1 ? "" : "s"}`;
   }
 
-  _commitPosted(changes) {
-    for (const [rowId, row] of Object.entries(changes.cells ?? {})) {
-      for (const [colKey, val] of Object.entries(row ?? {})) {
-        const k = `${rowId}|${colKey}`;
-        this.baseline.set(k, val);
-        this.dirtySet.delete(k);
-      }
-    }
-    this._updateDirtyIndicator(this.dirtySet.size);
-  }
-  
   _commitPosted(changes) {
     for (const [rowId, row] of Object.entries(changes.cells ?? {})) {
       for (const [colKey, val] of Object.entries(row ?? {})) {
@@ -667,6 +707,7 @@ class Grid {
     for (const col of columns) {
       const TH = el("th", col.key, col.type);
       TH.textContent = col.label ?? col.key;
+      if(col.hidden)TH.classList.add('hidden');
       TRH.append(TH);
     }
 
@@ -724,12 +765,15 @@ class Grid {
           B.append(b.text);
           BDGs.append(B);
         }
-        
+        if(data.type === 'flavor') console.log('grid render data',data);
         const CELL = el('td','cell', columns[x].key, columns[x].type, data.alertCase );
+        if(columns[x].hidden) CELL.classList.add('hidden');
         
         if(col.write){
-          
-          if(col.control === "text"){
+          if(col.hidden)
+            new TextIt(CELL, col, this.name);
+          else if(col.control === "text" ){
+            if(col.hidden) console.log('data',data,'col',col);
             new TextIt(CELL, data, this.name);
           }
           else new FindIt(CELL, data, this.name);
@@ -774,7 +818,7 @@ class Grid {
     
       const v = this.formCodec.normalizeScalar(h.value ?? "");
       const before = this.baseline.get(k);
-    
+      console.log(this.state);
       if (before === v) this.dirtySet.delete(k);
       else this.dirtySet.add(k);
     
@@ -832,10 +876,11 @@ class Grid {
       if (submitBtn) submitBtn.disabled = true;
 
       try {
-        const changes = this._buildDirtyPayload();
+        const isAll = this.state.submitMode === 'all';
+        const changes = ( isAll)? this._buildAllPayload() :this._buildDirtyPayload();
         console.log("try changes", changes);
         // OPTIONAL: no-op submit guard
-        if (!Object.keys(changes.cells).length) {
+        if (!Object.keys(changes.cells).length && !isAll) {
           console.log("No changes to submit.", changes);
           
           console.log("No Object to submit.", Object);
@@ -923,6 +968,7 @@ class Flavor {
   }
 
   alertCase(type, flavorId) {
+    console.log('alertCase',type, flavorId);
     if (type !== "flavor") return "n";
     const id = Number(flavorId);
     if (!id) return "n";
@@ -931,11 +977,6 @@ class Flavor {
     const nTotal  = this.notEmptyByFlavor.get(id)?.length ?? 0;
     const nOpened = this.openedByFlavor.get(id)?.length ?? 0;
     const nFresh  = this.freshByFlavor.get(id)?.length ?? 0;
-
-    if(id === 944){
-      console.log('basil', nTotal); 
-      console.log(nOpened); 
-    }
 
     if (nTotal  === 0)      return "none-left";
     if (nOpened === nTotal) return "only-opened";
@@ -1093,6 +1134,11 @@ class BaseGridModel {
 
   }
   
+  getAlertCase(type, id, obj, col){
+    //TODO: THis is a hack pile!!!
+    if(!this.flavorMeta || !id) return 'ok';
+    return this.flavorMeta.alertCase('flavor',id);
+  }
 
   getBadges( type, fieldName, id){
     // TODO: Badges could differ by type or field name, but at the moment
@@ -1113,13 +1159,37 @@ class BaseGridModel {
         {key:'Opened',         label:'Opened'},
         {key:'Emptied',        label:'Emptied'}
     ];
-    if(type === 'use') return [
-        {key:'Front-of-house', label:'Front-of-house'},
-        {key:'Pints',          label:'Pints'},
-        {key:'Cakes-pies',     label:'Cakes-pies'},
-        {key:'Novelties',      label:'Novelties'},
-        {key:'Events',         label:'Events'}
-    ];
+    if (type === 'location') {
+      return [...this.domain.locations]
+        .map(u => ({
+          key: u.id,
+          label: u._title || u.title?.rendered || ''
+        }));
+    }
+    if (type === 'use') {
+      return [...this.domain.uses]
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+        .map(u => ({
+          key: u.id,
+          label: u._title || u.title?.rendered || ''
+        }));
+    }
+  }
+
+  getTitleMap(name) {
+    this._titleMaps ??= new Map();           // Map<string, Map<number, obj>>
+    if (this._titleMaps.has(name)) return this._titleMaps.get(name);
+
+    const list = this.domain?.[name];
+    const map  = Indexer.byId(Array.isArray(list) ? list : []);
+    this._titleMaps.set(name, map);
+    return map;
+  }
+
+  titleFrom(col, id) {
+    if (!col?.titleMap || !id) return "";
+    const map = this.getTitleMap(col.titleMap);  // col.titleMap = "uses" | "flavors" | ...
+    return map.get(Number(id))?._title ?? "";
   }
 
   fillRowFromColumns(
@@ -1129,31 +1199,41 @@ class BaseGridModel {
   ) 
   {
     for (const col of this.columns) {
-        
       const key = col?.key;
       if (!key) continue;
-      const id = Number(obj?.[key] ?? 0);
-      if(typeof col.type === 'undefined') col.type = key; 
 
-      if(col.write || (col.type && Number.isInteger(obj?.[key] ?? null) )){
-        row[key] = { 
-          id        : obj[key],
-          rowId     : obj['id'] || i,
-          display   : this.titleById(this[('_'+ col.type +'sById')], obj[key], obj[key]),
-          type      : col.type,
-          colKey    : col.key,
-          options   : this.getOptions( col.type, col.key, id ),
-          badges    : this.getBadges( col.type, col.key, id ),
-          alertCase : this.flavorMeta.alertCase( col.type, id ),
+      const raw = obj?.[key];
+      const id = Number(raw ?? 0);
+
+      // Relationship-ish value (numeric) + titleMap => FindIt cell
+      if (Number.isFinite(id) && id > 0 && col.titleMap) {
+        row[key] = {
+          id,
+          rowId: obj?.id || i,
+          display: this.titleFrom(col, id),
+          type:    col.type,
+          colKey:  col.key,
+          options: this.getOptions(col.type, col.key, id),
+          badges:  this.getBadges(col.type, col.key, id),
+          // PATCH: computed CSS token (keep non-empty to satisfy your current el() helper)
+          alertCase: (typeof this.getAlertCase === 'function')
+            ? (this.getAlertCase(col.type, id, obj, col) || 'ok')
+            : 'ok',
+          value:   col.value,
+          hidden:  col.hidden,
         };
+        continue;
       }
-      else{ 
-          row[key] = { rowId: obj['id'] || i, display: obj?.[key] ?? null, type: col.type, colKey: col.key}
-      }
+
+      // Fallback: scalar / string cell
+      row[key] = {
+        rowId: obj?.id || i,
+        display: raw ?? "",
+        type: col.type,
+        colKey: col.key,
+      };
     }
   }
-
-
 }
 
 class BatchGridModel extends BaseGridModel{
@@ -1163,13 +1243,14 @@ class BatchGridModel extends BaseGridModel{
     super(domain, { location });
       this._flavorsById  = Indexer.byId(domain.flavors) || {};
       this.modelType = { type };
+      this.submitMode = 'all';
       this.build();
   }
 
   buildCols() {
     this.columns = [
       { key: "count", label: "count", write: true, control: "text", type: "number" },
-      { key: "flavor", label: "flavor", write: true, type: "flavor" }
+      { key: "flavor", label: "flavor", write: true, type: "flavor", titleMap: "flavors" }
     ];
     return this.columns;
   }
@@ -1220,10 +1301,10 @@ class FlavorTubsGridModel extends BaseGridModel{
     this.columns = [
       {key:'id',              label:'id'},
       {key:'state',           label:'state',   write:true},
-      {key:'use',             label:'use',     write:true},
-      {key:'amount',          label:'amount'},//  write:true,  type:'number',  control: "text"    },
-      //{key:'flavor',          label:'flavor',  type:"flavor"},
-      {key:'date',            label:'date'},
+      {key:'use',             label:'use',     write:true,    titleMap:'uses'},
+      {key:'amount',          label:'amount'},
+      //{key:'flavor',          label:'flavor',  type:"flavor", titleMap:'flavors'},
+      //{key:'date',            label:'date'},
       {key:'index',           label:'index'},
     ]
 
@@ -1265,9 +1346,9 @@ class CabinetGridModel extends BaseGridModel{
   buildCols(){
     this.columns = [
       {key:'id',              label:'id'},
-      {key:'current_flavor',  label:'Current Flavor',   type:"flavor",   write:true},
-      {key:'immediate_flavor',label:'Immediate Flavor', type:"flavor",   write:true},
-      {key:'next_flavor',     label:'Planned Flavor',   type:"flavor",   write:true}
+      {key:'current_flavor',  label:'Current Flavor',   type:"flavor", titleMap: "flavors", write:true},
+      {key:'immediate_flavor',label:'Immediate Flavor', type:"flavor", titleMap: "flavors", write:true},
+      {key:'next_flavor',     label:'Planned Flavor',   type:"flavor", titleMap: "flavors", write:true}
     ]
 
     return this.columns;
@@ -1284,6 +1365,81 @@ class CabinetGridModel extends BaseGridModel{
       rowType       : 'slot'
     });
   }
+
+}
+
+class CloseoutGridModel extends BaseGridModel{
+constructor(domain, { location = 935, type = 'closeouts' } = {} ) 
+  {
+    super(domain, { location });
+      this._flavorsById  = Indexer.byId(domain.flavors) || {};
+      this.modelType = { type };
+      this.submitMode = 'all';
+      this.build();
+  }
+  buildCols() {
+    this.columns = [
+      { key: "tubs_emptied", label: "count",    write: true, control: "text", type: "number" },
+      { key: "flavor",       label: "flavor",   write: true, type: "flavor" },
+      { key: "use",          label: "use",      write: true, type: "use" },
+      { key: "location",     label: "location", write: true, type:"location"},
+     // { key: "date",         label: "date",     write: true, hidden: true,  type:"date", value:new Date()}
+    ];
+    return this.columns;
+  }
+  
+  builRows() {
+    // single row
+    const rowId = 0;
+    
+    this.rows = [
+      {
+        id: rowId,
+
+        // count cell (TextIt expects value/display + rowId/colKey/type)
+        tubs_emptied: { 
+          rowId,
+          colKey: "tubs_emptied",
+          type: "number",
+          value: ""          // default blank
+        },
+
+        // flavor cell (FindIt expects id/display/options/etc.)
+        flavor: {
+          id: 0,
+          rowId,
+          colKey: "flavor",
+          type: "flavor",
+          display: "",
+          options: this.getOptions("flavor", "flavor", 0),
+          badges: []
+        },
+
+        use: {
+          id: 0,
+          rowId,
+          colKey: "use",
+          type: "use",
+          display: "",
+          options: this.getOptions("use", "use", 0),
+          badges: []
+        },
+
+        location:{
+          id: 935,
+          rowId,
+          colKey: "location",
+          type: "location",
+          display: "Woodinville",
+          options: this.getOptions("location", "location", 935),
+          value: 935,
+          badges: []
+        }
+      }
+    ];
+
+    return this.rows;
+  } 
 
 }
 
@@ -1324,11 +1480,13 @@ class ScoopAPI {
       need.add("cabinets"); need.add("slots"); need.add("flavors"); need.add("locations"); need.add("tubs");
     }
     if (types.has("tubs")) {
-      need.add("tubs"); need.add("flavors"); need.add("locations");
+      need.add("tubs"); need.add("flavors"); need.add("locations"); need.add("uses");
     }
     if (types.has("batches")) {
-      // adjust based on BatchGridModel's real needs
-      need.add("flavors"); need.add("locations");
+      need.add("flavors"); need.add("locations"); 
+    }
+    if(types.has("closeouts")){
+      need.add("flavors"); need.add("locations"); need.add("uses");
     }
 
     const spec = {};
@@ -1337,14 +1495,16 @@ class ScoopAPI {
     if (need.has("slots"))     spec.slots     = { url: "/wp-json/wp/v2/slot?_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet", paged: true };
     if (need.has("locations")) spec.locations = { url: "/wp-json/wp/v2/location?_fields=id,title", paged: true };
     if (need.has("tubs"))      spec.tubs      = { url: "/wp-json/wp/v2/tub?_fields=id,title,use,amount,flavor,location,state,index,date", paged: true };
+    if (need.has("uses"))      spec.uses      = { url: "/wp-json/wp/v2/use?_fields=id,title,order" };
 
     return spec;
   }
 
   makeModel(type, domain, { location = 0 } = {}) {
-    if (type === "planning") return new CabinetGridModel(domain, { location, type });
-    if (type === "tubs")     return new FlavorTubsGridModel(domain, { location, type  });
-    if (type === "batches")  return new BatchGridModel(domain, { location, type  });
+    if (type === "planning")  return new CabinetGridModel(domain, { location, type });
+    if (type === "tubs")      return new FlavorTubsGridModel(domain, { location, type  });
+    if (type === "batches")   return new BatchGridModel(domain, { location, type  });
+    if (type === "closeouts") return new CloseoutGridModel(domain, { location, type  });
     return null;
   }
 
@@ -1364,10 +1524,12 @@ class ScoopAPI {
     for (const el of hosts) {
       const type = el.dataset.gridType;
       const location = Number(el.dataset.location || 0);
-
+      
       const model = this.makeModel(type, D, { location });
-      if (!model) {
+      
+      if (!model || model == null) {
         el.textContent = `Unknown grid type: ${type}`;
+        console.log('no model for:',el);
         continue;
       }
 
@@ -1492,23 +1654,26 @@ class DomainCodec {
    * Decode a raw bundle (WP REST / Pods-shaped) into your canonical domain.
    * This is the one place “WP shape quirks” should live.
    */
+
+  static decoders = {
+    tubs     : DomainCodec._decodeTub,
+    slots    : DomainCodec._decodeSlot,
+    cabinets : DomainCodec._decodeCabinet,
+    flavors  : DomainCodec._decodeFlavor,
+    locations: DomainCodec._decodeLocation,
+    uses     : DomainCodec._decodeUse 
+  };
+
+
   static decode(bundle, opts = {}) {
     if (!bundle || typeof bundle !== "object") return bundle;
 
     const o = { ...DomainCodec.defaults, ...opts };
     const D = { ...bundle }; // shallow clone of bundle
 
-    if (Array.isArray(D.tubs))     D.tubs     = DomainCodec.decodeTubs(D.tubs, o);
-    if (Array.isArray(D.slots))    D.slots    = DomainCodec.decodeSlots(D.slots, o);
-    if (Array.isArray(D.cabinets)) D.cabinets = DomainCodec.decodeCabinets(D.cabinets, o);
-    if (Array.isArray(D.flavors))  D.flavors  = DomainCodec.decodeFlavors(D.flavors, o);
-
-    if (Array.isArray(D.locations)) D.locations = DomainCodec.decodeLocations(D.locations, o);
-
-    // Singular location endpoint (if you keep it)
-    if (D.location && typeof D.location === "object" && !Array.isArray(D.location)) {
-      D.location = DomainCodec.decodeLocations([D.location], o)[0] ?? D.location;
-    }
+    for (const [key, itemDecoder] of Object.entries(DomainCodec.decoders)) 
+      if (Array.isArray(D[key]))
+        D[key] = DomainCodec.decodeList(D[key], itemDecoder, o);    
 
     return D;
   }
@@ -1517,29 +1682,28 @@ class DomainCodec {
   // Collection decoders
   // -------------------------
 
+  static decodeList(list, itemFn, o = DomainCodec.defaults) {
+    if (!Array.isArray(list)) return [];
+    return list.map(item => itemFn.call(DomainCodec, item, o));
+  }
+
   static decodeTubs(tubs = [], o = DomainCodec.defaults) {
-    if (!Array.isArray(tubs)) return [];
-    return tubs.map(t => DomainCodec._decodeTub(t, o));
+    return DomainCodec.decodeList(tubs, DomainCodec._decodeTub, o);
   }
-
   static decodeSlots(slots = [], o = DomainCodec.defaults) {
-    if (!Array.isArray(slots)) return [];
-    return slots.map(s => DomainCodec._decodeSlot(s, o));
+    return DomainCodec.decodeList(slots, DomainCodec._decodeSlot, o);
   }
-
   static decodeCabinets(cabinets = [], o = DomainCodec.defaults) {
-    if (!Array.isArray(cabinets)) return [];
-    return cabinets.map(c => DomainCodec._decodeCabinet(c, o));
+    return DomainCodec.decodeList(cabinets, DomainCodec._decodeCabinet, o);
   }
-
   static decodeFlavors(flavors = [], o = DomainCodec.defaults) {
-    if (!Array.isArray(flavors)) return [];
-    return flavors.map(f => DomainCodec._decodeFlavor(f, o));
+    return DomainCodec.decodeList(flavors, DomainCodec._decodeFlavor, o);
   }
-
   static decodeLocations(locations = [], o = DomainCodec.defaults) {
-    if (!Array.isArray(locations)) return [];
-    return locations.map(loc => DomainCodec._decodeLocation(loc, o));
+    return DomainCodec.decodeList(locations, DomainCodec._decodeLocation, o);
+  }
+  static decodeLocations(uses = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(uses, DomainCodec._decodeUse, o);
   }
 
   // -------------------------
@@ -1642,6 +1806,16 @@ class DomainCodec {
     if (!loc || typeof loc !== "object") return loc;
 
     const x = DomainCodec._withIdAndTitle(loc, o);
+
+    // If you have relationship fields on location later, coerce them here.
+
+    return x;
+  }
+
+  static _decodeUse(use, o) {
+    if (!use || typeof use !== "object") return use;
+
+    const x = DomainCodec._withIdAndTitle(use, o);
 
     // If you have relationship fields on location later, coerce them here.
 

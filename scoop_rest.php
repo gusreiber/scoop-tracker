@@ -39,6 +39,7 @@
           'planning' => rest_url('scoop/v1/planning'),
           'batches'  => rest_url('scoop/v1/batches'),
           'tubs'     => rest_url('scoop/v1/tubs'),
+          'closeouts'=> rest_url('scoop/v1/closeouts'),
         ],
       ]);
     }
@@ -106,7 +107,9 @@ function scoop_batches_allowed_fields(): array {
 function scoop_tubs_allowed_fields(): array {
   return [ 'state', 'use']; //'amount' 
 }
-
+function scoop_closeouts_allowed_fields(): array {
+  return [ 'tubs_emptied', 'flavor', 'use', 'location', 'order']; //'amount' 
+}
 
 /**
  * REST: /wp-json/scoop/v1/planning
@@ -125,7 +128,6 @@ add_action('rest_api_init', function () {
       'pod_name'     => 'slot',
       'allowed_fields_cb' => 'scoop_planning_allowed_slot_fields',
     ],
-
     'batches' => [
       'path'         => '/batches',
       'methods'      => ['GET','POST'],
@@ -144,6 +146,15 @@ add_action('rest_api_init', function () {
       'pod_name'     => 'tub',
       'allowed_fields_cb' => 'scoop_tubs_allowed_fields',
     ],
+    'closeouts' => [
+      'path'         => '/closeouts',
+      'methods'      => ['GET','POST'],
+      'mode'         => 'create',
+      'envelope_key' => 'closeouts',
+      'post_type'    => 'closeout',
+      'pod_name'     => 'closeout',
+      'allowed_fields_cb' => 'scoop_closeouts_allowed_fields',
+    ]
   ];
 
   foreach ($routes as $key => $cfg) {
@@ -404,6 +415,9 @@ function scoop_create_pod_item( string $pod_name, array $allowed_fields, array $
     'data' => $data,
   ];
   $id = pods_api()->save_pod_item($params);
+
+  error_log('SAVE POD ITEM: pod=' . $pod_name);
+  error_log('SAVE POD ITEM DATA: ' . print_r($params['data'], true));
 
   if (is_wp_error($id)) return $id->get_error_message();
   $id = (int)$id;

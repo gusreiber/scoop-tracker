@@ -19,6 +19,38 @@ body *{
     position: fixed;
     bottom:1rem;
     right:1rem;
+    min-width: 14rem;
+    z-index: 99;
+
+    
+    & .TOAST{
+        background-color: white;
+        padding: 1rem 1.5rem 1.5rem;
+        font-size: .9rem;
+        margin-top:.5rem;
+        opacity: .9;
+        box-shadow: .125rem .25rem .5rem rgba(0,0,0,.25);
+        
+        & .date{ font-size: .67rem;}
+        
+        & h3{
+            font-size: 1rem;
+            margin:.25rem 0 .25rem !important;
+            font-weight: bold;
+        }
+
+        & .close{
+            position: absolute;
+            top: .25rem;
+            right:.25rem;
+            width:1.2rem;
+            font-weight: bold;
+            background-color: transparent;
+            border:none;
+
+
+        }
+    }
 }
 .findIt{
     position: relative;
@@ -85,7 +117,16 @@ body *{
         overflow: auto;
     } 
 }
-.scoop-grid.batches{
+html body .scoop-grid.Closeout,
+html body .scoop-grid.Batch{
+    width: auto !important;
+    min-width: none;
+    max-width: none;
+    box-shadow: none;
+    background-color: none;
+    &::before{
+        display: none;
+    }
     & form{
         display:inline-flex;
         align-items: flex-end;
@@ -109,6 +150,29 @@ body *{
         }
     }
 }
+
+body .scoop-grid.Closeout{
+    position: fixed;
+    left: 0;
+    top: auto;
+    bottom:0;
+    z-index: 9;
+}
+
+form table thead th,
+form table tbody td *,
+form table tbody td{
+    opacity: 1;
+}
+.TS_loading form table thead th,
+.TS_loading form table tbody > *,
+.TS_loading form table tbody td *{
+
+    opacity: .5;
+}
+
+.zTS_loading form table tbody> *> * > * {display: none;} 
+
 table.zGRID{
     width:auto;
     border-spacing: 0;
@@ -192,23 +256,38 @@ table.zGRID{
             z-index: 9;
         }
         &.none-left{
-            background-color:rgba(200,0,0,.67);
+            background-color:rgba(100,0,50,.67);
             border-color: darkred;
-            & *:not(a){
+            & *:not(li){
                 color:#600;
             }
+        }
+        &.none-left{
+            background-color:black;
+            border-color:black;
+            & *:not(li){
+                color:white;
+            }
+        }
+
+        &.all-committed{
+            background-color:rgba(200,0,0,.67);
+            border-color: darkred;
+            & *:not(li){
+                color:#600;
+            }            
         }
         &.only-opened{
             background-color: rgba(255,150,0,.75);
             border-color: #630;
-            & *:not(a){
+            & *:not(li){
                 color:#630;
             }
         }
         &.last-unopened{
             background-color: rgba(255,255,0,.25);
             border-color: #660;
-            & *:not(a){
+            & *:not(li){
                 color:#440;
             }
         }
@@ -443,7 +522,8 @@ html body {
     min-width: 16rem;
     display: inline-block;
     &:focus-within {z-index: 9;}
-    &.batches{
+    &.Closeout,
+    &.Batch{
         display: block; box-shadow:none; position: fixed; top: 1rem; width:12rem; z-index: 9; margin-top: -2px;
         & table,
         & form {
@@ -467,7 +547,7 @@ html body {
     }    
     & > * {min-width: 100%;}
 
-    &:not(.batches):before{
+    &:not(.Batch):before{
         content: '';
         display: inline-block;
         background-color: rgba(0,0,0,.1);

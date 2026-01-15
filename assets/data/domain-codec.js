@@ -1,0 +1,223 @@
+export default class DomainCodec {
+  // Keep “policy” explicit so you can audit/remove later.
+  static defaults = {
+    // If true, decode relationship fields (arrays/objects) into scalar IDs.
+    coerceRelationIds: true,
+    // If true, compute _title strings from WP-ish title shapes.
+    computeTitles: true,
+    // If true, normalize embedded tubs inside flavors.
+    normalizeEmbeddedTubs: true,
+  };
+
+  /**
+   * Decode a raw bundle (WP REST / Pods-shaped) into your canonical domain.
+   * This is the one place “WP shape quirks” should live.
+   */
+
+  static decoders = {
+    tubs     : DomainCodec._decodeTub,
+    slots    : DomainCodec._decodeSlot,
+    cabinets : DomainCodec._decodeCabinet,
+    flavors  : DomainCodec._decodeFlavor,
+    locations: DomainCodec._decodeLocation,
+    uses     : DomainCodec._decodeUse 
+  };
+
+
+  static decode(bundle, opts = {}) {
+    if (!bundle || typeof bundle !== "object") return bundle;
+
+    const o = { ...DomainCodec.defaults, ...opts };
+    const D = { ...bundle }; // shallow clone of bundle
+
+    for (const [key, itemDecoder] of Object.entries(DomainCodec.decoders)) 
+      if (Array.isArray(D[key]))
+        D[key] = DomainCodec.decodeList(D[key], itemDecoder, o);    
+
+    return D;
+  }
+
+  // -------------------------
+  // Collection decoders
+  // -------------------------
+
+  static decodeList(list, itemFn, o = DomainCodec.defaults) {
+    if (!Array.isArray(list)) return [];
+    return list.map(item => itemFn.call(DomainCodec, item, o));
+  }
+
+  static decodeTubs(tubs = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(tubs, DomainCodec._decodeTub, o);
+  }
+  static decodeSlots(slots = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(slots, DomainCodec._decodeSlot, o);
+  }
+  static decodeCabinets(cabinets = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(cabinets, DomainCodec._decodeCabinet, o);
+  }
+  static decodeFlavors(flavors = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(flavors, DomainCodec._decodeFlavor, o);
+  }
+  static decodeLocations(locations = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(locations, DomainCodec._decodeLocation, o);
+  }
+  static decodeUses(uses = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(uses, DomainCodec._decodeUse, o);
+  }
+
+  // -------------------------
+  // Shared per-entity helpers
+  // -------------------------
+
+  /**
+   * Ensure:
+   * - canonical numeric id in x.id
+   * - optional string title in x._title (without overwriting server-provided _title)
+   *
+   * Returns a CLONED object so callers can safely mutate.
+   */
+  static _withIdAndTitle(obj, o) {
+    if (!obj || typeof obj !== "object") return obj;
+
+    const x = { ...obj };
+
+    if (x.id == null || x.id === 0) {
+      x.id = DomainCodec._idOf(x.id ?? x.ID);
+    }
+
+    if (o.computeTitles) {
+      if (x._title == null || x._title === "") {
+        x._title = DomainCodec._titleOf(x);
+      }
+    }
+
+    return x;
+  }
+
+  // -------------------------
+  // Item decoders
+  // -------------------------
+
+  static _decodeTub(t, o) {
+    if (!t || typeof t !== "object") return t;
+
+    const x = DomainCodec._withIdAndTitle(t, o);
+
+    // scalar overwrites
+    x.state = DomainCodec._titleOf(x.state);
+
+    if (o.coerceRelationIds) {
+      x.flavor   = DomainCodec._idOf(x.flavor);
+      x.location = DomainCodec._idOf(x.location);
+      x.batch    = DomainCodec._idOf(x.batch);
+      x.cabinet  = DomainCodec._idOf(x.cabinet);
+    }
+
+    return x;
+  }
+
+  static _decodeSlot(s, o) {
+    if (!s || typeof s !== "object") return s;
+
+    const x = DomainCodec._withIdAndTitle(s, o);
+
+    if (o.coerceRelationIds) {
+      x.cabinet          = DomainCodec._idOf(x.cabinet);
+      x.location         = DomainCodec._idOf(x.location);
+      x.current_flavor   = DomainCodec._idOf(x.current_flavor);
+      x.immediate_flavor = DomainCodec._idOf(x.immediate_flavor);
+      x.next_flavor      = DomainCodec._idOf(x.next_flavor);
+    }
+
+    return x;
+  }
+
+  static _decodeCabinet(c, o) {
+    if (!c || typeof c !== "object") return c;
+
+    const x = DomainCodec._withIdAndTitle(c, o);
+
+    if (o.coerceRelationIds) {
+      x.location = DomainCodec._idOf(x.location);
+    }
+
+    if (x.max_tubs != null) {
+      const n = Number(x.max_tubs);
+      x.max_tubs = Number.isFinite(n) ? n : 0;
+    }
+
+    return x;
+  }
+
+  static _decodeFlavor(f, o) {
+    if (!f || typeof f !== "object") return f;
+
+    const x = DomainCodec._withIdAndTitle(f, o);
+
+    if (o.normalizeEmbeddedTubs && Array.isArray(x.tubs)) {
+      x.tubs = DomainCodec.decodeTubs(x.tubs, o);
+    }
+
+    return x;
+  }
+
+  static _decodeLocation(loc, o) {
+    if (!loc || typeof loc !== "object") return loc;
+
+    const x = DomainCodec._withIdAndTitle(loc, o);
+
+    // If you have relationship fields on location later, coerce them here.
+
+    return x;
+  }
+
+  static _decodeUse(use, o) {
+    if (!use || typeof use !== "object") return use;
+
+    const x = DomainCodec._withIdAndTitle(use, o);
+
+    // If you have relationship fields on location later, coerce them here.
+
+    return x;
+  }
+
+  // -------------------------
+  // Shared coercion helpers
+  // -------------------------
+
+  static _first(v) {
+    if (v == null) return null;
+    return Array.isArray(v) ? (v.length ? v[0] : null) : v;
+  }
+
+  static _idOf(v) {
+    const x = DomainCodec._first(v);
+    if (x == null || x === false) return 0;
+
+    if (typeof x === "object") {
+      return DomainCodec._idOf(x.id ?? x.ID ?? x.value);
+    }
+
+    const n = Number(x);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  static _titleOf(v) {
+    const x = DomainCodec._first(v);
+    if (x == null || x === false) return "";
+    if (typeof x === "string") return x;
+
+    if (typeof x === "object") {
+      const t = x.title;
+      if (t && typeof t === "string") return t;
+      if (t && typeof t === "object" && typeof t.rendered === "string") return t.rendered;
+
+      if (typeof x.post_title === "string") return x.post_title;
+      if (typeof x.name === "string") return x.name;
+      if (typeof x.slug === "string") return x.slug;
+      if (typeof x.rendered === "string") return x.rendered;
+    }
+
+    return "";
+  }
+}

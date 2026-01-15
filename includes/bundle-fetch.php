@@ -1,0 +1,71 @@
+<?php
+
+function scoop_cast($v, string $type) {
+  if ($v === null) return $type === 'string' ? '' : 0;
+
+  switch ($type) {
+    case 'int':   return (int)$v;
+    case 'float': return (float)$v;
+    case 'string': default: return (string)$v;
+  }
+}
+
+function scoop_fetch_entities(string $key, array $ctx = []): array {
+  $specs = scoop_entity_specs();
+  if (empty($specs[$key])) return [];
+
+  $spec = $specs[$key];
+
+  if (!function_exists('pods')) return [];
+
+  $post_type = $spec['post_type'];
+  $pod_name  = $spec['pod'];
+
+  // Keep this big to avoid paging; we’ll filter in PHP for now.
+  // If you later confirm fields are stored in postmeta, you can add meta_query here.
+  $ids = get_posts([
+    'post_type'      => $post_type,
+    'post_status'    => 'any',
+    'posts_per_page' => 2000,
+    'fields'         => 'ids',
+    'no_found_rows'  => true,
+  ]);
+
+  $out = [];
+  foreach ($ids as $id) {
+    $pod = pods($pod_name, $id);
+    if (!$pod || !$pod->exists()) continue;
+
+    $row = [
+      'id' => (int)$id,
+    ];
+
+    if (!empty($spec['title'])) {
+      $row['_title'] = get_the_title($id);
+    }
+
+    foreach (($spec['fields'] ?? []) as $field => $type) {
+      $row[$field] = scoop_cast($pod->field($field), $type);
+    }
+
+    // Optional contextual filter
+    if (!empty($spec['filter']) && is_callable($spec['filter'])) {
+      if (!$spec['filter']($row, $ctx)) continue;
+    }
+
+    // Optional location filter (common)
+    if (!empty($ctx['location']) && isset($row['location'])) {
+      if ((int)$row['location'] !== (int)$ctx['location']) continue;
+    }
+
+    foreach (($spec['post_fields'] ?? []) as $field => $type) {
+      if ($field === 'author_name') {
+        $row['author_name'] = scoop_cast(get_the_author_meta('display_name', $p->post_author), 'string');
+      }
+    }
+
+    $out[] = $row;
+  }
+
+  return $out;
+}

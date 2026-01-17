@@ -1,5 +1,4 @@
 import Grid               from "../ui/grid.js";
-import DomainCodec        from "./domain-codec.js";
 import FormCodec          from "./form-codec.js";
 import CabinetGridModel   from "../models/cabinet-grid-model.js";
 import BatchGridModel     from "../models/batch-grid-model.js";
@@ -17,10 +16,13 @@ export default class ScoopAPI {
     }
 
     this.controller = new AbortController();
+
+    // simple per-page cache (in-memory)
+    this._bundleCache = new Map(); // key:string -> bundleJson
   }
 
   abort() { this.controller.abort(); }
-  
+
   findGridHosts(root = document) {
     return [...root.querySelectorAll(".scoop-grid[data-grid-type]")];
   }
@@ -31,71 +33,20 @@ export default class ScoopAPI {
     try { return new URL(pathOrUrl); }
     catch { return new URL(pathOrUrl, window.location.origin); }
   }
-  
-  bundleSpecForGridTypes(types) {
-    const need = new Set();
 
-    if (types.has("Cabinet")) {
-      need.add("cabinets"); need.add("slots"); need.add("flavors"); need.add("locations"); need.add("tubs");
-    }
-    if (types.has("FlavorTub")) {
-      need.add("tubs"); need.add("flavors"); need.add("locations"); need.add("uses");
-    }
-    if (types.has("Batch")) {
-      need.add("flavors"); need.add("locations"); 
-    }
-    if(types.has("Closeout")){
-      need.add("flavors"); need.add("locations"); need.add("uses");
-    }
-
-    const spec = {};
-    if (need.has("cabinets"))  spec.cabinets  = { url: "/wp-json/wp/v2/cabinet?_fields=id,title,slots,location", paged: true };
-    if (need.has("flavors"))   spec.flavors   = { url: "/wp-json/wp/v2/flavor?_fields=id,title,tubs", paged: true };
-    if (need.has("slots"))     spec.slots     = { url: "/wp-json/wp/v2/slot?_fields=id,title,current_flavor,immediate_flavor,next_flavor,location,cabinet", paged: true };
-    if (need.has("locations")) spec.locations = { url: "/wp-json/wp/v2/location?_fields=id,title", paged: true };
-    if (need.has("tubs"))      spec.tubs      = { url: "/wp-json/wp/v2/tub?_fields=id,title,use,amount,flavor,location,state,index,date", paged: true };
-    if (need.has("uses"))      spec.uses      = { url: "/wp-json/wp/v2/use?_fields=id,title,order" };
-
-    return spec;
-  }
-
-  getModelsBom(){
+  getModelsBom() {
     return {
-      "Cabinet"   : CabinetGridModel, 
+      "Cabinet"   : CabinetGridModel,
       "FlavorTub" : FlavorTubGridModel,
       "Batch"     : BatchGridModel,
       "Closeout"  : CloseoutGridModel
-    }
+    };
   }
 
-  getModelCtrl(name, location = 0){
-    return {
-      type:name,
-      location,
-      load:async()=>{
-        const raw = await this.singleFormJson(name);
-        const D = DomainCodec.decode(raw);
-        const ctrl = this.getModelsBom()[name];
-        return new ctrl(name, D, {location});
-      }
-    }
-
-  }
-
-  async mountAllGrids({ root=document, domainCodec=DomainCodec, formCodec=FormCodec } = {}) {
-    const hosts = this.findGridHosts(root);
-    if (!hosts.length) return;
-
-    const grids = hosts.map(dom => {
-      const name = dom.dataset.gridType;
-      const location = Number(dom.dataset.location || 0);
-      const modelCtrl = this.getModelCtrl(name, location, { domainCodec });
-
-      return new Grid(dom, name, { api:this, formCodec, domainCodec, modelCtrl });
-    });
-
-    const models = await Promise.all(grids.map(g => g.modelCtrl.load()));
-    models.forEach((m, i) => grids[i].init(m));
+  route(name) {
+    const u = this.routes?.[name];
+    if (!u) throw new Error(`ScoopAPI.route("${name}") missing`);
+    return u;
   }
 
   async _fetch(url, { method="GET", headers={}, body=null, useNonce=false } = {}) {
@@ -119,46 +70,16 @@ export default class ScoopAPI {
 
     return { ok: res.ok, status: res.status, data, res };
   }
-  
+
   async getJson(url = this.baseUrl) {
     const r = await this._fetch(url, { method: "GET" });
     return r.data;
   }
 
-  async getAllPages(url = this.baseUrl, { perPage = 100, maxPages = 1000 } = {}) {
-    const all = [];
-    let page = 1;
-    let totalPages = 1;
-
-    while (page <= totalPages) {
-      if (page > maxPages) throw new Error(`Too many pages for ${url}`);
-
-      const u = new URL(this._absUrl(url), window.location.origin);
-      if (!u.searchParams.get("per_page")) u.searchParams.set("per_page", String(perPage));
-      u.searchParams.set("page", String(page));
-
-      const r = await this._fetch(u.toString(), { method: "GET" });
-
-      if (!Array.isArray(r.data)) return r.data;
-
-      all.push(...r.data);
-
-      const tp = Number(r.res.headers.get("X-WP-TotalPages") || "1");
-      totalPages = Number.isFinite(tp) && tp > 0 ? tp : 1;
-
-      page++;
-    }
-
-    return all;
-  }
-
+  // --- WRITES (unchanged) ---
   async postJson(payload, type = "", { useNonce = true } = {}) {
     const url = this.route(type);
-    if (!url) throw new Error(`postJson: missing route for type="${type}"`);
-
-    const bodyObj = { [type]: payload };   // <-- THE RULE
-
-    console.log("postJson", url, bodyObj);
+    const bodyObj = { [type]: payload }; // <-- THE RULE
 
     const r = await this._fetch(url, {
       method: "POST",
@@ -170,44 +91,101 @@ export default class ScoopAPI {
     return { ok: r.ok, status: r.status, data: r.data };
   }
 
-  async getBundle(){
-    const bURL = await this.routes.Batch;
-    console.log(this.routes);
-    const cfg = (typeof bURL === "string") ? { url: bURL } : (bURL ?? {});
-    //const data = await this.getJson(cfg);
-    console.log('??? this routes data',cfg);
-  };
+  // --- BUNDLE LOADING ---
 
-  async loadBundle(endpoints) {
-    this.getBundle();
-    const entries = Object.entries(endpoints ?? {});
-    console.log(endpoints);
-    const pairs = await Promise.all(entries.map(async ([key, spec]) => {
-      console.log(spec);
-      const cfg = (typeof spec === "string") ? { url: spec } : (spec ?? {});
-      if (!cfg.url) throw new Error(`Missing url for endpoint "${key}"`);
-      console.log(cfg.url);
-      const data = cfg.paged
-        ? await this.getAllPages(cfg.url, { perPage: cfg.perPage ?? 100, maxPages: cfg.maxPages ?? 1000 })
-        : await this.getJson(cfg.url);
-
-      return [key, data];
-    }));
-
-    return Object.fromEntries(pairs);
+  _typesKey(types) {
+    const arr = [...(types ?? [])].map(String).filter(Boolean);
+    arr.sort();
+    return arr.join(",");
   }
 
-  async singleFormJson(formName){
-    const types = new Set( [formName] );
-    console.log('single',formName);
-    return await this.loadBundle(this.bundleSpecForGridTypes(types));
+  _bundleUrlForTypes(types) {
+    const base = new URL(this.route("Bundle").toString());
+    const key = this._typesKey(types);
+    base.searchParams.set("types", key);
+    return base;
   }
 
-  // Generic: post Cabinet to a provided endpoint
-  route(name) {
-    const u = this.routes?.[name];
-    if (!u) throw new Error(`ScoopAPI.route("${name}") missing`);
-    return u;
+  // Returns full bundle JSON: { ok, types, needs, data }
+  async getBundleForTypes(types, { cache = true } = {}) {
+    const key = this._typesKey(types);
+    if (!key) throw new Error("getBundleForTypes: no types");
+
+    if (cache && this._bundleCache.has(key)) return this._bundleCache.get(key);
+
+    const url = this._bundleUrlForTypes(types);
+    const bundle = await this.getJson(url);
+
+    console.log('???bundle?.data', bundle?.data);
+    // Minimal guards so models can safely assume arrays exist.
+    const data = bundle?.data ?? {};
+    bundle.data = {
+      cabinets : Array.isArray(data.cabinets)  ? data.cabinets  : [],
+      slots    : Array.isArray(data.slots)     ? data.slots     : [],
+      tubs     : Array.isArray(data.tubs)      ? data.tubs      : [],
+      flavors  : Array.isArray(data.flavors)   ? data.flavors   : [],
+      locations: Array.isArray(data.locations) ? data.locations : [],
+      uses     : Array.isArray(data.uses)      ? data.uses      : [],
+      // if these exist later, keep them without forcing structure:
+      batches  : Array.isArray(data.batches)   ? data.batches   : (data.batches ?? []),
+      closeouts: Array.isArray(data.closeouts) ? data.closeouts : (data.closeouts ?? []),
+      ...data
+    };
+
+    if (cache) this._bundleCache.set(key, bundle);
+    return bundle;
   }
 
+  // The models expect "domain" = the data object with arrays:
+  // { cabinets, slots, tubs, flavors, locations, uses, ... }
+  async getDomainForPage(types) {
+    const bundle = await this.getBundleForTypes(types);
+    return bundle?.data ?? {};
+  }
+
+  // Controller factory that DOES NOT fetch; it uses a provided domain.
+  getModelCtrl(name, location = 0, domain = null) {
+    const Ctor = this.getModelsBom()[name];
+    if (!Ctor) throw new Error(`Missing model for grid type "${name}"`);
+
+    return {
+      type: name,
+      location,
+      load: async () => {
+        if (!domain) throw new Error(`ModelCtrl.load("${name}") missing domain`);
+        return new Ctor(name, domain, { location });
+      }
+    };
+  }
+
+  // --- MOUNTING ---
+
+  async mountAllGrids({ root=document, formCodec=FormCodec } = {}) {
+    const hosts = this.findGridHosts(root);
+    if (!hosts.length) return;
+
+    // Collect unique grid types on the page.
+    const types = new Set();
+    for (const dom of hosts) {
+      const t = dom.dataset.gridType;
+      if (t) types.add(t);
+    }
+
+    // One request for all grids on the page.
+    const domain = await this.getDomainForPage(types);
+
+    // Build grids with modelCtrls that reuse the same domain.
+    const grids = hosts.map(dom => {
+      const name = dom.dataset.gridType;
+      const location = Number(dom.dataset.location || 0);
+      const modelCtrl = this.getModelCtrl(name, location, domain);
+
+      // Keep Grid constructor args stable; pass null/undefined for codecs if Grid accepts them.
+      return new Grid(dom, name, { api: this, formCodec, modelCtrl });
+    });
+
+    const models = await Promise.all(grids.map(g => g.modelCtrl.load()));
+    console.log('models',models);
+    models.forEach((m, i) => grids[i].init(m));
+  }
 }

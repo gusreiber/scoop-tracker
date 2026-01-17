@@ -1,49 +1,73 @@
 <?php
-
+// here?????
 add_action('rest_api_init', function () {
   register_rest_route('scoop/v1', '/bundle', [
     'methods'  => ['GET'],
     'callback' => 'scoop_bundle_get',
     'permission_callback' => '__return_true',
-/*
-    'permission_callback' => function () {
-      return is_user_logged_in() && current_user_can('edit_posts');
-    },*/
   ]);
 });
 
-function scoop_bundle_needs_for_grid(string $type): array {
-  // mirrors your client bundleSpecForGridTypes
-  $map = [
-    'Cabinet'   => ['cabinets','slots','flavors','locations','tubs'],
-    'FlavorTub' => ['tubs','flavors','locations','uses'],
-    'Batch'     => ['flavors','locations'],
-    'Closeout'  => ['flavors','locations','uses'],
+function scoop_bundle_specs(): array {
+  return [
+    'Cabinet'   => ['needs' => ['cabinets','slots','flavors','locations','tubs']],
+    'FlavorTub' => ['needs' => ['tubs','flavors','locations','uses']],
+    'Batch'     => ['needs' => ['flavors','locations']],
+    'Closeout'  => ['needs' => ['flavors','locations','uses']],
   ];
-  return $map[$type] ?? [];
+}
+
+function scoop_parse_types_param($raw): array {
+  if (is_array($raw)) return array_values(array_filter(array_map('trim', $raw)));
+  $raw = (string)$raw;
+  if ($raw === '') return [];
+  return array_values(array_filter(array_map('trim', explode(',', $raw))));
 }
 
 function scoop_bundle_get(\WP_REST_Request $req) {
-  $type     = (string)($req->get_param('types') ?? '');
-  $location = (int)($req->get_param('location') ?? 0);
+  $types = scoop_parse_types_param($req->get_param('types'));
 
-  if ($type === '') {
-    return new \WP_REST_Response(['ok'=>false,'error'=>'Missing types'], 400);
+  $specs = scoop_bundle_specs();
+
+  if (!$types) {
+    return new \WP_REST_Response([
+      'ok' => false,
+      'error' => 'Missing types param. Example: ?types=Cabinet,FlavorTub',
+      'known' => array_keys($specs),
+    ], 400);
   }
 
-  $need = scoop_bundle_needs_for_grid($type);
-  if (!$need) {
-    return new \WP_REST_Response(['ok'=>false,'error'=>"Unknown types={$type}"], 400);
+  $unknown = [];
+  $needs = [];
+
+  foreach ($types as $t) {
+    if (!isset($specs[$t])) { $unknown[] = $t; continue; }
+    foreach (($specs[$t]['needs'] ?? []) as $needType) {
+      $needs[$needType] = true;
+    }
   }
 
-  $ctx = ['location' => $location];
-
-  $bundle = [];
-  foreach ($need as $key) {
-    $bundle[$key] = scoop_fetch_entities($key, $ctx);
+  if ($unknown) {
+    return new \WP_REST_Response([
+      'ok' => false,
+      'error' => 'Unknown grid type(s)',
+      'unknown' => $unknown,
+      'known' => array_keys($specs),
+      'types' => $types,
+    ], 400);
   }
 
-  return new \WP_REST_Response(['ok'=>true,'bundle'=>$bundle], 200);
+  $needTypes = array_keys($needs);
+
+  $data = [];
+  foreach ($needTypes as $needType) {
+    $data[$needType] = scoop_bundle_fetch_type($needType, $req);
+  }
+
+  return new \WP_REST_Response([
+    'ok' => true,
+    'types' => $types,
+    'needs' => $needTypes,
+    'data' => $data,
+  ], 200);
 }
-
-

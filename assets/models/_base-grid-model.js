@@ -15,6 +15,7 @@ export default class BaseGridModel {
     const { location = 935 } = options || {};
     this.name = name;
     this.domain = domain;
+
     this.location = location;
     // --- grid contract ---
     this.columns = [];
@@ -56,7 +57,7 @@ export default class BaseGridModel {
   getIdsForLocation(list, { locationKey = "location", idKey = "id" } = {}) {
     const ids = new Set();
     for (const item of (Array.isArray(list) ? list : [])) {
-      if (item?.[locationKey] === this.location) ids.add(item?.[idKey]);
+      ids.add(item?.[idKey]);
     }
     return ids;
   }

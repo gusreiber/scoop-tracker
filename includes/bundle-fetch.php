@@ -11,12 +11,15 @@ function scoop_cast($v, string $type) {
 }
 
 function scoop_fetch_entities(string $key, array $ctx = []): array {
+  error_log("top????: SCOOP fetch_entities key={$key} ctx=" . json_encode($ctx));
+
   $specs = scoop_entity_specs();
   if (empty($specs[$key])) return [];
 
   $spec = $specs[$key];
-
+error_log(' pods?');
   if (!function_exists('pods')) return [];
+  error_log('got pods');
 
   $post_type = $spec['post_type'];
   $pod_name  = $spec['pod'];
@@ -67,5 +70,29 @@ function scoop_fetch_entities(string $key, array $ctx = []): array {
     $out[] = $row;
   }
 
+  error_log("bottom: SCOOP fetch_entities key={$key} count=" . count($out));
+
   return $out;
+}
+
+function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array {
+  // Convert request context you care about (location, etc.)
+  $ctx = [];
+
+  $loc = $req->get_param('location');
+  if ($loc !== null && $loc !== '') $ctx['location'] = (int) $loc;
+
+  $map = [
+    'tubs'      => 'tubs',
+    'flavors'   => 'flavors',
+    'slots'     => 'slots',
+    'uses'      => 'uses',
+    'locations' => 'locations',
+    'cabinets'  => 'cabinets',
+    'batches'   => 'batchs',
+    'closeouts' => 'closeouts',
+  ];
+
+  $key = $map[$needType] ?? $needType;
+  return scoop_fetch_entities($key, $ctx);
 }

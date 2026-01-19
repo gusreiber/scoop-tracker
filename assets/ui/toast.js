@@ -20,7 +20,7 @@ export default class Toast {
     return TOASTER;
   }
 
-  static addMessage({title='title', message='This event happened', state='OK'}){
+  static addMessage({title='title', message='This event happened', state='OK', id=null}={}){
     const date    = Date.now();
     const TOASTER = Toast._ensureHost();
     const TOAST   = Toast._el('div', '', 'TOAST', state, 't'+date);
@@ -38,10 +38,23 @@ export default class Toast {
     TOAST.append(H3);
     TOAST.append(P);
     TOAST.append(CLOSE);
-
+    TOAST.update = Toast.update;
+    if(id) TOAST.id = id;
     TOASTER.append(TOAST);
     TOASTER.classList.add('show');
+
+    return TOAST;
+    
   }
+  
+  static update(node, {title='title', message='This event happened', state='OK'} = {}){
+    if(!(node instanceof Element)) return;
+    const date    = Date.now();
+    node.querySelector('h3')   .textContent = title;
+    node.querySelector('p')    .textContent = message;
+    node.querySelector('.date').textContent = new Date(date).toLocaleString();
+  }
+
   static hide(){
     Toast._ensureHost().classList.remove('show');
   }

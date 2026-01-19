@@ -17,6 +17,7 @@ export default class BaseGridModel {
     this.domain = domain;
 
     this.location = location;
+    console.log('base domain???', this.domain);
     // --- grid contract ---
     this.columns = [];
     this.rows = [];
@@ -230,5 +231,7 @@ export default class BaseGridModel {
       };
     }
   }
+
+  //invalidate() { this._cache = null; this._inflight = null; }
 }
 

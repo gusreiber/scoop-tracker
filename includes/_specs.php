@@ -12,6 +12,7 @@ function scoop_entity_specs(): array {
             'amount' => 'float',
             'flavor' => 'int',
             'date'   => 'string',
+            'location'=> 'int',
             'index'  => 'int',
         ],
         'post_fields' => [

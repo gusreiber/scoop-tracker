@@ -1,14 +1,27 @@
 <?php
 
 function scoop_cast($v, string $type) {
-  if ($v === null) return $type === 'string' ? '' : 0;
-
   switch ($type) {
-    case 'int':   return (int)$v;
-    case 'float': return (float)$v;
-    case 'string': default: return (string)$v;
+    case 'int':
+      // critical: collapse relationship values to an ID
+      return scoop_rel_id($v);
+
+    case 'float':
+      if (is_array($v) || is_object($v)) return 0.0;
+      return (float)$v;
+
+    case 'string':
+      if (is_array($v) || is_object($v)) return '';
+      return (string)$v;
+
+    case 'bool':
+      return (bool)$v;
+
+    default:
+      return $v;
   }
 }
+
 
 function scoop_fetch_entities(string $key, array $ctx = []): array {
   error_log("top????: SCOOP fetch_entities key={$key} ctx=" . json_encode($ctx));
@@ -61,9 +74,13 @@ error_log(' pods?');
       if ((int)$row['location'] !== (int)$ctx['location']) continue;
     }
 
+    $p = get_post($id);
     foreach (($spec['post_fields'] ?? []) as $field => $type) {
       if ($field === 'author_name') {
-        $row['author_name'] = scoop_cast(get_the_author_meta('display_name', $p->post_author), 'string');
+        $row['author_name'] = scoop_cast(
+          get_the_author_meta('display_name', $p?->post_author ?? 0),
+          'string'
+        );
       }
     }
 

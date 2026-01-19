@@ -18,14 +18,39 @@ function scoop_require($rel) {
   require_once $path;
 }
 
+/**
+ * Config/constants first
+ */
 scoop_require('includes/_config.php');
-scoop_require('includes/enqueue.php');
-scoop_require('includes/shortcode.php');
-scoop_require('includes/pods.php');
 scoop_require('includes/_specs.php');
+/**
+ * Helpers next (no hooks should depend on files after this point)
+ */
+scoop_require('includes/_pods_helpers.php'); // you create this (scoop_rel_id, nodate, pods_api_save, guard helpers)
+
+/**
+ * Pods hooks / domain behavior
+ */
+scoop_require('includes/hooks/cabinet-slot.php');
+scoop_require('includes/hooks/batch-tub.php');
+scoop_require('includes/hooks/tub-state.php');
+scoop_require('includes/hooks/closeout.php');
+
+/**
+ * REST + bundle
+ */
 scoop_require('includes/bundle-fetch.php');
 scoop_require('includes/bundle.php');
 
 scoop_require('includes/rest.php');
 
+
+/**
+ * UI glue (shortcode/admin/enqueue) last
+ */
+scoop_require('includes/enqueue.php');
+scoop_require('includes/shortcode.php');
 scoop_require('includes/admin-page.php');
+
+
+add_filter('pods_api_pre_save_pod_item', 'scoop_enforce_tub_rules', 10, 3);

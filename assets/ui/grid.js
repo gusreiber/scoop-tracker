@@ -33,6 +33,7 @@ export default class Grid extends El{
     this.state     = null;
     this.filter    = null;
     this._isInit   = false;
+    this._docListenerBound = false;
     
     this.loadConfig(config);
     this._build();
@@ -432,13 +433,16 @@ export default class Grid extends El{
           return;
         }
         if (r.ok && r.data?.ok) {
-          console.log("COMMIT! result:", r);
+          document.body.classList.add('TS_GRID-UPDATING');
+          this.modelCtrl?.invalidate?.(); 
+          await this.modelCtrl?.load?.({ force: true });
         
           this._commitPosted(changes);
-          Toast.addMessage({title:'Update saved', message:r.data.updated});
-          document.dispatchEvent(new CustomEvent("ts:grid:refreshed",  {
-            detail: { source: this.name }
-          }));
+          
+          const TOAST = Toast.addMessage({title:'Update sent', message:r.data.updated});
+          
+          await this.api.refreshPageDomain({ force: true, toast:TOAST, info:{name:this.name, response:r} });
+          
         }
         // TODO: mark successful cells as clean (e.g., store baseline values)
         
@@ -450,24 +454,19 @@ export default class Grid extends El{
       }
     });
 
-    document.addEventListener("ts:grid:refreshed", async (e) => {
-      e.preventDefault?.();
-      this.target.classList.add('TS_loading');
-
-      // optional: close transient UI first
-      document.dispatchEvent(new Event("ts:grid:close-overlays"));
-
-      const newData = await this.modelCtrl?.load();
-      this.init( newData );
-
-      document.dispatchEvent(new Event("ts:grid:new-data"));
+    document.addEventListener("ts:domain:updated", async (e) => {
+      if (this._reloading) return;
+      this._reloading = true;
+      try {
+        const model = await this.modelCtrl.load(); // uses api snapshot
+        this.init(model);
+      } finally {
+        this._reloading = false;
+      }
     });
-
-    document.addEventListener("ts:grid:new-data", async (e) => {
-      e.preventDefault?.();
-      this.target.classList.remove('TS_loading');
-    });
+    
   }
+
   
   destroy() {
     //TODO: this doesn't exist

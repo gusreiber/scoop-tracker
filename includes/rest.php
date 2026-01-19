@@ -147,32 +147,30 @@ function scoop_handle_cells_post(\WP_REST_Request $req, array $cfg, array $allow
       continue;
     }
 
-    if (!function_exists('pods')) {
-      $errors[$id][] = ['field'=>null,'error'=>'Pods not available.'];
+    if (!function_exists('pods_api') || !is_object(pods_api())) {
+      $errors[$id][] = ['field'=>null,'error'=>'Pods API not available.'];
       continue;
     }
 
-    $pod = pods($pod_name, $id);
-    if (!$pod || !$pod->exists()) {
-      $errors[$id][] = ['field'=>null,'error'=>"pods('{$pod_name}', {$id}) => not found / exists() false"];
-      continue;
-    }
-
+    $clean = [];
     foreach ($row as $field => $value) {
       if (!isset($allowed[$field])) continue;
+      $clean[$field] = scoop_coerce_value($field, $value);
+    }
 
-      // Default coercion: int (fits your flavor fields). You can override per endpoint later.
-      $v = scoop_coerce_value($field, $value);
+    if (!empty($clean)) {
+      $result = scoop_pods_api_save($pod_name, $id, $clean);
 
-      $result = scoop_save_pod_field($pod, $field, $v);
-
-      if ($result === true) {
-        if (!isset($updated[$id])) $updated[$id] = [];
-        $updated[$id][$field] = $v;
+      if ($result !== false && !is_wp_error($result)) {
+        $updated[$id] = ($updated[$id] ?? []) + $clean;
       } else {
-        $errors[$id][] = ['field'=>$field,'error'=> is_string($result) ? $result : 'Unknown error'];
+        $msg = is_wp_error($result) ? $result->get_error_message() : 'Save failed';
+        foreach (array_keys($clean) as $field) {
+          $errors[$id][] = ['field'=>$field,'error'=>$msg];
+        }
       }
     }
+
   }
 
   $ok = empty($errors);

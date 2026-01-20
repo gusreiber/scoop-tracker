@@ -222,6 +222,7 @@ export default class Grid extends El{
         new TextIt(CELL, col, this.name);
       else if(col.control === "text" )
         new TextIt(CELL, data, this.name);
+      //else if(col.num);
       else new FindIt(CELL, data, this.name);
     }else{
       CELL.append('' + (data.display || ''));

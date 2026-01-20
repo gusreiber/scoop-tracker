@@ -8,6 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     base: "/",
     routes: SCOOP.routes,
   });
-  console.log('routes!!!????', SCOOP);
+  
   api.mountAllGrids();
 });

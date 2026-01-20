@@ -14,7 +14,7 @@ export default class FlavorTubGridModel extends BaseGridModel{
       {key:'id',              label:'id'},
       {key:'state',           label:'state',   type:'state',  write:true},
       {key:'use',             label:'use',     type:'use',    write:true,  titleMap:'uses'},
-      {key:'amount',          label:'amount',  type:'num'},
+      {key:'amount',          label:'amount',  type:'num',    write:true,  control: 'text'},
       {key:'flavor',          label:'flavor',  type:'flavor', titleMap:'flavors'},
       {key:'date',            label:'date',    type:'date'},
       {key:'index',           label:'index',   type:'num'},

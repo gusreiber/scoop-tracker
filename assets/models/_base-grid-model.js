@@ -216,7 +216,7 @@ export default class BaseGridModel {
 
       const raw = rowData?.[key];
       const id = Number(raw ?? 0);
-
+      console.log('col',col);
       row[key] = {
         id,
         rowId:     rowData?.id || i,
@@ -228,6 +228,7 @@ export default class BaseGridModel {
         alertCase: this.getAlertCase(id, col.type),
         value:     col.value,
         hidden:    col.hidden,
+        write:     col.write ?? false
       };
     }
   }

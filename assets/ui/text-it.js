@@ -10,10 +10,11 @@ export default class TextIt {
     this.data = data ?? {};
     this.formKey = formKey;
 
-    this.value = this.data.value ?? this.data.display ?? "";
+    this.value  = this.data.value ?? this.data.display ?? "";
     this.rowId  = this.data.rowId ?? this.data.id ?? 0;
     this.colKey = this.data.colKey ?? this.data.key ?? '';
     this.type   = (this.data.hidden)? "hidden" : this.data.type ?? "text"; // "number" or "text"
+    this.step   = this.data.step ?? null;
 
     this.fieldName = `${this.formKey}[cells][${this.rowId}][${this.colKey}]`;
 
@@ -31,6 +32,7 @@ export default class TextIt {
     INP.type = (this.type === "number") ? "number" : "text";
     INP.value = String(this.value ?? "");
     INP.autocomplete = "off";
+    if(this.type === "number" && this.step) INP.step = this.step;
 
     // Keep hidden input authoritative
     INP.addEventListener("input", () => {
@@ -51,7 +53,7 @@ export default class TextIt {
     });
 
     const BASE = document.createElement("div");
-    BASE.classList.add("textIt",'cell', `col-${this.colKey}`);
+    BASE.classList.add("textIt", `col-${this.colKey}`);
 
     BASE.append(HDN, INP, BTN);
     this.target.append(BASE);

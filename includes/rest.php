@@ -108,7 +108,7 @@ function scoop_handle_create_post(\WP_REST_Request $req, array $cfg, array $allo
     'type' => $pod_name,
     'created' => ['id' => (int)$new_id],
   ], 200);
-}
+} 
 
 
 function scoop_handle_cells_post(\WP_REST_Request $req, array $cfg, array $allowed_fields) {

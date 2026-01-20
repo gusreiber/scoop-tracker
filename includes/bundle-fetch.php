@@ -24,15 +24,12 @@ function scoop_cast($v, string $type) {
 
 
 function scoop_fetch_entities(string $key, array $ctx = []): array {
-  error_log("top????: SCOOP fetch_entities key={$key} ctx=" . json_encode($ctx));
 
   $specs = scoop_entity_specs();
   if (empty($specs[$key])) return [];
 
   $spec = $specs[$key];
-error_log(' pods?');
   if (!function_exists('pods')) return [];
-  error_log('got pods');
 
   $post_type = $spec['post_type'];
   $pod_name  = $spec['pod'];
@@ -86,8 +83,6 @@ error_log(' pods?');
 
     $out[] = $row;
   }
-
-  error_log("bottom: SCOOP fetch_entities key={$key} count=" . count($out));
 
   return $out;
 }

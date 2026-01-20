@@ -417,7 +417,7 @@ table.zGRID{
 
         & .cell{
             position: relative;
-            padding: 1.25rem 4rem;
+            padding: 1.25rem 3rem;
 
             & .badges{
                 
@@ -448,7 +448,13 @@ table.zGRID{
         & .cell.read-only{
             padding:.5rem .5rem;
         }
-        & .cell.textIt-box{padding:0}
+        & .textIt-box{
+            padding:0;
+            & .textIt{
+                position: absolute;
+                top:0; left:0; right: 0; bottom: 0;
+            }
+        }
     }
 }
 

@@ -13,8 +13,8 @@ export default class BatchGridModel extends BaseGridModel{
 
   buildCols() {
     this.columns = [
-      { key: "count", label: "count", write: true, control: "text", type: "number" },
-      { key: "flavor", label: "flavor", write: true, type: "flavor", titleMap: "flavors" }
+      { key: "flavor", label: "flavor", write: true, type: "flavor", titleMap: "flavors" },
+      { key: "count", label: "count", write: true, control: "text", type: "number", step:0.01 }
     ];
     return this.columns;
   }
@@ -26,15 +26,6 @@ export default class BatchGridModel extends BaseGridModel{
     this.rows = [
       {
         id: rowId,
-
-        // count cell (TextIt expects value/display + rowId/colKey/type)
-        count: { 
-          rowId,
-          colKey: "count",
-          type: "number",
-          value: ""          // default blank
-        },
-
         // flavor cell (FindIt expects id/display/options/etc.)
         flavor: {
           id: 0,
@@ -44,7 +35,15 @@ export default class BatchGridModel extends BaseGridModel{
           display: "",
           options: this.getOptions("flavor", "flavor", 0),
           badges: []
-        }
+        },
+        // count cell (TextIt expects value/display + rowId/colKey/type)
+        count: { 
+          rowId,
+          colKey: "count",
+          type: "number",
+          step: 0.01,
+          value: ""          // default blank
+        }        
       }
     ];
 

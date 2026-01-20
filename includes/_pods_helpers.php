@@ -97,11 +97,17 @@ function scoop_coerce_value(string $field, $value) {
     'flavor',
     'use',
     'location',
-    'count',
     'tubs_emptied',
     'order',
   ], true)) {
     return (int)$value;
+  }
+
+  if(in_array($field, [
+    'count',
+    'amount'
+  ], true)) {
+    return (float)$value;
   }
 
   // default: leave as-is
@@ -115,10 +121,10 @@ function scoop_planning_allowed_slot_fields(): array {
   return [ 'current_flavor', 'immediate_flavor', 'next_flavor' ];
 }
 function scoop_batches_allowed_fields(): array {
-  return [ 'count', 'flavor' ];
+  return [ 'flavor','count' ];
 }
 function scoop_tubs_allowed_fields(): array {
-  return [ 'state', 'use']; //'amount' 
+  return [ 'state', 'use', 'amount']; //'amount' 
 }
 function scoop_closeouts_allowed_fields(): array {
   return [ 'tubs_emptied', 'flavor', 'use', 'location', 'order']; //'amount' 

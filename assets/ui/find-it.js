@@ -228,7 +228,7 @@ export default class FindIt extends El {
   }
 
   clear() {
-    this.HDN.value = "";
+    this.HDN.value = "0";
     this.INP.value = "";
     this.value = "";
     this.display = "";
@@ -238,7 +238,7 @@ export default class FindIt extends El {
   select(op) {
     const key = op?.key;
 
-    this.value   = key == null ? "" : String(key);
+    this.value   = key == null ? "0" : String(key);
     this.display = String(op?.label ?? "");
 
     this.HDN.value = this.value;

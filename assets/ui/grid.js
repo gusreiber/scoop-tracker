@@ -305,10 +305,23 @@ export default class Grid extends El{
     this._updateDirtyIndicator(0);
   }
 
-
   _updateDirtyIndicator(n) {
     if (!this.DIRTY_IND) return;
     this.DIRTY_IND.textContent = `${n} change${n === 1 ? "" : "s"}`;
+  }
+
+  _normRelId(v) {
+    if (v == null) return 0;
+    if (typeof v === 'number') return v > 0 ? v : 0;
+    if (typeof v === 'string') {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+    if (typeof v === 'object') {
+      const n = Number(v.id ?? v.ID ?? 0);
+      return Number.isFinite(n) && n > 0 ? n : 0;
+    }
+    return 0;
   }
 
   _commitPosted(changes) {
@@ -352,7 +365,10 @@ export default class Grid extends El{
       const v = this.formCodec.normalizeScalar(h.value ?? "");
       const before = this.baseline.get(k);
       
-      if (before === v) this.dirtySet.delete(k);
+      const beforeId = this._normRelId(before);
+      const afterId  = this._normRelId(v);
+
+      if (beforeId === afterId) this.dirtySet.delete(k);
       else this.dirtySet.add(k);
     
       // Display count wherever you want

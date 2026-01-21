@@ -9,8 +9,8 @@ function scoop_active_flavors( $atts = [], $content = null, $tag = '' ) {
     // (We will filter by dates in PHP.)
     $where_flavor = "
     (
-        batches.tub.ID IS NOT NULL
-        AND batches.tub.cabinet.ID IS NULL
+        batch.tub.ID IS NOT NULL
+        AND batch.tub.cabinet.ID IS NULL
     )
     ";
 

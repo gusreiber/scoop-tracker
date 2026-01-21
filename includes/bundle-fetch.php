@@ -105,7 +105,7 @@ function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array
     'uses'      => 'uses',
     'locations' => 'locations',
     'cabinets'  => 'cabinets',
-    'batches'   => 'batchs',
+    'batch'   => 'batch',
     'closeout' => 'closeout',
   ];
 

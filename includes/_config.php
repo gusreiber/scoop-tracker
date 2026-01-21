@@ -13,7 +13,7 @@ function scoop_routes_config(string $batch_key = ''): array {
       'allowed_fields_cb' => 'scoop_planning_allowed_slot_fields',
     ],
     'Batch' => [
-      'path'         => '/batches',
+      'path'         => '/batch',
       'methods'      => ['GET','POST'],
       'mode'         => 'create',
       'envelope_key' => 'Batch',

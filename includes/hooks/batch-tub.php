@@ -5,7 +5,7 @@ if (!defined('ABSPATH')) exit;
  * Batch + Tub hooks (refactored)
  *
  * Goals:
- * - Stable title/slug generation for batches
+ * - Stable title/slug generation for batch
  * - Deterministic tub creation (DB-driven; not dependent on $pieces shape)
  * - Use Pods API for creates/updates so Pods hooks fire consistently
  * - Guard against accidental recursion

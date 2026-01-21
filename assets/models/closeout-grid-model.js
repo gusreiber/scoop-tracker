@@ -5,7 +5,7 @@ export default class CloseoutGridModel extends BaseGridModel{
   constructor(name = 'Closeout', domain, attrs = {}) 
   {
     super(name, domain, attrs );
-      this._flavorsById  = Indexer.byId(domain.flavors) || {};
+      this._flavorsById  = Indexer.byId(domain.flavor) || {};
       this.submitMode = 'all';
       this._build();
   }

@@ -6,14 +6,14 @@ export default class BatchGridModel extends BaseGridModel{
   constructor(name = 'Batch', domain, attrs = {}, metaData = null) 
   {
     super(name, domain, attrs, metaData );
-    this._flavorsById  = Indexer.byId(domain?.flavors) || {};
+    this._flavorsById  = Indexer.byId(domain?.flavor) || {};
     this.submitMode = 'all';
     this._build();
   }
 
   buildCols() {
     this.columns = [
-      { key: "flavor", label: "flavor", write: true, type: "flavor", titleMap: "flavors" },
+      { key: "flavor", label: "flavor", write: true, type: "flavor", titleMap: "flavor" },
       { key: "count", label: "count", write: true, control: "text", type: "number", step:0.01 }
     ];
     return this.columns;

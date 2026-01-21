@@ -28,8 +28,8 @@ export default class BaseGridModel {
     // --- derived indexes (convenience, not exposed to Grid) ---
     this._tubsById         = domain.tubs? 
                              Indexer.byId(domain.tubs.filter(t => t.state !== 'Emptied'))  : [];
-    this._flavorsById      = domain.flavors? 
-                             Indexer.byId(domain.flavors) : [];
+    this._flavorsById      = domain.flavor? 
+                             Indexer.byId(domain.flavor) : [];
     this._availByFlavor    = domain.tubs? 
                              Indexer.groupBy(
                               domain.tubs.filter( t => t.state !== "Emptied"),
@@ -201,7 +201,7 @@ export default class BaseGridModel {
 
   titleFrom(id, col) {
     if (!col?.titleMap) return id;
-    const map = this.getTitleMap(col.titleMap);  // col.titleMap = "uses" | "flavors" | ...
+    const map = this.getTitleMap(col.titleMap);  // col.titleMap = "uses" | "flavor" | ...
     return map.get(Number(id))?._title ?? "";
   }
   

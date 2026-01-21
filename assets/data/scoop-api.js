@@ -157,7 +157,7 @@ export default class ScoopAPI {
       cabinets : Array.isArray(data.cabinets)  ? data.cabinets  : [],
       slots    : Array.isArray(data.slots)     ? data.slots     : [],
       tubs     : Array.isArray(data.tubs)      ? data.tubs      : [],
-      flavors  : Array.isArray(data.flavors)   ? data.flavors   : [],
+      flavor  : Array.isArray(data.flavor)   ? data.flavor   : [],
       locations: Array.isArray(data.locations) ? data.locations : [],
       uses     : Array.isArray(data.uses)      ? data.uses      : [],
       // if these exist later, keep them without forcing structure:
@@ -171,7 +171,7 @@ export default class ScoopAPI {
   }
 
   // The models expect "domain" = the data object with arrays:
-  // { cabinets, slots, tubs, flavors, locations, uses, ... }
+  // { cabinets, slots, tubs, flavor, locations, uses, ... }
   async refreshPageDomain({ force = false, toast = null, info = null } = {}) {
 
     if (!this.gridTypes) throw new Error("refreshPageDomain: page types not set");

@@ -14,7 +14,7 @@ function scoop_active_flavors( $atts = [], $content = null, $tag = '' ) {
     )
     ";
 
-    $flavors = pods( 'flavor', [
+    $flavor = pods( 'flavor', [
         'where'   => $where_flavor,
         'orderby' => 'post_title ASC',
         'limit'   => -1,
@@ -22,11 +22,11 @@ function scoop_active_flavors( $atts = [], $content = null, $tag = '' ) {
 
     ob_start();
 
-    if ( $flavors && $flavors->total() > 0 ) {
-        while ( $flavors->fetch() ) {
+    if ( $flavor && $flavor->total() > 0 ) {
+        while ( $flavor->fetch() ) {
 
-            $flavor_id    = (int) $flavors->id();
-            $flavor_title = $flavors->display( 'post_title' );
+            $flavor_id    = (int) $flavor->id();
+            $flavor_title = $flavor->display( 'post_title' );
 
             // Query tubs for THIS flavor that are not in any cabinet.
             $where_tub = "
@@ -137,8 +137,8 @@ add_action( 'wp_enqueue_scripts', function() {
 
     // Enqueue your custom JS from the child theme
     wp_enqueue_script(
-        'scoop-flavors',
-        get_stylesheet_directory_uri() . '/js/scoop-flavors.js',
+        'scoop-flavor',
+        get_stylesheet_directory_uri() . '/js/scoop-flavor.js',
         array(),
         null,
         true
@@ -146,7 +146,7 @@ add_action( 'wp_enqueue_scripts', function() {
 
     // Pass ajax_url + nonce to JS
     wp_localize_script(
-        'scoop-flavors',
+        'scoop-flavor',
         'SCOOP_FLAVORS',
         array(
             'ajax_url' => admin_url( 'admin-ajax.php' ),

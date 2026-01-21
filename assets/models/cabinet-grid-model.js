@@ -14,9 +14,9 @@ export default class CabinetGridModel extends BaseGridModel{
   buildCols(){
     this.columns = [
       {key:'id',              label:'id'},
-      {key:'current_flavor',  label:'Current Flavor',   type:"flavor", titleMap: "flavors", write:true},
-      {key:'immediate_flavor',label:'Immediate Flavor', type:"flavor", titleMap: "flavors", write:true},
-      {key:'next_flavor',     label:'Planned Flavor',   type:"flavor", titleMap: "flavors", write:true}
+      {key:'current_flavor',  label:'Current Flavor',   type:"flavor", titleMap: "flavor", write:true},
+      {key:'immediate_flavor',label:'Immediate Flavor', type:"flavor", titleMap: "flavor", write:true},
+      {key:'next_flavor',     label:'Planned Flavor',   type:"flavor", titleMap: "flavor", write:true}
     ]
 
     return this.columns;

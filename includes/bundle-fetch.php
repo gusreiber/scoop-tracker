@@ -100,7 +100,7 @@ function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array
 
   $map = [
     'tubs'      => 'tubs',
-    'flavors'   => 'flavors',
+    'flavor'   => 'flavor',
     'slots'     => 'slots',
     'uses'      => 'uses',
     'locations' => 'locations',

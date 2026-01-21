@@ -6,7 +6,7 @@
 
 add_shortcode('scoop_grid', function ($atts) {
     $atts = shortcode_atts([
-    'type'     => 'Cabinet', // Cabinet | tubs | etc
+    'type'     => 'Cabinet', // Cabinet | tub | etc
     'location' => null,
     ], $atts, 'scoop_grid');
 

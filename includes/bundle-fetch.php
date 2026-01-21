@@ -99,7 +99,7 @@ function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array
   if ($loc !== null && $loc !== '') $ctx['location'] = (int) $loc;
 
   $map = [
-    'tubs'      => 'tubs',
+    'tub'      => 'tub',
     'flavor'   => 'flavor',
     'slots'     => 'slots',
     'uses'      => 'uses',

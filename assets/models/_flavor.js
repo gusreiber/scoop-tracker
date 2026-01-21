@@ -9,11 +9,11 @@
 import Indexer from "../data/indexer.js";
 
 export default class Flavor {
-  constructor({ flavorsById, tubs, location }) {
+  constructor({ flavorsById, tub, location }) {
     this.flavorsById = flavorsById;
     this.location = Number(location);
 
-    const notEmpty = (tubs ?? []).filter(t => t.state !== "Emptied");
+    const notEmpty = (tub ?? []).filter(t => t.state !== "Emptied");
     
     const hereNotEmpty = notEmpty.filter(t => t.location  === location);
     const hereOpened   = hereNotEmpty.filter(t => t.state === "Opened");

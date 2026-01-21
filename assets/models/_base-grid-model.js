@@ -26,20 +26,20 @@ export default class BaseGridModel {
     this.minCount = 0;
 
     // --- derived indexes (convenience, not exposed to Grid) ---
-    this._tubsById         = domain.tubs? 
-                             Indexer.byId(domain.tubs.filter(t => t.state !== 'Emptied'))  : [];
+    this._tubsById         = domain.tub? 
+                             Indexer.byId(domain.tub.filter(t => t.state !== 'Emptied'))  : [];
     this._flavorsById      = domain.flavor? 
                              Indexer.byId(domain.flavor) : [];
-    this._availByFlavor    = domain.tubs? 
+    this._availByFlavor    = domain.tub? 
                              Indexer.groupBy(
-                              domain.tubs.filter( t => t.state !== "Emptied"),
+                              domain.tub.filter( t => t.state !== "Emptied"),
                               t => t.flavor
                             ) : [];
 
     this.flavorMeta = new Flavor({
       flavorsById: this._flavorsById,
       location:    this.location,
-      tubs:        domain.tubs
+      tub:        domain.tub
     });
 
     this.fBadgeSpecs = this.flavorMeta.getFlavorBadgeSpecs();

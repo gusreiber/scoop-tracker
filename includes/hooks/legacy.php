@@ -9,8 +9,8 @@ function scoop_active_flavors( $atts = [], $content = null, $tag = '' ) {
     // (We will filter by dates in PHP.)
     $where_flavor = "
     (
-        batches.tubs.ID IS NOT NULL
-        AND batches.tubs.cabinet.ID IS NULL
+        batches.tub.ID IS NOT NULL
+        AND batches.tub.cabinet.ID IS NULL
     )
     ";
 
@@ -28,7 +28,7 @@ function scoop_active_flavors( $atts = [], $content = null, $tag = '' ) {
             $flavor_id    = (int) $flavor->id();
             $flavor_title = $flavor->display( 'post_title' );
 
-            // Query tubs for THIS flavor that are not in any cabinet.
+            // Query tub for THIS flavor that are not in any cabinet.
             $where_tub = "
             (
                 cabinet.ID IS NULL
@@ -36,14 +36,14 @@ function scoop_active_flavors( $atts = [], $content = null, $tag = '' ) {
             )
             ";
 
-            $tubs = pods( 'tub', [
+            $tub = pods( 'tub', [
                 'where'   => $where_tub,
                 'orderby' => 'post_title ASC',
                 'limit'   => -1,
             ] );
 
-            if ( ! $tubs || $tubs->total() === 0 ) {
-                // No tubs at all for this flavor (with cabinet = NULL),
+            if ( ! $tub || $tub->total() === 0 ) {
+                // No tub at all for this flavor (with cabinet = NULL),
                 // skip this flavor.
                 continue;
             }
@@ -51,19 +51,19 @@ function scoop_active_flavors( $atts = [], $content = null, $tag = '' ) {
             // Build tub list for this flavor, filtering by dates in PHP.
             $tub_output = '';
 
-            while ( $tubs->fetch() ) {
+            while ( $tub->fetch() ) {
 
-                $tub_title     = $tubs->display( 'post_title' );
-                $tub_state     = $tubs->display( 'state' );      // optional display
-                $sold_on_date  = $tubs->display( 'sold-on' );    // field slug "sold-on"
-                $sold_out_date = $tubs->display( 'sold-out' );   // field slug "sold-out"
+                $tub_title     = $tub->display( 'post_title' );
+                $tub_state     = $tub->display( 'state' );      // optional display
+                $sold_on_date  = $tub->display( 'sold-on' );    // field slug "sold-on"
+                $sold_out_date = $tub->display( 'sold-out' );   // field slug "sold-out"
 
                 // A tub is "available" only if BOTH dates are empty.
                 if ( ! empty( $sold_on_date ) || ! empty( $sold_out_date ) ) {
-                    continue; // skip tubs that have started or finished serving
+                    continue; // skip tub that have started or finished serving
                 }
 
-                // Only reached for truly available tubs.
+                // Only reached for truly available tub.
                 $tub_output .= '<li>';
                 $tub_output .= '<strong>' . esc_html( $tub_title ) . '</strong>';
 
@@ -80,12 +80,12 @@ function scoop_active_flavors( $atts = [], $content = null, $tag = '' ) {
                 $tub_output .= '</li>';
             }
 
-            // If no tubs survived the date filter, skip this flavor entirely.
+            // If no tub survived the date filter, skip this flavor entirely.
             if ( $tub_output === '' ) {
                 continue;
             }
 
-            // Otherwise, render the flavor + its available tubs.
+            // Otherwise, render the flavor + its available tub.
             echo '<div class="flavor-choice">';
             echo '<h3>' . esc_html( $flavor_title ) . '</h3>';
             echo '<ul>' . $tub_output . '</ul>';
@@ -125,7 +125,7 @@ function scoop_add_batches_ajax() {
 
     wp_send_json( array(
         'success' => true,
-        'created' => $count.'tubs',
+        'created' => $count.'tub',
     ) );
 }
 */

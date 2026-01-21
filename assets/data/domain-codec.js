@@ -5,7 +5,7 @@ export default class DomainCodec {
     coerceRelationIds: true,
     // If true, compute _title strings from WP-ish title shapes.
     computeTitles: true,
-    // If true, normalize embedded tubs inside flavor.
+    // If true, normalize embedded tub inside flavor.
     normalizeEmbeddedTubs: true,
   };
 
@@ -15,7 +15,7 @@ export default class DomainCodec {
    */
 
   static decoders = {
-    tubs     : DomainCodec._decodeTub,
+    tub     : DomainCodec._decodeTub,
     slots    : DomainCodec._decodeSlot,
     cabinets : DomainCodec._decodeCabinet,
     flavor  : DomainCodec._decodeFlavor,
@@ -46,8 +46,8 @@ export default class DomainCodec {
     return list.map(item => itemFn.call(DomainCodec, item, o));
   }
 
-  static decodeTubs(tubs = [], o = DomainCodec.defaults) {
-    return DomainCodec.decodeList(tubs, DomainCodec._decodeTub, o);
+  static decodeTubs(tub = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(tub, DomainCodec._decodeTub, o);
   }
   static decodeSlots(slots = [], o = DomainCodec.defaults) {
     return DomainCodec.decodeList(slots, DomainCodec._decodeSlot, o);
@@ -154,8 +154,8 @@ export default class DomainCodec {
 
     const x = DomainCodec._withIdAndTitle(f, o);
 
-    if (o.normalizeEmbeddedTubs && Array.isArray(x.tubs)) {
-      x.tubs = DomainCodec.decodeTubs(x.tubs, o);
+    if (o.normalizeEmbeddedTubs && Array.isArray(x.tub)) {
+      x.tub = DomainCodec.decodeTubs(x.tub, o);
     }
 
     return x;

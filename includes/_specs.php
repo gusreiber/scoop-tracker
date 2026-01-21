@@ -3,7 +3,7 @@
 function scoop_bundle_specs(): array {
   return [
     'Cabinet'   => ['needs' => ['cabinets','slots','flavor']],
-    'FlavorTub' => ['needs' => ['tubs','flavor','uses']],
+    'FlavorTub' => ['needs' => ['tub','flavor','uses']],
     'Batch'     => ['needs' => ['flavor']],
     'Closeout'  => ['needs' => ['flavor','uses']],
   ];
@@ -15,7 +15,7 @@ function scoop_get_entity_spec_keys(string $bundle_key): array {
 
 function scoop_entity_specs(string $key = ''): array {
   $spc =[
-    'tubs' => [
+    'tub' => [
       'post_type' => 'tub',
       'pod'       => 'tub',
       'title'     => true, // TODO: Remove... not shown, but JS might try to use...
@@ -67,7 +67,7 @@ function scoop_entity_specs(string $key = ''): array {
       'pod'       => 'flavor',
       'title'     => true,
       'fields'    => [
-        // add fields as needed; you can omit tubs if you’ll compute from tubs list
+        // add fields as needed; you can omit tub if you’ll compute from tub list
       ],
       'writeable' => []
     ],

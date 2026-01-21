@@ -77,12 +77,12 @@ function scoop_prepare_closeout($pieces, $is_new_item) {
 }
 
 /**
- * Define eligibility for tubs to be emptied by a closeout.
+ * Define eligibility for tub to be emptied by a closeout.
  * Tune this in one place.
  */
 function scoop_closeout_tub_where(int $flavor_id, int $location_id): string {
   // IMPORTANT: adjust state list to match your real workflow.
-  // Suggestion: only tubs that are currently Serving (or Opened) get emptied by closeout.
+  // Suggestion: only tub that are currently Serving (or Opened) get emptied by closeout.
   // Also exclude already-emptied.
   $states = ["Serving", "Opened"];
   $state_sql = "'" . implode("','", array_map('esc_sql', $states)) . "'";
@@ -134,8 +134,8 @@ function scoop_process_closeout($pieces, $is_new_item, $id) {
       return $pieces;
     }
 
-    // Fetch eligible tubs
-    $tubs = pods('tub', [
+    // Fetch eligible tub
+    $tub = pods('tub', [
       'where'   => scoop_closeout_tub_where($flavor_id, $location_id),
       // Better ordering: oldest first by “sold_on/opened” if you have it.
       // Adjust to your actual datetime field(s).
@@ -145,9 +145,9 @@ function scoop_process_closeout($pieces, $is_new_item, $id) {
 
     $updated = 0;
 
-    if ($tubs && $tubs->total() > 0) {
-      while ($tubs->fetch()) {
-        $tub_id = (int)$tubs->id();
+    if ($tub && $tub->total() > 0) {
+      while ($tub->fetch()) {
+        $tub_id = (int)$tub->id();
         if (!$tub_id) continue;
 
         // Use Pods API to ensure hooks fire
@@ -171,7 +171,7 @@ function scoop_process_closeout($pieces, $is_new_item, $id) {
         'processed_at'    => current_time('mysql'),
         'processed_count' => $updated,
         'processed_note'  => ($updated < $need)
-          ? "Requested {$need}, updated {$updated} (not enough eligible tubs)."
+          ? "Requested {$need}, updated {$updated} (not enough eligible tub)."
           : "OK ({$updated}).",
       ],
     ]);

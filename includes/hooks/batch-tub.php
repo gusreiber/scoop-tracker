@@ -164,13 +164,13 @@ function scoop_create_tubs_for_new_batch($pieces, $is_new_item, $id) {
 
   return scoop_guard("create_tubs_for_batch:{$batch_id}", function() use ($pieces, $batch_id) {
 
-    // Skip if tubs already exist
+    // Skip if tub already exist
     $existing = pods('tub', [
       'where' => 'batch.ID = ' . $batch_id,
       'limit' => 1,
     ]);
     if ($existing && $existing->total() > 0) {
-      scoop_log("scoop_create_tubs_for_new_batch: batch {$batch_id} already has tubs");
+      scoop_log("scoop_create_tubs_for_new_batch: batch {$batch_id} already has tub");
       return $pieces;
     }
 

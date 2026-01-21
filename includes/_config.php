@@ -22,7 +22,7 @@ function scoop_routes_config(string $batch_key = ''): array {
       'allowed_fields_cb' => 'scoop_batches_allowed_fields',
     ],
     'FlavorTub' => [
-      'path'         => '/tubs',
+      'path'         => '/tub',
       'methods'      => ['GET','POST'],
       'mode'         => 'update',
       'envelope_key' => 'FlavorTub',

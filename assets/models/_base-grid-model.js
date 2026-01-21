@@ -168,7 +168,7 @@ export default class BaseGridModel {
         {key:'Emptied',        label:'Emptied'}
     ];
     if (type === 'location') {
-      return [...this.domain.locations]
+      return [...this.domain.location]
         .map(u => ({
           key: u.id,
           label: u._title || u.title?.rendered || ''

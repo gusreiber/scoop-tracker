@@ -82,7 +82,7 @@ function scoop_entity_specs(string $key = ''): array {
       'writeable' => []
     ],
 
-    'locations' => [
+    'location' => [
       'post_type' => 'location',
       'pod'       => 'location',
       'title'     => true,

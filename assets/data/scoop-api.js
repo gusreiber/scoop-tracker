@@ -159,7 +159,7 @@ export default class ScoopAPI {
       tub     : Array.isArray(data.tub)      ? data.tub      : [],
       flavor  : Array.isArray(data.flavor)   ? data.flavor   : [],
       location: Array.isArray(data.location) ? data.location : [],
-      uses     : Array.isArray(data.uses)      ? data.uses      : [],
+      use     : Array.isArray(data.use)      ? data.use      : [],
       // if these exist later, keep them without forcing structure:
       batch  : Array.isArray(data.batch)   ? data.batch   : (data.batch ?? []),
       closeout: Array.isArray(data.closeout) ? data.closeout : (data.closeout ?? []),
@@ -171,7 +171,7 @@ export default class ScoopAPI {
   }
 
   // The models expect "domain" = the data object with arrays:
-  // { cabinet, slot, tub, flavor, location, uses, ... }
+  // { cabinet, slot, tub, flavor, location, use, ... }
   async refreshPageDomain({ force = false, toast = null, info = null } = {}) {
 
     if (!this.gridTypes) throw new Error("refreshPageDomain: page types not set");
@@ -204,7 +204,7 @@ export default class ScoopAPI {
     return this._domain ?? {};
   }
 
-  // Controller factory that DOES NOT fetch; it uses a provided domain.
+  // Controller factory that DOES NOT fetch; it use a provided domain.
   getModelCtrl(name, location = 0) {
     const Ctor = this.getModelsBom()[name];
     if (!Ctor) throw new Error(`Missing model for grid type "${name}"`);

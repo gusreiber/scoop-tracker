@@ -3,9 +3,9 @@
 function scoop_bundle_specs(): array {
   return [
     'Cabinet'   => ['needs' => ['cabinet','slot','flavor']],
-    'FlavorTub' => ['needs' => ['tub','flavor','uses']],
+    'FlavorTub' => ['needs' => ['tub','flavor','use']],
     'Batch'     => ['needs' => ['flavor']],
-    'Closeout'  => ['needs' => ['flavor','uses']],
+    'Closeout'  => ['needs' => ['flavor','use']],
   ];
 }
 
@@ -72,7 +72,7 @@ function scoop_entity_specs(string $key = ''): array {
       'writeable' => []
     ],
 
-    'uses' => [
+    'use' => [
       'post_type' => 'use',
       'pod'       => 'use',
       'title'     => true,

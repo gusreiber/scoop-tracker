@@ -9,8 +9,8 @@ export default class FindInGrid {
   constructor(host, {
     root = host,
     targetSelector = "tr.group",
-    textKey = "groupLabel",       // uses data-group-label
-    typeKey = "groupType",        // uses data-group-type
+    textKey = "groupLabel",       // use data-group-label
+    typeKey = "groupType",        // use data-group-type
     defaultType = null,           // e.g. if only one type present
     placeholder = "Filter…",
   } = {}) {

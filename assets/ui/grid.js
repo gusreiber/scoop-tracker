@@ -516,7 +516,7 @@ export default class Grid extends El{
       if (this._reloading) return;
       this._reloading = true;
       try {
-        const model = await this.modelCtrl.load(); // uses api snapshot
+        const model = await this.modelCtrl.load(); // use api snapshot
         this.init(model);
       } finally {
         this._reloading = false;

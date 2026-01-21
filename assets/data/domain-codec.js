@@ -20,7 +20,7 @@ export default class DomainCodec {
     cabinet : DomainCodec._decodeCabinet,
     flavor  : DomainCodec._decodeFlavor,
     location: DomainCodec._decodeLocation,
-    uses     : DomainCodec._decodeUse 
+    use     : DomainCodec._decodeUse 
   };
 
 
@@ -61,8 +61,8 @@ export default class DomainCodec {
   static decodeLocations(location = [], o = DomainCodec.defaults) {
     return DomainCodec.decodeList(location, DomainCodec._decodeLocation, o);
   }
-  static decodeUses(uses = [], o = DomainCodec.defaults) {
-    return DomainCodec.decodeList(uses, DomainCodec._decodeUse, o);
+  static decodeUses(use = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(use, DomainCodec._decodeUse, o);
   }
 
   // -------------------------

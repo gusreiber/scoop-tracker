@@ -175,7 +175,7 @@ export default class BaseGridModel {
         }));
     }
     if (type === 'use') {
-      return [...this.domain.uses]
+      return [...this.domain.use]
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
         .map(u => ({
           key: u.id,
@@ -201,7 +201,7 @@ export default class BaseGridModel {
 
   titleFrom(id, col) {
     if (!col?.titleMap) return id;
-    const map = this.getTitleMap(col.titleMap);  // col.titleMap = "uses" | "flavor" | ...
+    const map = this.getTitleMap(col.titleMap);  // col.titleMap = "use" | "flavor" | ...
     return map.get(Number(id))?._title ?? "";
   }
   

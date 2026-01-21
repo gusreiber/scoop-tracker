@@ -102,7 +102,7 @@ function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array
     'tub'      => 'tub',
     'flavor'   => 'flavor',
     'slot'     => 'slot',
-    'uses'      => 'uses',
+    'use'      => 'use',
     'location' => 'location',
     'cabinet'  => 'cabinet',
     'batch'   => 'batch',

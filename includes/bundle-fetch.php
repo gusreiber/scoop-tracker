@@ -106,7 +106,7 @@ function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array
     'locations' => 'locations',
     'cabinets'  => 'cabinets',
     'batches'   => 'batchs',
-    'closeouts' => 'closeouts',
+    'closeout' => 'closeout',
   ];
 
   $key = $map[$needType] ?? $needType;

@@ -162,7 +162,7 @@ export default class ScoopAPI {
       uses     : Array.isArray(data.uses)      ? data.uses      : [],
       // if these exist later, keep them without forcing structure:
       batches  : Array.isArray(data.batches)   ? data.batches   : (data.batches ?? []),
-      closeouts: Array.isArray(data.closeouts) ? data.closeouts : (data.closeouts ?? []),
+      closeout: Array.isArray(data.closeout) ? data.closeout : (data.closeout ?? []),
       ...data
     };
 

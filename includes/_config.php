@@ -31,7 +31,7 @@ function scoop_routes_config(string $batch_key = ''): array {
       'allowed_fields_cb' => 'scoop_tubs_allowed_fields',
     ],
     'Closeout' => [
-      'path'         => '/closeouts',
+      'path'         => '/closeout',
       'methods'      => ['GET','POST'],
       'mode'         => 'create',
       'envelope_key' => 'Closeout',

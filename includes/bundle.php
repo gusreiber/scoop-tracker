@@ -8,15 +8,6 @@ add_action('rest_api_init', function () {
   ]);
 });
 
-function scoop_bundle_specs(): array {
-  return [
-    'Cabinet'   => ['needs' => ['cabinets','slots','flavors','locations','tubs']],
-    'FlavorTub' => ['needs' => ['tubs','flavors','locations','uses']],
-    'Batch'     => ['needs' => ['flavors','locations']],
-    'Closeout'  => ['needs' => ['flavors','locations','uses']],
-  ];
-}
-
 function scoop_parse_types_param($raw): array {
   if (is_array($raw)) return array_values(array_filter(array_map('trim', $raw)));
   $raw = (string)$raw;
@@ -69,5 +60,6 @@ function scoop_bundle_get(\WP_REST_Request $req) {
     'types' => $types,
     'needs' => $needTypes,
     'data' => $data,
+    'meta' => 'hi?'
   ], 200);
 }

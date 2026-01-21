@@ -23,7 +23,7 @@ function scoop_cast($v, string $type) {
 }
 
 
-function scoop_fetch_entities(string $key, array $ctx = []): array {
+function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = false ): array {
 
   $specs = scoop_entity_specs();
   if (empty($specs[$key])) return [];
@@ -31,8 +31,11 @@ function scoop_fetch_entities(string $key, array $ctx = []): array {
   $spec = $specs[$key];
   if (!function_exists('pods')) return [];
 
+  if( $fields_only ) return $spec['fields'];
+
   $post_type = $spec['post_type'];
   $pod_name  = $spec['pod'];
+  $pod_write = $spec['writable'];
 
   // Keep this big to avoid paging; we’ll filter in PHP for now.
   // If you later confirm fields are stored in postmeta, you can add meta_query here.
@@ -41,6 +44,7 @@ function scoop_fetch_entities(string $key, array $ctx = []): array {
     'post_status'    => 'any',
     'posts_per_page' => 2000,
     'fields'         => 'ids',
+    'writable'       => $pod_write,
     'no_found_rows'  => true,
   ]);
 

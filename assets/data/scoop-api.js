@@ -100,7 +100,6 @@ export default class ScoopAPI {
   }
 
   async getJson(url = this.baseUrl) {
-    console.log("API.getJson", url);
     const r = await this._fetch(url, { method: "GET" });
     return r.data;
   }
@@ -215,7 +214,7 @@ export default class ScoopAPI {
       location,
       load: async () => {
         const domain = this.getDomainSnapshot();
-        return new Ctor(name, domain, { location });
+        return new Ctor(name, domain, { location, metaData: SCOOP.metaData[name]});
       }
     };
   }
@@ -238,8 +237,7 @@ export default class ScoopAPI {
       return new Grid(dom, name, { api: this, formCodec, modelCtrl });
     });
 
-    const models = await Promise.all(grids.map(g => g.modelCtrl.load()));
-    
+    const models = await Promise.all(grids.map(g => g.modelCtrl.load()));    
     models.forEach((m, i) => grids[i].init(m));
   }
 }

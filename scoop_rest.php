@@ -23,6 +23,7 @@ function scoop_require($rel) {
  */
 scoop_require('includes/_config.php');
 scoop_require('includes/_specs.php');
+scoop_require('includes/_write_fields.php');
 /**
  * Helpers next (no hooks should depend on files after this point)
  */
@@ -54,3 +55,5 @@ scoop_require('includes/admin-page.php');
 
 register_activation_hook(__FILE__, 'scoop_readonly');
 add_filter('pods_api_pre_save_pod_item', 'scoop_enforce_tub_rules', 10, 3);
+
+error_log( "--------------");

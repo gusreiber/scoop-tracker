@@ -37,10 +37,10 @@
    * Combined handler for GET/POST.
    */
   function scoop_handle_request(\WP_REST_Request $req, array $cfg, string $route_key) {
-
+   
     $allowed_fields = [];
     if (!empty($cfg['allowed_fields_cb']) && is_callable($cfg['allowed_fields_cb'])) {
-      $allowed_fields = call_user_func($cfg['allowed_fields_cb']);
+      $allowed_fields = call_user_func($cfg['allowed_fields_cb'], wp_get_current_user());
     }
 
     if ($req->get_method() === 'GET') {

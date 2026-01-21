@@ -15,9 +15,10 @@ export default class BaseGridModel {
     const { location = 935 } = options || {};
     this.name = name;
     this.domain = domain;
+    this.metaData = options?.metaData ?? null;
+    console.log(name, options);
 
     this.location = location;
-    console.log('base domain???', this.domain);
     // --- grid contract ---
     this.columns = [];
     this.rows = [];
@@ -143,7 +144,7 @@ export default class BaseGridModel {
     //TODO: Not sure what I was thinking when I made a pass-thru...
     //TODO: Need to clean-up all these useless 'ok_' classes..
     if(type !== 'flavor') return 'ok_ac';
-    return this[`${type}Meta`].alertCase(type,id);
+    return this[`${type}Meta`].alertCase(id);
   }
 
   getBadges( id, type = 'flavor', spec = this.fBadgeSpecs){
@@ -216,7 +217,6 @@ export default class BaseGridModel {
 
       const raw = rowData?.[key];
       const id = Number(raw ?? 0);
-      console.log('col',col);
       row[key] = {
         id,
         rowId:     rowData?.id || i,

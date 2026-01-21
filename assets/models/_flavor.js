@@ -41,11 +41,9 @@ export default class Flavor {
       .filter(Boolean);
   }
 
-  alertCase(type, flavorId) {
-    if (type !== "flavor") return "n";
+  alertCase(flavorId, type='flavor') {
     const id = Number(flavorId);
-    if (!id) return "n";
-    
+    if (!id) return 'n';
 
     const nTotal  = this.notEmptyByFlavor.get(id)?.length ?? 0;
     const nOpened = this.openedByFlavor.get(id)?.length ?? 0;
@@ -56,7 +54,7 @@ export default class Flavor {
     if (nFresh  === 0)               return "all-committed";
     if (last    === 0)               return "only-opened";
     if (nFresh  === 1 || last === 1) return "last-unopened";
-    return 'ok';
+    return '';
   }
 
 

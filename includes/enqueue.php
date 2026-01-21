@@ -16,6 +16,26 @@ function scoop_client_routes(): array {
   
   return $out;
 }
+
+function scoop_client_metadata():array{
+  $out = [];
+  foreach (scoop_routes_config() as $key => $cfg) {
+    $fields = [];
+    $writeable = [];
+    foreach(scoop_get_entity_spec_keys($key) as $pod){
+      $spc = scoop_entity_specs($pod);
+      $fields[$pod] = $spc['fields'];
+      $writeable[$pod] = $spc['writeable'];
+    }
+    $out[$key] = [
+      'fields'   => $fields,
+      'writeable' => $writeable,
+      'fieldType' => scoop_routes_config($key)['post_type']
+    ];
+  }  
+  return $out;
+}
+
 function scoop_enqueue_assets() {
   $base_url  = SCOOP_REST_URL;
   $base_path = SCOOP_REST_DIR;
@@ -41,6 +61,7 @@ function scoop_enqueue_assets() {
         'nonce'   => wp_create_nonce('wp_rest'),
         'isAdmin' => current_user_can('edit_posts'),
         'routes'  => scoop_client_routes(),
+        'metaData'=> scoop_client_metadata(), //scoop_fetch_entities
     ]);
 }
 

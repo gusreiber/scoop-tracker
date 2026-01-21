@@ -3,9 +3,9 @@ import Indexer       from "../data/indexer.js";
 
 export default class BatchGridModel extends BaseGridModel{
 
-  constructor(name = 'Batch', domain, attrs = {}) 
+  constructor(name = 'Batch', domain, attrs = {}, metaData = null) 
   {
-    super(name, domain, attrs );
+    super(name, domain, attrs, metaData );
     this._flavorsById  = Indexer.byId(domain?.flavors) || {};
     this.submitMode = 'all';
     this._build();

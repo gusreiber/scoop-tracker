@@ -1,7 +1,7 @@
 <?php
 
-function scoop_routes_config(): array {
-  return [
+function scoop_routes_config(string $batch_key = ''): array {
+  $cfg = [
 
     'Cabinet' => [
       'path'         => '/planning',
@@ -40,4 +40,5 @@ function scoop_routes_config(): array {
       'allowed_fields_cb' => 'scoop_closeouts_allowed_fields',
     ]
   ];
+  return ($batch_key === '')? $cfg : $cfg[$batch_key];
 }

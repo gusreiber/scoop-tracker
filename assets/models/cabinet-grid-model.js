@@ -5,7 +5,7 @@ export default class CabinetGridModel extends BaseGridModel{
   constructor(name = 'Cabinet', domain, attrs = {}) 
   {
     super(name, domain, attrs );
-    this._cabinetsById = Indexer.byId(domain.cabinets);
+    this._cabinetsById = Indexer.byId(domain.cabinet);
     this._slotsByCabinetId = Indexer.groupBy(domain.slots, s => s.cabinet);
 
     this._build();
@@ -23,7 +23,7 @@ export default class CabinetGridModel extends BaseGridModel{
   }
 
   builRows() {
-    const cabinetIds = this.getIdsForLocation(this.domain.cabinets);
+    const cabinetIds = this.getIdsForLocation(this.domain.cabinet);
     return this.buildGroupedRows({
       groupsMap     : this._slotsByCabinetId,
       includeGroupId: (id) => cabinetIds.has(Number(id)),      

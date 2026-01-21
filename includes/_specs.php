@@ -2,7 +2,7 @@
 
 function scoop_bundle_specs(): array {
   return [
-    'Cabinet'   => ['needs' => ['cabinets','slots','flavor']],
+    'Cabinet'   => ['needs' => ['cabinet','slots','flavor']],
     'FlavorTub' => ['needs' => ['tub','flavor','uses']],
     'Batch'     => ['needs' => ['flavor']],
     'Closeout'  => ['needs' => ['flavor','uses']],
@@ -51,7 +51,7 @@ function scoop_entity_specs(string $key = ''): array {
       'writeable' => ['current_flavor','immediate_flavor','next_flavor']
     ],
 
-    'cabinets' => [
+    'cabinet' => [
       'post_type' => 'cabinet',
       'pod'       => 'cabinet',
       'title'     => true,

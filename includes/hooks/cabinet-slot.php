@@ -124,7 +124,7 @@ function scoop_cabinet_pre_save_title($pieces, $is_new_item) {
 }
 
 /* ------------------------------------------------------------
- * Cabinet post-save: create slots once
+ * Cabinet post-save: create slot once
  * ------------------------------------------------------------ */
 
 add_filter('pods_api_post_save_pod_item_cabinet', 'scoop_cabinet_post_save_create_slots', 10, 3);
@@ -136,7 +136,7 @@ function scoop_cabinet_post_save_create_slots($pieces, $is_new_item, $id) {
   if (!scoop_guard_enter($guard_key)) return $pieces;
 
   try {
-    // If any slots exist for this cabinet, do nothing.
+    // If any slot exist for this cabinet, do nothing.
     $existing = pods('slot', [
       'where' => 'cabinet.ID = ' . $cabinet_id,
       'limit' => 1,
@@ -189,7 +189,7 @@ function scoop_cabinet_post_save_create_slots($pieces, $is_new_item, $id) {
       if ($new_slot_id) $created++;
     }
 
-    error_log("scoop_cabinet_post_save_create_slots: cabinet={$cabinet_id} created={$created} slots (max_tubs={$max_tubs})");
+    error_log("scoop_cabinet_post_save_create_slots: cabinet={$cabinet_id} created={$created} slot (max_tubs={$max_tubs})");
     return $pieces;
 
   } finally {

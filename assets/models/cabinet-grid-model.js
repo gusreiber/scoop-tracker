@@ -6,7 +6,7 @@ export default class CabinetGridModel extends BaseGridModel{
   {
     super(name, domain, attrs );
     this._cabinetsById = Indexer.byId(domain.cabinet);
-    this._slotsByCabinetId = Indexer.groupBy(domain.slots, s => s.cabinet);
+    this._slotsByCabinetId = Indexer.groupBy(domain.slot, s => s.cabinet);
 
     this._build();
   }

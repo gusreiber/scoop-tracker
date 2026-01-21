@@ -16,7 +16,7 @@ export default class DomainCodec {
 
   static decoders = {
     tub     : DomainCodec._decodeTub,
-    slots    : DomainCodec._decodeSlot,
+    slot    : DomainCodec._decodeSlot,
     cabinet : DomainCodec._decodeCabinet,
     flavor  : DomainCodec._decodeFlavor,
     location: DomainCodec._decodeLocation,
@@ -49,8 +49,8 @@ export default class DomainCodec {
   static decodeTubs(tub = [], o = DomainCodec.defaults) {
     return DomainCodec.decodeList(tub, DomainCodec._decodeTub, o);
   }
-  static decodeSlots(slots = [], o = DomainCodec.defaults) {
-    return DomainCodec.decodeList(slots, DomainCodec._decodeSlot, o);
+  static decodeSlots(slot = [], o = DomainCodec.defaults) {
+    return DomainCodec.decodeList(slot, DomainCodec._decodeSlot, o);
   }
   static decodeCabinets(cabinet = [], o = DomainCodec.defaults) {
     return DomainCodec.decodeList(cabinet, DomainCodec._decodeCabinet, o);

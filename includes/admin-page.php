@@ -52,7 +52,7 @@ function scoop_render_command_test_page() {
     }
   }
 
-  // A couple of sample slots to copy/paste IDs
+  // A couple of sample slot to copy/paste IDs
   $slot_posts = get_posts( [
     'post_type'      => 'slot',
     'posts_per_page' => 10,
@@ -87,7 +87,7 @@ echo shortcode_exists('scoop_grid') ? 'SHORTCODE: yes' : 'SHORTCODE: no';
     ?></pre>
 
     <form method="post">
-      <h3>Test payload (supports multiple slots/fields)</h3>
+      <h3>Test payload (supports multiple slot/fields)</h3>
 
       <p>Example fields: <code>current_flavor</code>, <code>immediate_flavor</code>, <code>next_flavor</code></p>
 

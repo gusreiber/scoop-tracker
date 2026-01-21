@@ -155,7 +155,7 @@ export default class ScoopAPI {
     const data = bundle?.data ?? {};
     bundle.data = {
       cabinet : Array.isArray(data.cabinet)  ? data.cabinet  : [],
-      slots    : Array.isArray(data.slots)     ? data.slots     : [],
+      slot    : Array.isArray(data.slot)     ? data.slot     : [],
       tub     : Array.isArray(data.tub)      ? data.tub      : [],
       flavor  : Array.isArray(data.flavor)   ? data.flavor   : [],
       location: Array.isArray(data.location) ? data.location : [],
@@ -171,7 +171,7 @@ export default class ScoopAPI {
   }
 
   // The models expect "domain" = the data object with arrays:
-  // { cabinet, slots, tub, flavor, location, uses, ... }
+  // { cabinet, slot, tub, flavor, location, uses, ... }
   async refreshPageDomain({ force = false, toast = null, info = null } = {}) {
 
     if (!this.gridTypes) throw new Error("refreshPageDomain: page types not set");

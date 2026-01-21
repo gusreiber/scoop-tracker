@@ -1,6 +1,20 @@
 <?php
 
 if (!defined('ABSPATH')) exit;
+function scoop_readonly() {
+
+  // Authors get read-only
+  if ($author = get_role('author')) {
+    $author->add_cap('scoop_readonly');
+  }
+
+  // Admins get everything
+  if ($admin = get_role('administrator')) {
+    $admin->add_cap('scoop_readonly');
+    $admin->add_cap('scoop_write');
+    $admin->add_cap('scoop_admin');
+  }
+}
 
 function scoop_nodate( $value ) { 
 	return ( 

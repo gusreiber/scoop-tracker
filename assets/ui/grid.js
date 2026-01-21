@@ -27,6 +27,7 @@ export default class Grid extends El{
     this.name      = name;
     this.modelCtrl = config?.modelCtrl ?? null;
     this.location  = config?.modelCtrl?.location ?? 0;
+    this.formCodec = config?.formCodec;
   
     this.baseline  = new Map();   // key -> value
     this.dirtySet  = new Set();   // key
@@ -34,6 +35,7 @@ export default class Grid extends El{
     this.filter    = null;
     this._isInit   = false;
     this._docListenerBound = false;
+    this._lastFocusedEl = this.target;
     
     this.loadConfig(config);
     this._build();
@@ -346,11 +348,48 @@ export default class Grid extends El{
 
   }
 
+  _captureFocusAddress() {
+    const el = document.activeElement;
+    if (!el || !this.FORM.contains(el)) return null;
+
+    // If focus is inside a cell editor, find the hidden input that already has the key
+    const h = el.closest('td')?.querySelector('input[type="hidden"][name]');
+    if (!h) return null;
+
+    const parsed = this.formCodec.parseBracketName(h.name);
+    if (!parsed || parsed.length < 4) return null;
+    if (parsed[0] !== this.name || parsed[1] !== 'cells') return null;
+
+    this._lastFocusedEl = { rowId: Number(parsed[2]), colKey: parsed[3] };
+
+    return this._lastFocusedEl;
+  }
+
+  _restoreFocusAddress() {
+    const addr = this._lastFocusedEl;
+    if (!addr) return;
+
+    const { rowId, colKey } = addr;
+
+    const h = this.FORM.querySelector(
+      `input[type="hidden"][name="${this.name}[cells][${rowId}][${colKey}]"]`
+    );
+    if (!h) return;
+
+    // Prefer focusing the visible input in the same cell (FindIt/TextIt)
+    const cell = h.closest('td');
+    const focusable =
+      cell?.querySelector('input:not([type="hidden"]), textarea, [contenteditable="true"], button');
+
+    requestAnimationFrame(() => (focusable ?? h).focus());
+  }
+
   async _bindEvents() {
     if (this._eventsBound || !this.FORM) return;
     this._eventsBound = true;
 
     this.FORM.addEventListener('ts:findit-change', (e) => {
+      console.log('!!!!ts:findit-change',e);
       const h = e.target.closest('input[type="hidden"][name]');
       if (!h) return;
     
@@ -361,12 +400,14 @@ export default class Grid extends El{
       const rowId = Number(parsed[2]);
       const colKey = parsed[3];
       const k = `${rowId}|${colKey}`;
-    
-      const v = this.formCodec.normalizeScalar(h.value ?? "");
+      //TODO: Hacking state enum. Need Enum check in formCodec.normalizeScalar
+      const v = (h.name.indexOf('[state]') === -1 )?
+        this.formCodec.normalizeScalar(h.value ?? ""):
+         h.value;
       const before = this.baseline.get(k);
       
       const beforeId = this._normRelId(before);
-      const afterId  = this._normRelId(v);
+      const afterId  = (h.name.indexOf('[state]') === -1 )? this._normRelId(v) : h.value;
 
       if (beforeId === afterId) this.dirtySet.delete(k);
       else this.dirtySet.add(k);
@@ -412,9 +453,10 @@ export default class Grid extends El{
 
     this.FORM.addEventListener("mousedown", (e)=>{this._showHide(e)}, true);
 
-    this.FORM.addEventListener("submit", async (e) => {
-      
+    this.FORM.addEventListener("submit", async (e) => {      
       e.preventDefault();
+      this._captureFocusAddress();
+
       if(e.submitter && e.submitter.classList.contains('oc')) return false;
       console.log('FORM POST URL',this.postUrl);
 
@@ -431,8 +473,6 @@ export default class Grid extends El{
         // OPTIONAL: no-op submit guard
         if (!Object.keys(changes.cells).length && !isAll) {
           console.log("No changes to submit.", changes);
-          
-          console.log("No Object to submit.", Object);
           return;
         }
         
@@ -459,6 +499,7 @@ export default class Grid extends El{
           const TOAST = Toast.addMessage({title:'Update sent', message:r.data.updated});
           
           await this.api.refreshPageDomain({ force: true, toast:TOAST, info:{name:this.name, response:r} });
+          this._restoreFocusAddress();
           
         }
         // TODO: mark successful cells as clean (e.g., store baseline values)

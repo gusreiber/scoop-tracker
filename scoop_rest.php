@@ -52,5 +52,5 @@ scoop_require('includes/enqueue.php');
 scoop_require('includes/shortcode.php');
 scoop_require('includes/admin-page.php');
 
-
+register_activation_hook(__FILE__, 'scoop_readonly');
 add_filter('pods_api_pre_save_pod_item', 'scoop_enforce_tub_rules', 10, 3);

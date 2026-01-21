@@ -230,9 +230,10 @@ export default class FindIt extends El {
   clear() {
     this.HDN.value = "0";
     this.INP.value = "";
-    this.value = "";
+    this.value = "0";
     this.display = "";
     this._applyFilter("", { noPaint: !this.isOpen });
+    this.HDN.dispatchEvent(new Event('ts:findit-change', { bubbles: true }));
   }
 
   select(op) {

@@ -6,8 +6,9 @@
 // TODO: needs to refactor out IF blocks
 // ...and leave that to the kids...
 //////////////////////////////////
-import Indexer from "../data/indexer.js";
-import Flavor  from "./_flavor.js";
+import Indexer         from "../data/indexer.js";
+import Flavor          from "./_flavor.js";
+import ColumnsProvider from "./_column-provider.js";
 
 export default class BaseGridModel {
   
@@ -86,8 +87,46 @@ export default class BaseGridModel {
     this.buildRows();
   }
 
-  buildCols(){
-    throw new Error("buildCols() must be implemented by subclass");
+  buildCols() {
+    // Try metadata first for column schema
+    if (this.metaData?.columns) {
+      this.columns = this._columnsFromMetadata();
+      if (this.columns?.length) return this.columns;
+    }
+    
+    // Subclass must provide fallback
+    throw new Error(`${this.name}.buildCols(): no metadata and no fallback implemented`);
+  }
+
+  _columnsFromMetadata() {
+    const cols = [];
+    for (const [key, meta] of Object.entries(this.metaData.columns)) {
+      if (!meta.visible) continue;
+      
+      cols.push({
+        key,
+        label: meta.label,
+        type: meta.dataType,
+        write: meta.editable,  // ← Server-controlled editability
+        hidden: meta.hidden,
+        control: meta.control === 'input' ? 'text' : undefined,
+        titleMap: this._inferTitleMap(key)
+      });
+    }
+    return cols;
+  }
+
+  _inferTitleMap(key) {
+    const maps = {
+      'flavor': 'flavor',
+      'current_flavor': 'flavor',
+      'immediate_flavor': 'flavor',
+      'next_flavor': 'flavor',
+      'use': 'use',
+      'location': 'location',
+      'cabinet': 'cabinet'
+    };
+    return maps[key] ?? null;
   }
 
   buildRows(){

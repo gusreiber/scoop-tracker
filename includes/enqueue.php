@@ -17,25 +17,40 @@ function scoop_client_routes(): array {
   return $out;
 }
 
-function scoop_client_metadata():array{
+// enqueue.php - REPLACE scoop_client_metadata()
+function scoop_client_metadata(): array {
   $out = [];
+  
   foreach (scoop_routes_config() as $key => $cfg) {
-    $fields = [];
-    $writeable = [];
-    foreach(scoop_get_entity_spec_keys($key) as $pod){
-      
-      $spc = scoop_entity_specs($pod);
-      $fields[$pod] = $spc['fields'];
-      $writeable[$pod] = $spc['writeable'];
-      
+    $post_type = $cfg['post_type'] ?? null;
+    if (!$post_type) continue;
+    
+    $entity_spec = scoop_entity_specs($post_type);
+    if (!$entity_spec) continue;
+    
+    $writeable_fields = $entity_spec['writeable'] ?? [];
+    $writeable_set = array_flip($writeable_fields);
+    
+    // Build column definitions
+    $columns = [];
+    foreach ($entity_spec['fields'] as $field_key => $field_desc) {
+      $columns[$field_key] = [
+        'label'    => ucfirst(str_replace('_', ' ', $field_key)),
+        'dataType' => $field_desc['data_type'] ?? 'string',
+        'control'  => $field_desc['control'] ?? 'input',
+        'hidden'   => $field_desc['hidden'] ?? false,
+        'visible'  => !($field_desc['hidden'] ?? false),
+        'editable' => isset($writeable_set[$field_key]), // ← KEY PART
+      ];
     }
-
+    
     $out[$key] = [
-      'fields'   => $fields,
-      'writeable' => $writeable,
-      'postPod' => ($cfg['post_type'] ?? null),
+      'postPod'  => $post_type,
+      'columns'  => $columns,
+      'writeable' => $writeable_fields, // Keep for debugging
     ];
-  }  
+  }
+  
   return $out;
 }
 

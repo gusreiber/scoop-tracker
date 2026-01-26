@@ -20,13 +20,13 @@ function scoop_entity_specs(string $key = ''): array {
       'pod'       => 'tub',
       'title'     => true, // TODO: Remove... not shown, but JS might try to use...
       'fields'    => [
-          'state'  => 'string',
-          'use'    => 'int',
-          'amount' => 'float',
-          'flavor' => 'int',
-          'date'   => 'string',
-          'location'=> 'int',
-          'index'  => 'int',
+          'state'    => ['data_type' => 'string', 'control' => 'enum',  ],
+          'use'      => ['data_type' => 'int',    'control' => 'find'  ],
+          'amount'   => ['data_type' => 'float',  'control' => 'input' ],
+          'flavor'   => ['data_type' => 'int',    'control' => 'input' ],
+          'date'     => ['data_type' => 'string', 'control' => 'input' ],
+          'location' => ['data_type' => 'int',    'control' => 'input', 'hidden' => true ],
+          'index'    => ['data_type' => 'int',    'hidden'  => true ],
       ],
       'post_fields' => [
           'author_name' => 'string',     // comes from WP_Post->post_author
@@ -42,11 +42,11 @@ function scoop_entity_specs(string $key = ''): array {
       'pod'       => 'slot',
       'title'     => true,
       'fields'    => [
-        'cabinet'          => 'int',
-        'location'         => 'int',
-        'current_flavor'   => 'int',
-        'immediate_flavor' => 'int',
-        'next_flavor'      => 'int',
+        'cabinet'          => ['data_type' => 'int', 'control' => 'find', 'hidden' => true ],
+        'location'         => ['data_type' => 'int', 'control' => 'find', 'hidden' => true ],
+        'current_flavor'   => ['data_type' => 'int', 'control' => 'find' ],
+        'immediate_flavor' => ['data_type' => 'int', 'control' => 'find' ],
+        'next_flavor'      => ['data_type' => 'int', 'control' => 'find' ],
       ],
       'writeable' => ['current_flavor','immediate_flavor','next_flavor']
     ],
@@ -56,8 +56,8 @@ function scoop_entity_specs(string $key = ''): array {
       'pod'       => 'cabinet',
       'title'     => true,
       'fields'    => [
-        'location' => 'int',
-        'max_tubs' => 'int',
+        'location' => ['data_type' => 'int', 'control' => 'find' ],
+        'max_tubs' => ['data_type' => 'int', 'control' => 'find' ],
       ],
       'writeable' => []
     ],
@@ -93,5 +93,6 @@ function scoop_entity_specs(string $key = ''): array {
     ],
   ];
   if( $key === '') return $spc;
-  return $spc[$key];
+  return $spc[$key] ?? [];
+
 }

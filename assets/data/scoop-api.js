@@ -1,33 +1,41 @@
 import Grid               from "../ui/grid.js";
-import FormCodec          from "./form-codec.js";
 import CabinetGridModel   from "../models/cabinet-grid-model.js";
 import BatchGridModel     from "../models/batch-grid-model.js";
 import CloseoutGridModel  from "../models/closeout-grid-model.js";
 import FlavorTubGridModel from "../models/flavor-tub-grid-model.js";
+import ColumnsProvider    from "../models/_column-provider.js";
+import FormCodec          from "./form-codec.js";
 
 export default class ScoopAPI {
-  constructor({ nonce, base = "/", routes = {} } = {}) {
+  constructor({ nonce, base = "/", routes = {}, metaData = null } = {}) {
+    // Core config
     this.nonce = nonce ?? null;
     this.baseUrl = this._absUrl(base);
-    this.routes = {};
+    this.routes = this._normalizeRoutes(routes);
+    this.metaData = metaData;
+    this.Meta     = new ColumnsProvider(metaData);
+
+    // Grid/page state
     this.gridTypes = new Set();
     this.typesKey = "";
     this.bundleUrl = new URL(this.baseUrl);
 
-    this._hosts;
-    this._domain;
-    this._domainInflight;
+    // Domain state
+    this._hosts = null;
+    this._domain = null;
+    this._domainInflight = null;
 
-
-    for (const [k, v] of Object.entries(routes)) {
-      this.routes[k] = this._absUrl(v);
-    }
-
+    // Request control + caching
     this.controller = new AbortController();
-
-    // simple per-page cache (in-memory)
     this._bundleCache = new Map(); // key:string -> bundleJson
   }
+
+  _normalizeRoutes(routes = {}) {
+    const out = {};
+    for (const [k, v] of Object.entries(routes)) out[k] = this._absUrl(v);
+    return out;
+  }
+
 
   abort() { this.controller.abort(); }
 
@@ -154,7 +162,7 @@ export default class ScoopAPI {
     // Minimal guards so models can safely assume arrays exist.
     const data = bundle?.data ?? {};
     bundle.data = {
-      cabinet : Array.isArray(data.cabinet)  ? data.cabinet  : [],
+      //cabinet : Array.isArray(data.cabinet)  ? data.cabinet  : [],
       slot    : Array.isArray(data.slot)     ? data.slot     : [],
       tub     : Array.isArray(data.tub)      ? data.tub      : [],
       flavor  : Array.isArray(data.flavor)   ? data.flavor   : [],
@@ -219,23 +227,26 @@ export default class ScoopAPI {
     };
   }
 
-
   // --- MOUNTING ---
 
-  async mountAllGrids({ root=document, formCodec=FormCodec } = {}) {
+  async mountAllGrids({ root=document, formCodec = FormCodec} = {}) {
     if(!this.getTypesFromGridHosts(root)) return;
-    
-    // One request for all grids on the page.
-    this._domain = await this.refreshPageDomain();
 
     // Build grids with modelCtrls that reuse the same domain.
     const grids = this._hosts.map(dom => {
       const name = dom.dataset.gridType;
       const location = Number(dom.dataset.location || 0);
       const modelCtrl = this.getModelCtrl(name, location );
+
+      this.Meta.forGrid(name);
       // Keep Grid constructor args stable; pass null/undefined for codecs if Grid accepts them.
-      return new Grid(dom, name, { api: this, formCodec, modelCtrl });
+      const G = new Grid(dom, name, { api: this,  modelCtrl, formCodec }); //columns is a possible config item here
+      return G;
     });
+
+    // One request for all grids on the page.
+    this._domain = await this.refreshPageDomain();
+
 
     const models = await Promise.all(grids.map(g => g.modelCtrl.load()));    
     models.forEach((m, i) => grids[i].init(m));

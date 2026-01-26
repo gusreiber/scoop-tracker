@@ -22,7 +22,7 @@ export default class CabinetGridModel extends BaseGridModel{
     return this.columns;
   }
 
-  builRows() {
+  buildRows() {
     const cabinetIds = this.getIdsForLocation(this.domain.cabinet);
     return this.buildGroupedRows({
       groupsMap     : this._slotsByCabinetId,

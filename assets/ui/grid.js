@@ -17,7 +17,7 @@ export default class Grid extends El{
   constructor(target, name, config={
                 api         = {baseUrl:'/'},
                 formCodec   = FormCodec,
-                domainCodec = DomainCodec,
+                columns,
                 modelCtrl
               } = {}
             ) 
@@ -28,6 +28,12 @@ export default class Grid extends El{
     this.modelCtrl = config?.modelCtrl ?? null;
     this.location  = config?.modelCtrl?.location ?? 0;
     this.formCodec = config?.formCodec;
+
+    this._columnsSet = false;
+    this.cols = null;
+    this.rows = [];
+    this.rowGroups = [];
+    this.rowGroupDom = [];
   
     this.baseline  = new Map();   // key -> value
     this.dirtySet  = new Set();   // key
@@ -36,27 +42,21 @@ export default class Grid extends El{
     this._isInit   = false;
     this._docListenerBound = false;
     this._lastFocusedEl = this.target;
-    
+
     this.loadConfig(config);
     this._build();
-    
-    if(config.columns) this.setColumns(config.columns);
-    
+    if (config?.columns?.length) this.setColumns(config.columns, true);
+    this._attachCoreDom();     // attach FORM/TABLE/SUBMIT once
+    this._bindEvents(); 
   }
   
   init(state = this.state) {
-    this.state = state;
-    this.rowGroupDom = [];
-    this.setColumns(state.columns);
-    this.setRowGroups( state.rowGroups );
-    this.setRows(state.rows);
-    if(state?.filter) this.FORM.querySelectorAll
-        ('.gridFilterInput').forEach(f=>f.remove());
-    this._filter = (state?.filter)? new FindInGrid(this.FORM, { root: this.TABLE }) : null;
-    
-    this._bindEvents();
+    if (this._isInit) return this.refresh(state); // important
 
-    this._attachCoreDom();
+    this.state = state;
+    this.setColumns(state.columns, true);
+    this._rebuildBodies(state);
+    this._filter     = (state?.filter) ? new FindInGrid(this.FORM, { root: this.TABLE }) : this.filter;
 
     this._captureBaseline();
 
@@ -64,46 +64,30 @@ export default class Grid extends El{
     this._isInit = true;
   }
 
-  loadConfig( 
-    { api         = this.api,
-      formCodec   = this.formCodec,
-      domainCodec = this.domainCodec,
-      modelCtrl   = this.modelCtrl } = {},
-      state = this.state
-  ){
-    this.api        = api;
-    this.formCodec  = formCodec;
-    this.domainCodec= domainCodec;
-    this.modelCtrl  = modelCtrl;
-    this.postUrl    = api.baseUrl;
-    
-    this.cols       = (state?.columns)? this.setColumns(state.columns) : this.colnulls;
-    this.rowGroups  = (state?.groups) ? this.setRowGroups(state.groups): this.rowGroups;
-    this.rows       = (state?.rows)   ? this.setRows(state.rows)       : this.rows;
-    this._filter    = (state?.filter) ? new FindInGrid(this.FORM, { root: this.TABLE }) : this.filter;
-
+  loadConfig({ api, formCodec, domainCodec, modelCtrl } = {}) {
+    if (api) this.api = api;
+    if (formCodec) this.formCodec = formCodec;
+    if (domainCodec) this.domainCodec = domainCodec;
+    if (modelCtrl) this.modelCtrl = modelCtrl;
+    this.postUrl = this.api?.baseUrl ?? this.postUrl;
   }
 
   async refresh(state) {
     if (!this._isInit) throw new Error("Grid.refresh() called before init()");
     this.state = state;
-    
-    //this.setColumns(await state.columns);
-
-    // rebuild group TBODIES fresh
-    this.setRowGroups(state.rowGroups);
-
-    // fill rows
-    this.setRows(state.rows);
-
-    // baseline resets because DOM changed
+    this._rebuildBodies(state);
     this._captureBaseline();
-    
-    
     this.FORM.dispatchEvent(new Event("ts:grid:close-overlays"));
   }
+  
+  preloadColumns(columns) {
+    this.setColumns(columns, true);
+    this._captureBaseline(); // optional: only if inputs already exist (often they won’t yet)
+  }
 
-  setColumns(columns = []){
+  setColumns(columns = [], force){
+    if(!force && this._columnsSet) return;
+    this._columnsSet = true;
     this.cols = columns;
     this._buildCols();
   }
@@ -132,6 +116,14 @@ export default class Grid extends El{
     if(this.cols) this._buildCols();
   }
 
+  _rebuildBodies({ rowGroups, rows }) {
+    this.TABLE.querySelectorAll("tbody").forEach(tb => tb.remove());
+    this.rowGroupDom = [];
+    this.setRowGroups(rowGroups ?? []);
+    this.setRows(rows ?? []);
+  }
+
+
   _buildCols(){
     if(!this.cols || !this.TABLE  || !this.TRH) return;
 
@@ -145,14 +137,14 @@ export default class Grid extends El{
       if(col.hidden) TH.classList.add('hidden');
       this.TRH.append(TH);
     }
-
+  
     this.TABLE.prepend(this.THEAD);
-
   }
 
   _buildRowGroups(){
     if(!this.rowGroups || this.rowGroups.length === 0) return;
     this.rowGroupDom.forEach(g=>g.remove());
+    this.rowGroupDom = [];
     const gEls = this.rowGroupDom;
     const el = this.el;
     
@@ -184,39 +176,60 @@ export default class Grid extends El{
     }
   }
 
-  _buildRows(){
+_buildRows() {
+  try {
     const rows = this.rows ?? [];
     const cols = this.cols ?? [];
-    const rowGroups = this.rowGroups;
+    const rowGroups = this.rowGroups ?? [];
     const el = this.el;
-    if(!rowGroups || rowGroups.length === 0) {
+
+    if (!rowGroups.length) {
       this.rowGroupDom = [ el('tbody') ];
       this.TABLE.append(this.rowGroupDom[0]);
     }
 
     let i = 0;
-    let next = (rowGroups.length > 0) ? rowGroups[i].startIndex : 0 ;
+
     rows.forEach((row, r) => {
-      
       if (rowGroups[i + 1] && r === rowGroups[i + 1].startIndex) i++;
 
-      const TR =  el( 'tr', {classes:['row'],data:{ rowId : row.id.rowId }});
-      cols.forEach(col =>{
+      const TR = el('tr', { classes:['row'], data:{ rowId: row?.id?.rowId ?? row?.id ?? 0 } });
 
+      cols.forEach(col => {
         const data = row?.[col.key] ?? "";
-        TR.append( this._getCellDom(col,data) );
-        
+        TR.append(this._getCellDom(col, data));
       });
-      this.rowGroupDom[i].append(TR);
-      
+
+      const body = this.rowGroupDom[i];
+      if (!body) {
+        console.error("Grid buildRows: missing tbody", {
+          grid: this.name,
+          i, r,
+          rowGroups: rowGroups.map(g => g.startIndex),
+          rowGroupDomLen: this.rowGroupDom.length,
+          rowsLen: rows.length
+        });
+        return; // stop building further rows; or create a fallback body (below)
+      }
+
+      body.append(TR);
     });
 
+  } catch (e) {
+    console.error("Grid _buildRows exception", this.name, e, {
+      rowsLen: this.rows?.length,
+      rowGroups: this.rowGroups
+    });
   }
+}
+
 
   _getCellDom(col,data){
     // TODO: Decide if I am going to demand data types for all cells
     // TODO: Decide how I am going to swallow or reflect those types in the css class
-    const CELL = this.el('td', { classes:['cell', col.key, col.type ?? 'ok_colType', data.alertCase ?? 'ok_alertCase' ] } );
+    const d = (data && typeof data === "object") ? data : { display: String(data ?? "") };
+    const CELL = this.el('td', { classes:['cell', col.key, col.type ?? 'ok_colType', d.alertCase ?? 'ok_alertCase' ] });
+
     if(col.hidden) CELL.classList.add('hidden');
     
     if(col.write){
@@ -512,23 +525,34 @@ export default class Grid extends El{
       }
     });
 
-    document.addEventListener("ts:domain:updated", async (e) => {
-      if (this._reloading) return;
-      this._reloading = true;
-      try {
-        const model = await this.modelCtrl.load(); // use api snapshot
-        this.init(model);
-      } finally {
-        this._reloading = false;
-      }
-    });
-    
+    if (!this._docListenerBound) {
+      this._docListenerBound = true;
+      this._onDomainUpdated = async () => {
+        if (this._reloading) return;
+        this._reloading = true;
+        try {
+          const model = await this.modelCtrl.load();
+          if (this._isInit) {
+            await this.refresh(model);
+            this._restoreFocusAddress();
+          }
+        } finally {
+          this._reloading = false;
+        }
+      };
+
+      document.addEventListener("ts:domain:updated", this._onDomainUpdated);
+    }    
   }
 
   
   destroy() {
-    //TODO: this doesn't exist
-    console.log("I am here to create not distroy");
+    if (this._onDomainUpdated) {
+      document.removeEventListener("ts:domain:updated", this._onDomainUpdated);
+      this._onDomainUpdated = null;
+      this._docListenerBound = false;
+    }
+    this.FORM?.remove();
   }
 
 }

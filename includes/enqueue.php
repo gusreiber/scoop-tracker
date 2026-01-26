@@ -23,14 +23,17 @@ function scoop_client_metadata():array{
     $fields = [];
     $writeable = [];
     foreach(scoop_get_entity_spec_keys($key) as $pod){
+      
       $spc = scoop_entity_specs($pod);
       $fields[$pod] = $spc['fields'];
       $writeable[$pod] = $spc['writeable'];
+      
     }
+
     $out[$key] = [
       'fields'   => $fields,
       'writeable' => $writeable,
-      'fieldType' => scoop_routes_config($key)['post_type']
+      'postPod' => ($cfg['post_type'] ?? null),
     ];
   }  
   return $out;

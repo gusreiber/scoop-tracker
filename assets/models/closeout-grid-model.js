@@ -21,7 +21,7 @@ export default class CloseoutGridModel extends BaseGridModel{
     return this.columns;
   }
   
-  builRows() {
+  buildRows() {
     // single row
     const rowId = 0;
     

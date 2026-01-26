@@ -127,3 +127,46 @@ function scoop_coerce_value(string $field, $value) {
   // default: leave as-is
   return $value;
 }
+
+function scoop_pods_ready(): bool {
+  return function_exists('pods_api') && is_object(pods_api());
+}
+
+function scoop_pods_field_def(string $pod_name, string $field_name): array {
+  if (!scoop_pods_ready()) return [];
+  $pod = pods_api()->load_pod(['name' => $pod_name]);
+  if (!$pod || empty($pod['fields'][$field_name])) return [];
+  return $pod['fields'][$field_name];
+}
+
+function scoop_pods_dropdown_options(string $pod_name, string $field_name): array {
+  static $cache = [];
+  $k = $pod_name . ':' . $field_name;
+  if (isset($cache[$k])) return $cache[$k];
+
+  $field = scoop_pods_field_def($pod_name, $field_name);
+  $opts  = $field['options'] ?? [];
+
+  $out = [];
+
+  if (!empty($opts['pick_custom']) && is_string($opts['pick_custom'])) {
+    $lines = preg_split("/\r\n|\r|\n/", trim($opts['pick_custom']));
+    foreach ($lines as $line) {
+      $line = trim($line);
+      if ($line === '') continue;
+      if (strpos($line, '|') !== false) {
+        [$key, $label] = array_map('trim', explode('|', $line, 2));
+      } else {
+        $key = $label = $line;
+      }
+      $out[] = ['key' => (string)$key, 'label' => (string)$label];
+    }
+  } elseif (!empty($opts['choices']) && is_array($opts['choices'])) {
+    foreach ($opts['choices'] as $key => $label) {
+      $out[] = ['key' => (string)$key, 'label' => (string)$label];
+    }
+  }
+
+  return $cache[$k] = $out;
+}
+

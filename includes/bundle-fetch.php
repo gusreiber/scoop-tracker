@@ -1,9 +1,19 @@
 <?php
 
-function scoop_cast($v, string $type) {
+function scoop_field_type($desc): string {
+  if (is_string($desc)) return $desc; // backward compat
+  if (is_array($desc)) {
+    $t = $desc['data_type'] ?? $desc['type'] ?? 'string';
+    return is_string($t) ? $t : 'string';
+  }
+  return 'string';
+}
+
+function scoop_cast($v, $desc) {
+  $type = scoop_field_type($desc);
+
   switch ($type) {
     case 'int':
-      // critical: collapse relationship values to an ID
       return scoop_rel_id($v);
 
     case 'float':
@@ -22,9 +32,8 @@ function scoop_cast($v, string $type) {
   }
 }
 
-
 function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = false ): array {
-
+      error_log('-----------scoop_fetch_entities');
   $specs = scoop_entity_specs();
   if (empty($specs[$key])) return [];
 
@@ -35,7 +44,7 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
 
   $post_type = $spec['post_type'];
   $pod_name  = $spec['pod'];
-  $pod_write = $spec['writable'];
+  $pod_write = $spec['writeable'];
 
   // Keep this big to avoid paging; we’ll filter in PHP for now.
   // If you later confirm fields are stored in postmeta, you can add meta_query here.
@@ -44,7 +53,7 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
     'post_status'    => 'any',
     'posts_per_page' => 2000,
     'fields'         => 'ids',
-    'writable'       => $pod_write,
+    'writeable'       => $pod_write,
     'no_found_rows'  => true,
   ]);
 
@@ -52,6 +61,7 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
   foreach ($ids as $id) {
     $pod = pods($pod_name, $id);
     if (!$pod || !$pod->exists()) continue;
+    
 
     $row = [
       'id' => (int)$id,
@@ -61,8 +71,8 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
       $row['_title'] = get_the_title($id);
     }
 
-    foreach (($spec['fields'] ?? []) as $field => $type) {
-      $row[$field] = scoop_cast($pod->field($field), $type);
+    foreach (($spec['fields'] ?? []) as $field => $desc) {
+      $row[$field] = scoop_cast($pod->field($field), $desc);
     }
 
     // Optional contextual filter
@@ -90,7 +100,8 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
 
   return $out;
 }
-
+//$field = scoop_pods_field_def('tub', 'state');
+//error_log(print_r($field, true));
 function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array {
   // Convert request context you care about (location, etc.)
   $ctx = [];
@@ -98,7 +109,7 @@ function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array
   $loc = $req->get_param('location');
   if ($loc !== null && $loc !== '') $ctx['location'] = (int) $loc;
 
-  $map = [
+  $map = [ 
     'tub'      => 'tub',
     'flavor'   => 'flavor',
     'slot'     => 'slot',

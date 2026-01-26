@@ -19,7 +19,7 @@ export default class BatchGridModel extends BaseGridModel{
     return this.columns;
   }
   
-  builRows() {
+  buildRows() {
     // single row
     const rowId = 0;
     

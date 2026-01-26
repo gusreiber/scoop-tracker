@@ -13,7 +13,7 @@ function scoop_routes_config(string $batch_key = ''): array {
       'allowed_fields_cb' => 'scoop_planning_allowed_slot_fields',
     ],
     'Batch' => [
-      'path'         => '/batch',
+      'path'         => '/batches',
       'methods'      => ['GET','POST'],
       'mode'         => 'create',
       'envelope_key' => 'Batch',
@@ -22,7 +22,7 @@ function scoop_routes_config(string $batch_key = ''): array {
       'allowed_fields_cb' => 'scoop_batches_allowed_fields',
     ],
     'FlavorTub' => [
-      'path'         => '/tub',
+      'path'         => '/tubs',
       'methods'      => ['GET','POST'],
       'mode'         => 'update',
       'envelope_key' => 'FlavorTub',
@@ -31,7 +31,7 @@ function scoop_routes_config(string $batch_key = ''): array {
       'allowed_fields_cb' => 'scoop_tubs_allowed_fields',
     ],
     'Closeout' => [
-      'path'         => '/closeout',
+      'path'         => '/closeouts',
       'methods'      => ['GET','POST'],
       'mode'         => 'create',
       'envelope_key' => 'Closeout',

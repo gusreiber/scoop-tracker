@@ -83,15 +83,15 @@ export default class BaseGridModel {
 
   _build() {
     this.buildCols();
-    this.builRows();
+    this.buildRows();
   }
 
   buildCols(){
     throw new Error("buildCols() must be implemented by subclass");
   }
 
-  builRows(){
-    throw new Error("builRows() must be implemented by subclass");
+  buildRows(){
+    throw new Error("buildRows() must be implemented by subclass");
   }
 
   buildGroupedRows({

@@ -104,6 +104,9 @@ function scoop_enforce_tub_rules( $pieces, $is_new_item, $id = 0 ) {
     if ($new_state === 'Emptied' && scoop_nodate($old_emptied_at) && scoop_nodate($new_emptied_at)) {
       $pieces['fields']['emptied_at']['value'] = $now;
       $activate('emptied_at');
+      $pieces['object_fields']['post_status']['value'] = 'draft';
+      $activate('post_status');
+
       error_log('auto-set emptied_at for tub ' . $tub_id);
     }
   }

@@ -23,7 +23,7 @@ export default class FlavorTubGridModel extends BaseGridModel{
     return this.columns;
   }
 
-  builRows(){
+  buildRows(){
     const locationTubIds = this.filterByLocation(this.domain.tub)
       .filter(t => t.state !== "Emptied");
     const tubsByFlavorId = Indexer.groupBy(locationTubIds, t => t.flavor);

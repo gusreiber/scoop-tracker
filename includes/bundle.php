@@ -60,6 +60,5 @@ function scoop_bundle_get(\WP_REST_Request $req) {
     'types' => $types,
     'needs' => $needTypes,
     'data' => $data,
-    'meta' => 'hi?'
   ], 200);
 }

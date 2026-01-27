@@ -1,6 +1,86 @@
 <?php
 
 if (!defined('ABSPATH')) exit;
+
+function scoop_create_custom_roles() {
+  // Remove old roles if they exist (for updates)
+  remove_role('scoop_manager');
+  remove_role('scoop_staff');
+  
+/**
+ * Register custom roles for Scoop Tracker
+ * Run this once on plugin activation or theme setup
+ */
+
+  // Scoop Manager - Full control of inventory
+  add_role('scoop_manager', 'Manager', [
+    'read'         => true,
+    'edit_posts'   => true,
+    'upload_files' => true,
+    'scoop_readonly' => true,
+    'scoop_write'    => true,
+    'scoop_admin'    => true,
+  ]);
+
+  // Scoop Staff - Can update state/use/amount only
+  add_role('scoop_backhouse', 'Kitchen Staff', [
+    'read'         => true,
+    'edit_posts'   => true,
+    'scoop_readonly' => true,
+    'scoop_write'    => true,
+  ]);  
+
+  // Scoop Staff - Can update state/use/amount only
+  add_role('scoop_lead', 'Shift Lead', [
+    'read'         => true,
+    'edit_posts'   => true,
+    'scoop_readonly' => true,
+    'scoop_write'    => true,
+  ]);
+
+  // Scoop Staff - Can update state/use/amount only
+  add_role('scoop_staff', 'Scooper', [
+    'read'         => true,
+    'edit_posts'   => true,
+    'scoop_readonly' => true,
+    'scoop_write'    => true,
+  ]);
+  
+  // Update existing roles (optional - keep your existing function too)
+  scoop_update_existing_roles();
+}
+
+function scoop_update_existing_roles() {
+  // Authors get read-only
+  if ($author = get_role('author')) {
+    $author->add_cap('scoop_readonly');
+  }
+
+  // Editors get write access
+  if ($editor = get_role('editor')) {
+    $editor->add_cap('scoop_readonly');
+    $editor->add_cap('scoop_write');
+  }
+
+  // Admins get everything
+  if ($admin = get_role('administrator')) {
+    $admin->add_cap('scoop_readonly');
+    $admin->add_cap('scoop_write');
+    $admin->add_cap('scoop_admin');
+  }
+}
+
+// Run on activation (add to your main plugin file)
+register_activation_hook(__FILE__, 'scoop_create_custom_roles');
+
+// Or run once manually via admin action
+add_action('admin_init', function() {
+  if (isset($_GET['scoop_setup_roles']) && current_user_can('manage_options')) {
+    scoop_create_custom_roles();
+    wp_die('Roles created! <a href="' . admin_url() . '">Go back</a>');
+  }
+});
+
 function scoop_readonly() {
 
   // Authors get read-only

@@ -14,19 +14,12 @@ import FindInGrid from "./find-in-grid.js";
 import Toast      from "./toast.js";
 
 export default class Grid extends El{
-  constructor(target, name, config={
-                api         = {baseUrl:'/'},
-                formCodec   = FormCodec,
-                columns,
-                modelCtrl
-              } = {}
-            ) 
-  {
+  constructor(target, name, config = {}) {
     super();
-    this.target    = target;
-    this.name      = name;
+    this.target = target;
+    this.name = name;
     this.modelCtrl = config?.modelCtrl ?? null;
-    this.location  = config?.modelCtrl?.location ?? 0;
+    this.location = config?.modelCtrl?.location ?? 0;
     this.formCodec = config?.formCodec;
 
     this._columnsSet = false;
@@ -34,29 +27,42 @@ export default class Grid extends El{
     this.rows = [];
     this.rowGroups = [];
     this.rowGroupDom = [];
-  
-    this.baseline  = new Map();   // key -> value
-    this.dirtySet  = new Set();   // key
-    this.state     = null;
-    this.filter    = null;
-    this._isInit   = false;
+
+    this.baseline = new Map();
+    this.dirtySet = new Set();
+    this.state = null;
+    this.filter = null;
+    this._isInit = false;
     this._docListenerBound = false;
     this._lastFocusedEl = this.target;
 
     this.loadConfig(config);
     this._build();
-    if (config?.columns?.length) this.setColumns(config.columns, true);
-    this._attachCoreDom();     // attach FORM/TABLE/SUBMIT once
-    this._bindEvents(); 
+    
+    // NEW: Preload columns from metadata if available
+    if (config?.columns?.length) {
+      this.setColumns(config.columns, true);
+    } else if (config?.api?.Meta) {
+      const metaCols = config.api.Meta.forGrid(name);
+      if (metaCols?.length) this.setColumns(metaCols, true);
+    }
+    
+    this._attachCoreDom();
+    this._bindEvents();
   }
-  
+
   init(state = this.state) {
-    if (this._isInit) return this.refresh(state); // important
+    if (this._isInit) return this.refresh(state);
 
     this.state = state;
-    this.setColumns(state.columns, true);
+    
+    // Only set columns if not already set from metadata
+    if (!this._columnsSet) {
+      this.setColumns(state.columns, true);
+    }
+    
     this._rebuildBodies(state);
-    this._filter     = (state?.filter) ? new FindInGrid(this.FORM, { root: this.TABLE }) : this.filter;
+    this._filter = (state?.filter) ? new FindInGrid(this.FORM, { root: this.TABLE }) : this.filter;
 
     this._captureBaseline();
 

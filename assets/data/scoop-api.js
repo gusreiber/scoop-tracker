@@ -229,26 +229,33 @@ export default class ScoopAPI {
 
   // --- MOUNTING ---
 
-  async mountAllGrids({ root=document, formCodec = FormCodec} = {}) {
-    if(!this.getTypesFromGridHosts(root)) return;
+  async mountAllGrids({ root = document, formCodec = FormCodec } = {}) {
+    if (!this.getTypesFromGridHosts(root)) return;
 
-    // Build grids with modelCtrls that reuse the same domain.
+    // Build grids with pre-loaded columns from metadata
     const grids = this._hosts.map(dom => {
       const name = dom.dataset.gridType;
       const location = Number(dom.dataset.location || 0);
-      const modelCtrl = this.getModelCtrl(name, location );
+      const modelCtrl = this.getModelCtrl(name, location);
 
-      this.Meta.forGrid(name);
-      // Keep Grid constructor args stable; pass null/undefined for codecs if Grid accepts them.
-      const G = new Grid(dom, name, { api: this,  modelCtrl, formCodec }); //columns is a possible config item here
+      // Get columns from metadata immediately
+      const columns = this.Meta.forGrid(name);
+
+      // Grid gets columns before data loads
+      const G = new Grid(dom, name, { 
+        api: this, 
+        modelCtrl, 
+        formCodec,
+        columns  // ← Pass columns early
+      });
       return G;
     });
 
-    // One request for all grids on the page.
+    // One request for all grids on the page
     this._domain = await this.refreshPageDomain();
 
-
-    const models = await Promise.all(grids.map(g => g.modelCtrl.load()));    
+    // Now load models and populate rows
+    const models = await Promise.all(grids.map(g => g.modelCtrl.load()));
     models.forEach((m, i) => grids[i].init(m));
   }
 }

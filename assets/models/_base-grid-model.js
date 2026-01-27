@@ -179,41 +179,43 @@ export default class BaseGridModel {
 
   }
   
-  getAlertCase( id , type = 'flavor' ){
-    //TODO: Not sure what I was thinking when I made a pass-thru...
-    //TODO: Need to clean-up all these useless 'ok_' classes..
-    if(type !== 'flavor') return 'ok_ac';
-    return this[`${type}Meta`].alertCase(id);
+  getAlertCase(id, fieldKey = 'flavor') {  // Changed param name from 'type' to 'fieldKey'
+    // Only flavor-related fields get alert cases
+    if (fieldKey === 'flavor' || fieldKey.includes('_flavor')) {
+      return this.flavorMeta.alertCase(id);
+    }
+    return '';
   }
 
-  getBadges( id, type = 'flavor', spec = this.fBadgeSpecs){
-    // TODO: Badges could differ by type or field name, but at the moment
-    // I only have flavor bages and they are all tub counts of that ID.
-    if(type !== 'flavor') return [];
-    return this[`${type}Meta`].badges(id, spec);
+  getBadges(id, fieldKey = 'flavor', spec = this.fBadgeSpecs) {  // Changed param name
+    // Only flavor-related fields get badges
+    if (fieldKey === 'flavor' || fieldKey.includes('_flavor')) {
+      return this.flavorMeta.badges(id, spec);
+    }
+    return [];
   }
 
-  getOptions( id, type ){
-    // TODO: This is just a brute force return of the Flavors list
-    // TODO: This should all go in the appropriate models, not options in the parent model
-    // key and label are the properties the listed objects need
-    if(!type || type === 'id') return [];
-    if(type === 'state') return [
-        {key:'__override__',   label:'__override__'},
-        {key:'Hardening',      label:'Hardening'},
-        {key:'Freezing',       label:'Freezing'},
-        {key:'Tempering',      label:'Tempering'},
-        {key:'Opened',         label:'Opened'},
-        {key:'Emptied',        label:'Emptied'}
+  getOptions(id, fieldKey) {  // Changed param name from 'type' to 'fieldKey'
+    if (!fieldKey || fieldKey === 'id') return [];
+    
+    if (fieldKey === 'state') return [
+      {key:'__override__',   label:'__override__'},
+      {key:'Hardening',      label:'Hardening'},
+      {key:'Freezing',       label:'Freezing'},
+      {key:'Tempering',      label:'Tempering'},
+      {key:'Opened',         label:'Opened'},
+      {key:'Emptied',        label:'Emptied'}
     ];
-    if (type === 'location') {
+    
+    if (fieldKey === 'location') {
       return [...this.domain.location]
         .map(u => ({
           key: u.id,
           label: u._title || u.title?.rendered || ''
         }));
     }
-    if (type === 'use') {
+    
+    if (fieldKey === 'use') {
       return [...this.domain.use]
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
         .map(u => ({
@@ -221,9 +223,12 @@ export default class BaseGridModel {
           label: u._title || u.title?.rendered || ''
         }));
     }
-    //TODO: This should get out of here. I don't need the baseModel doing all this work.
-    if(type === 'flavor')
-      return this[`${type}Meta`].optionsAll;
+    
+    // Handle all flavor-related fields
+    if (fieldKey === 'flavor' || fieldKey === 'current_flavor' || 
+        fieldKey === 'immediate_flavor' || fieldKey === 'next_flavor') {
+      return this.flavorMeta.optionsAll;
+    }
     
     return [];
   }
@@ -244,27 +249,23 @@ export default class BaseGridModel {
     return map.get(Number(id))?._title ?? "";
   }
   
-  fillRowFromColumns(
-    row, // The row so far...
-    rowData, // THE RAW DATA for the item that is the basis for the row
-    i,   // a simple 
-  ) 
-  {
+  fillRowFromColumns(row, rowData, i) {
     for (const col of this.columns) {
       const key = col?.key;
       if (!key) continue;
 
       const raw = rowData?.[key];
       const id = Number(raw ?? 0);
+      
       row[key] = {
         id,
         rowId:     rowData?.id || i,
-        display:   (col.titleMap)? this.titleFrom(id, col) : raw ?? "",
+        display:   (col.titleMap) ? this.titleFrom(id, col) : raw ?? "",
         type:      col.type,
         colKey:    col.key,
-        options:   this.getOptions  (id, col.type),
-        badges:    this.getBadges   (id, col.type),
-        alertCase: this.getAlertCase(id, col.type),
+        options:   this.getOptions  (id, col.key),   // ← Changed from col.type
+        badges:    this.getBadges   (id, col.key),   // ← Changed from col.type
+        alertCase: this.getAlertCase(id, col.key),   // ← Changed from col.key
         value:     col.value,
         hidden:    col.hidden,
         write:     col.write ?? false

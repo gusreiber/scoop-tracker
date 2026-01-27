@@ -1,571 +1,797 @@
+/* ============================================
+   CSS VARIABLES - COLOR PALETTE
+   ============================================ */
+
+:root {
+  /* Brand Colors - Green Palette */
+  --color-green-darkest: #030;
+  --color-green-dark: #32620E;
+  --color-green-medium: #4c6b38;
+  --color-green-base: #67924b;
+  --color-green-light: #527d35;
+  --color-green-lighter: #a6d488;
+  --color-green-pale: rgba(180, 220, 200, 0.5);
+  --color-green-accent: rgba(0, 50, 0, 0.75);
+  
+  /* Background Colors */
+  --color-bg-main: #D7DCD2;
+  --color-bg-secondary: #f9f9f9;
+  --color-bg-white: white;
+  --color-bg-footer: #c6c9c4;
+  --color-bg-cell: rgba(255, 255, 255, 0.25);
+  --color-bg-cell-focus: #F6F7F5;
+  
+  /* Text Colors */
+  --color-text-base: #666;
+  --color-text-white: white;
+  --color-text-black: black;
+  --color-text-dark: #600;
+  --color-text-dark-alt: #630;
+  --color-text-dark-yellow: #440;
+  --color-text-dark-yellow-border: #660;
+  
+  /* Alert State Colors */
+  --color-alert-none: black;
+  --color-alert-committed: rgba(200, 0, 0, 0.67);
+  --color-alert-committed-border: darkred;
+  --color-alert-opened: rgba(255, 150, 0, 0.75);
+  --color-alert-opened-border: #630;
+  --color-alert-last: rgba(255, 255, 0, 0.25);
+  --color-alert-last-border: #660;
+  
+  /* Border Colors */
+  --color-border-main: rgba(0, 50, 0, 1);
+  --color-border-light: rgba(50, 100, 50, 0.33);
+  --color-border-green: rgba(0, 100, 50, 1);
+  
+  /* Shadow Colors */
+  --shadow-light: rgba(0, 0, 0, 0.125);
+  --shadow-medium: rgba(0, 0, 0, 0.25);
+  --shadow-dark: rgba(0, 0, 0, 0.5);
+  
+  /* Overlay/Backdrop */
+  --overlay-dark: rgba(0, 0, 0, 0.1);
+  --overlay-white: rgba(255, 255, 255, 0.75);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
 html {
-  font-size: 100%; /* = user’s default, usually 16px */
+  font-size: 100%;
   font-family: sans-serif;
-  color:#666;
-    background-color:#f9f9f9   ;
+  color: var(--color-text-base);
+  background-color: var(--color-bg-secondary);
 }
-body *{
-    position: relative;
-    margin: 0; padding: 0; list-style: none; position: relative; box-sizing: border-box;
-    zbox-shadow: inset 0 0 0 .5px rgba(0,255,100,.5), 0 0 0 .5px rgba(0,255,100,.5);
-    
+
+html,
+html body {
+  background-color: var(--color-bg-main);
 }
+
+body * {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  position: relative;
+  box-sizing: border-box;
+}
+
 * {
-  transition: all 0.3s ease;
-  transition-delay:.05s;
-}
-html > body.TS_GRID-UPDATING .scoop-grid{
-    opacity:.5;
-}
-.TOASTER {
-    position: fixed;
-    bottom:1rem;
-    right:1rem;
-    min-width: 14rem;
-    z-index: 99;
-
-    
-    & .TOAST{
-        background-color: white;
-        padding: 1rem 1.5rem 1.5rem;
-        font-size: .9rem;
-        margin-top:.5rem;
-        opacity: .9;
-        box-shadow: .125rem .25rem .5rem rgba(0,0,0,.25);
-        
-        & .date{ font-size: .67rem;}
-        
-        & h3{
-            font-size: 1rem;
-            margin:.25rem 0 .25rem !important;
-            font-weight: bold;
-        }
-
-        & .close{
-            position: absolute;
-            top: .25rem;
-            right:.25rem;
-            width:1.2rem;
-            font-weight: bold;
-            background-color: transparent;
-            border:none;
-
-
-        }
-    }
-}
-.findIt{
-    position: relative;
-
-    & button.clear{
-        position: absolute;
-        top:0; right:0; padding: 0;
-        line-height: 1rem;
-        width:1rem;
-        height: 1rem;
-        font-size: .6rem;
-        font-weight: bold;
-        font-family: monospace;
-        text-align: center;
-    }
-    & ul.options{
-        z-index: 9;
-        overflow: hidden;
-        max-height: 0;
-        position: absolute;
-        top: 100%;
-        background-color: white;
-        box-shadow:.125rem .5rem .5rem 1px rgba(0,0,0,.25), 0 0 0 1px rgba(0,0,0,.25);
-        margin: -.25rem 0 0 .125rem;  
-        left:0;
-        width:0%;
-        min-width: 0;
-        max-width: 0;
-        z-index: -1;
-        color:0;
-        & li{
-            display: block;
-            padding: .25rem .5rem;
-            color:black;
-            white-space: nowrap;
-            text-decoration: none;
-        }
-        & li.active{
-            background-color: #32620E;
-            color:white;
-            font-weight: 600;
-            & *{color:white;}
-        } 
-    }
+  transition: all 0.3s ease 0.05s;
 }
 
-.gridFilterInput{
-    padding:.5rem;
-    border-top-right-radius: .25rem;
-    border-top-left-radius: .25rem;
-    position: sticky;
-    z-index: 8;
-    top:2rem;
-}
-.findIt:focus,
-.findIt:focus-within{
-    z-index: 9;
-    & ul.options{
-        z-index: 9;
-        max-height: 12rem;
-        min-width: 100%;
-        max-width: 200%;
-        width:auto;
-        overflow: auto;
-    } 
-}
-html body .scoop-grid.Closeout,
-html body .scoop-grid.Batch{
-    width: auto !important;
-    min-width: none;
-    max-width: none;
-    box-shadow: none;
-    background-color: none;
-    &::before{
-        display: none;
-    }
-    & form{
-        display:inline-flex;
-        align-items: flex-end;
-        gap:0;
-        flex-direction: row;
-        max-height: auto;
+/* ============================================
+   LAYOUT - MAIN & FOOTER
+   ============================================ */
 
-        & button.save{
-            height: 2rem;
-            width: 2rem;
-            font-size: 0;
-            padding:0;
-            top:2rem;
-            text-align: center;
-        }
-        & .zGRID{
-            margin:0;
-            & th{
-                height: 2rem;
-            }
-        }
-    }
-}
+html body {
+  & main,
+  & main > * {
+    margin: 0 !important;
+    padding: 0 !important;
 
-body .scoop-grid.Closeout{
-    position: fixed;
-    left: 0;
-    top: auto;
-    bottom:0;
-    z-index: 9;
-}
+    & .scoop-grid {
+      margin: 1rem !important;
+      max-width: 40rem !important;
+      width: calc(100% - 2rem) !important;
+      vertical-align: top;
 
-form table thead th,
-form table tbody td *,
-form table tbody td{
-    opacity: 1;
-}
-.TS_loading form table thead th,
-.TS_loading form table tbody > *,
-.TS_loading form table tbody td *{
+      &.Batch {
+        margin: 1rem 0 !important;
+      }
+    }
 
-    opacity: .5;
-}
+    & .scoop-grid thead {
+      position: sticky;
+      z-index: 3;
+      top: 2rem;
+      border: none;
+      border-collapse: separate;
+    }
 
-.zTS_loading form table tbody> *> * > * {display: none;} 
+    & .entry-content {
+      margin: 0.5rem 1rem !important;
+      padding: 0;
+      font-size: 0;
+    }
+  }
 
-table.zGRID{
-    width:auto;
-    border-spacing: 0;
-    border-collapse:separate;
-    border:.5px solid rgba(0,50,0,1);
-    background:rgba(255,255,255,.75);
-    & thead {
-        z-index: 3;
-        box-shadow: 0 .125rem .125rem rgba(0,0,0,.125);
-    }
-    & tbody tr th,
-    & thead tr th{
-        font-size:.6rem;
-        color:white;
-        background-color: #67924b;
-        border-color: #030;
-        height: 2.25rem;
-    }
-    & tbody tr td{border-color:rgba(50,100,50,.33) }
-    & tbody tr th{
-        font-size:.75rem;
-        background-color: #4c6b38; 
-        box-shadow: inset 0 .125rem .125rem rgba(0,0,0,.125);
-        & button {color:white}
-    }
-    & th.hidden,
-    & td.hidden{display:none}
-    & th{
-        background-color: rgba(180,220,200,.5);
-        &.current_flavor{
-            background-color: #527d35;
-            z-index: 2;
-            &:after{
-                display: block;
-                content: '';
-                position: absolute;
-                top:0; right: 0; bottom: 0;
-                width:.5rem;
-                box-shadow:.25rem .125rem .25rem -.125rem rgba(0,0,0,.33);
-            }
-        }
-        &.immediate_flavor{
-            z-index: 1;
-            &:after{
-                display: block;
-                content: '';
-                position: absolute;
-                top:0; right: 0; bottom: 0;
-                width:.5rem;
-                box-shadow:.25rem .125rem .25rem -.125rem rgba(0,0,0,.5);
-            }
-        }
-    }
-    & td{
-        &.current_flavor{
-            background-color: #a6d488;
-            z-index: 2;
-            &:after{
-                display: block;
-                content: '';
-                position: absolute;
-                top:0; right: 0; bottom: 0;
-                width:.67rem;
-                box-shadow:.25rem 0 .33rem -.125rem rgba(0,0,0,.5);
-            }
-        }
-        &.immediate_flavor:after{
-            display: block;
-            content: '';
-            position: absolute;
-            top:0; right: 0; bottom: 0;
-            width:.5rem;
-            box-shadow:.25rem .125rem .25rem -.125rem rgba(0,0,0,.5);
-        }
-    }
-    & th,
-    & td{
-        border-spacing: 0;
-        border:1px solid rgba(0,100,50,1);
-        &:focus-within{
-            z-index: 9;
-        }
-        &.none-left{
-            background-color:rgba(100,0,50,.67);
-            border-color: darkred;
-            & *:not(li){
-                color:#600;
-            }
-        }
-        &.none-left{
-            background-color:black;
-            border-color:black;
-            & *:not(li){
-                color:white;
-            }
-        }
-
-        &.all-committed{
-            background-color:rgba(200,0,0,.67);
-            border-color: darkred;
-            & *:not(li){
-                color:#600;
-            }            
-        }
-        &.only-opened{
-            background-color: rgba(255,150,0,.75);
-            border-color: #630;
-            & *:not(li){
-                color:#630;
-            }
-        }
-        &.last-unopened{
-            background-color: rgba(255,255,0,.25);
-            border-color: #660;
-            & *:not(li){
-                color:#440;
-            }
-        }
-    }
-    & th,
-    & .groupCell{
-        padding:.5rem;
-    }
-    & .groupCell{
-        & button.oc{
-            height:.85rem;
-            width:.85rem;
-            border-radius: 50%;
-            border:none;
-            background: none;
-            zbox-shadow: inset rgba(0,0,0,.1) .025rem .25rem .125rem,inset 0 .125rem .125rem -.125rem rgba(0,0,0,.1), inset 0 .125rem .25rem 5rem rgba(0,0,0,.1);
-
-            &:before,
-            &:after{
-                content: '⏷';
-                display: block;
-                position: absolute;
-                line-height: .75rem;
-                text-align: center;
-                font-size: .67rem;   
-                top:0; left:0; right:0; bottom:0;
-            }
-            &:after{
-                content: '⏵';
-                display: none;
-            }
-        }
-        & b{
-            display: flex;
-            gap:.25rem;
-            vertical-align: middle;
-            align-items: center;
-        }
-    }
-    & .collapsible.opened{
-        & .row td >*{
-          max-height:20rem;
-          
-        }
-         
-    }
-    & .collapsible.closed{
-        & .group th{
-          border-bottom:none;
-          & button.oc{
-          &:after{
-            content: '⏵';
-            display: block;
-          }
-          &:before{
-            display:none;
-          }
-        }
-        }
-        & .row td{
-        padding:0 .5rem;
-        overflow:hidden;
-        line-height:0;
-        color:transparent;
-        background:transparent;
-        border:none;
-    }
-        & .row td>*{
-          display:block;
-          max-height:0rem;
-          overflow:hidden;
-        }
-        & .row td button,
-        & .row td input {display:none;}
-        & .row td *{
-                background:transparent;
-                
-          }
-    }
-    & tr{
-        & .badges{
-            font-size: .6rem;
-            position: absolute;
-            display: block;
-            right: 0rem;
-            bottom: 0;
-            & .badge{
-                display: inline-block;
-                color: white;
-                background-color: rgba(0, 50, 0, .75);
-                height: 1rem;
-                line-height: 1rem;
-                padding: 0 .25rem 0 .33rem;
-                text-align: center;
-                border-top-left-radius: .45rem;
-                min-width: .9rem;
-                font-weight: bold;
-            }
-        }
-        & .id{ display:none}
-        & .minMax:before {
-            content: '+';
-        }
-        & button,
-        & input,
-        & td,
-        & li,
-        & th{
-            font-size:.75rem;
-        }
-        & .number {
-            width:3rem;
-
-            & div.cell{
-                padding:.0;
-                width:100%;
-                position:absolute;
-                top:0;
-                bottom:0;
-                & .clear{
-                    display:none;
-                }
-            }
-        }
-
-        & .cell{
-            position: relative;
-            padding: 1.25rem 3rem;
-
-            & .badges{
-                
-            }
-            & button.clear{
-                position: absolute;
-                top:0; right:0; padding: 0;
-                line-height: 1rem;
-                width:1rem;
-                height: 1rem;
-                font-size: .6rem;
-                font-weight: bold;
-                font-family: monospace;
-                text-align: center;
-                display: none;
-            }
-            & .findIt,
-            & input{
-                position: absolute;
-                border-style: solid;
-                border:none;
-                top:0; left:0; right:0; bottom:0;
-                padding:.5rem; 
-                background-color: rgba(255,255,255,.25);
-                
-                &:focus{background-color: #F6F7F5;}             
-            } 
-
-        }
-        & .cell.read-only{
-            padding:.5rem .5rem;
-        }
-        & .textIt-box{
-            padding:0;
-            & .textIt{
-                position: absolute;
-                top:0; left:0; right: 0; bottom: 0;
-            }
-        }
-    }
-}
-
-form.zGRID-form{
-
-    display: inline-flex;
-    flex-direction: column;
-    gap:0rem;
-    zmax-height: calc(60rem + 16px);
-    z-index: 1;
-    box-shadow: rgba(0,0,0,.25) .125rem .125rem .67rem;
-
-    & button.save{
-        padding:.5rem;
-        text-align: right;
-        box-shadow: .125rem .125rem .5rem rgba(0,0,0,.05125),-.125rem .125rem .5rem rgba(0,0,0,.05125);
-        border:1px solid;
-        position: sticky;
-        z-index: 5;
-        bottom: 0;
-    }
-    & button.save::after{
-        content: '💾';
-        font-size: 1rem;
-        line-height: .8rem;
-        font-weight: bold;
-        margin: 0 .25rem;
-    }
+  & h1.wp-block-post-title,
+  & footer * {
+    display: none;
+  }
 }
 
 footer {
-    height: 2rem; background-color:#c6c9c4;
-    box-shadow: inset rgba(0,0,0,.25) 0 .25rem .5rem -.125rem;
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-}
-html,
-html body {
-    background-color: #D7DCD2;
-    & main,
-    & main > * {
-        margin:0 !important;
-        padding:0 !important;
-        & .scoop-grid{
-            margin:1rem !important;
-            max-width: 40rem !important;
-            width:calc(100% - 2rem) !important;
-            vertical-align: top;
-            
-            &.Batch{
-                margin: 1rem 0 !important;
-            }
-        }
-        & .scoop-grid thead{
-                position: sticky;
-                z-index: 3;
-                top:2rem;
-                border: none;
-                border-collapse: separate;
-            
-        }
-        & .entry-content{
-            margin:.5rem 1rem !important;
-            padding:0;
-            font-size: 0;
-        }
-    }
-    & h1.wp-block-post-title,
-    & footer *{
-     display: none;;
-    }
+  height: 2rem;
+  background-color: var(--color-bg-footer);
+  box-shadow: inset 0 0.25rem 0.5rem -0.125rem var(--shadow-medium);
+  position: fixed;
+  bottom: 0;
+  width: 100%;
 }
 
-.scoop-grid{
-    min-height: 6rem;
-    min-width: 16rem;
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+
+.TOASTER {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  min-width: 14rem;
+  z-index: 99;
+
+  & .TOAST {
+    background-color: var(--color-bg-white);
+    padding: 1rem 1.5rem 1.5rem;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+    opacity: 0.9;
+    box-shadow: 0.125rem 0.25rem 0.5rem var(--shadow-medium);
+
+    & .date {
+      font-size: 0.67rem;
+    }
+
+    & h3 {
+      font-size: 1rem;
+      margin: 0.25rem 0 0.25rem !important;
+      font-weight: bold;
+    }
+
+    & .close {
+      position: absolute;
+      top: 0.25rem;
+      right: 0.25rem;
+      width: 1.2rem;
+      font-weight: bold;
+      background-color: transparent;
+      border: none;
+    }
+  }
+}
+
+/* ============================================
+   GRID CONTAINER
+   ============================================ */
+
+.scoop-grid {
+  min-height: 6rem;
+  min-width: 16rem;
+  display: inline-block;
+
+  &:focus-within {
+    z-index: 9;
+  }
+
+  & > * {
+    min-width: 100%;
+  }
+
+  &:not(.Batch):not(.Closeout):before {
+    content: '';
     display: inline-block;
-    &:focus-within {z-index: 9;}
-    &.Closeout,
-    &.Batch{
-        display: block; box-shadow:none; position: fixed; top: 1rem; width:12rem; z-index: 9; margin-top: -2px;
-        & table,
-        & form {
-            background:#D7DCD2 ; width:auto !important; min-width: 0;
-            z-index: 6;
-            & .save{
-                position: absolute;
-                margin-top: 2px;
-                left:100%;
-                margin-left: -.125rem;
-                border-radius: .125rem;
-            }
-            & tbody tr td.flavor{
-                padding:.5rem 6rem;
-                &:before{
-                    content: 'Add batch';
-                    text-align: left;
-                }
-            }
-        }
-    }    
-    & > * {min-width: 100%;}
+    background-color: var(--overlay-dark);
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+  }
+}
 
-    &:not(.Batch):before{
-        content: '';
-        display: inline-block;
-        background-color: rgba(0,0,0,.1);
-        position: absolute;
-        top:0; left:0; bottom:0;  right:0 ;
+html > body.TS_GRID-UPDATING .scoop-grid {
+  opacity: 0.5;
+}
+
+/* Special Grid Types: Batch & Closeout */
+.scoop-grid.Batch,
+.scoop-grid.Closeout {
+  display: block;
+  box-shadow: none;
+  position: fixed;
+  top: 1rem;
+  width: 12rem;
+  z-index: 9;
+  max-width: none !important;
+  min-width: 0;
+
+  & table,
+  & form {
+    background: var(--color-bg-main);
+    width: auto !important;
+    min-width: 0;
+    z-index: 6;
+  }
+
+  & form {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 0;
+    flex-direction: row;
+    max-height: auto;
+
+    & button.save {
+      position: absolute;
+      margin-top: 2px;
+      left: 100%;
+      margin-left: -0.125rem;
+      border-radius: 0.125rem;
+      height: 2rem;
+      width: 2rem;
+      font-size: 0;
+      padding: 0;
+      top: 2rem;
+      text-align: center;
     }
+
+    & .zGRID {
+      margin: 0;
+
+      & th {
+        height: 2rem;
+      }
+    }
+  }
+
+  & tbody tr td.flavor {
+    padding: 0.5rem 6rem;
+
+    &:before {
+      content: 'Add batch';
+      text-align: left;
+    }
+  }
+}
+
+.scoop-grid.Closeout {
+  left: 0;
+  top: auto;
+  bottom: 0;
+}
+
+/* ============================================
+   FORM
+   ============================================ */
+
+form.zGRID-form {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0;
+  z-index: 1;
+  box-shadow: 0.125rem 0.125rem 0.67rem var(--shadow-medium);
+
+  & button.save {
+    padding: 0.5rem;
+    text-align: right;
+    box-shadow: 
+      0.125rem 0.125rem 0.5rem rgba(0, 0, 0, 0.05),
+      -0.125rem 0.125rem 0.5rem rgba(0, 0, 0, 0.05);
+    border: 1px solid;
+    position: sticky;
+    z-index: 5;
+    bottom: 0;
+
+    &::after {
+      content: '💾';
+      font-size: 1rem;
+      line-height: 0.8rem;
+      font-weight: bold;
+      margin: 0 0.25rem;
+    }
+  }
+}
+
+/* ============================================
+   TABLE - CORE STRUCTURE
+   ============================================ */
+
+table.zGRID {
+  width: auto;
+  border-spacing: 0;
+  border-collapse: separate;
+  border: 0.5px solid var(--color-border-main);
+  background: var(--overlay-white);
+
+  & thead {
+    z-index: 3;
+    box-shadow: 0 0.125rem 0.125rem var(--shadow-light);
+
+    & tr th {
+      font-size: 0.6rem;
+      color: var(--color-text-white);
+      background-color: var(--color-green-base);
+      border-color: var(--color-green-darkest);
+      height: 2.25rem;
+    }
+  }
+
+  & tbody {
+    & tr th {
+      font-size: 0.75rem;
+      color: var(--color-text-white);
+      background-color: var(--color-green-medium);
+      border-color: var(--color-green-darkest);
+      box-shadow: inset 0 0.125rem 0.125rem var(--shadow-light);
+
+      & button {
+        color: var(--color-text-white);
+      }
+    }
+
+    & tr td {
+      border-color: var(--color-border-light);
+    }
+  }
+
+  & th.hidden,
+  & td.hidden {
+    display: none;
+  }
+}
+
+/* ============================================
+   TABLE - HEADERS (th)
+   ============================================ */
+
+table.zGRID th {
+  background-color: var(--color-green-pale);
+  padding: 0.5rem;
+  border: 1px solid var(--color-border-green);
+
+  &.current_flavor {
+    background-color: var(--color-green-light);
+    z-index: 2;
+
+    &:after {
+      display: block;
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 0.5rem;
+      box-shadow: 0.25rem 0.125rem 0.25rem -0.125rem var(--shadow-medium);
+    }
+  }
+
+  &.immediate_flavor {
+    z-index: 1;
+
+    &:after {
+      display: block;
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 0.5rem;
+      box-shadow: 0.25rem 0.125rem 0.25rem -0.125rem var(--shadow-dark);
+    }
+  }
+}
+
+/* ============================================
+   TABLE - CELLS (td)
+   ============================================ */
+
+table.zGRID td {
+  border: 1px solid var(--color-border-green);
+
+  &:focus-within {
+    z-index: 9;
+  }
+
+  &.current_flavor {
+    background-color: var(--color-green-lighter);
+    z-index: 2;
+
+    &:after {
+      display: block;
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 0.67rem;
+      box-shadow: 0.25rem 0 0.33rem -0.125rem var(--shadow-dark);
+    }
+  }
+
+  &.immediate_flavor:after {
+    display: block;
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 0.5rem;
+    box-shadow: 0.25rem 0.125rem 0.25rem -0.125rem var(--shadow-dark);
+  }
+}
+
+table.zGRID th:focus-within {
+  z-index: 9;
+}
+
+/* ============================================
+   TABLE - ALERT STATES
+   ============================================ */
+
+table.zGRID {
+  & th.none-left,
+  & td.none-left {
+    background-color: var(--color-alert-none);
+    border-color: var(--color-alert-none);
+
+    & *:not(li) {
+      color: var(--color-text-white);
+    }
+  }
+
+  & th.all-committed,
+  & td.all-committed {
+    background-color: var(--color-alert-committed);
+    border-color: var(--color-alert-committed-border);
+
+    & *:not(li) {
+      color: var(--color-text-dark);
+    }
+  }
+
+  & th.only-opened,
+  & td.only-opened {
+    background-color: var(--color-alert-opened);
+    border-color: var(--color-alert-opened-border);
+
+    & *:not(li) {
+      color: var(--color-text-dark-alt);
+    }
+  }
+
+  & th.last-unopened,
+  & td.last-unopened {
+    background-color: var(--color-alert-last);
+    border-color: var(--color-alert-last-border);
+
+    & *:not(li) {
+      color: var(--color-text-dark-yellow);
+    }
+  }
+}
+
+/* ============================================
+   TABLE - ROW GROUPS
+   ============================================ */
+
+table.zGRID .groupCell {
+  padding: 0.5rem;
+
+  & b {
+    display: flex;
+    gap: 0.25rem;
+    vertical-align: middle;
+    align-items: center;
+  }
+
+  & button.oc {
+    height: 0.85rem;
+    width: 0.85rem;
+    border-radius: 50%;
+    border: none;
+    background: none;
+
+    &:before,
+    &:after {
+      content: '⏷';
+      display: block;
+      position: absolute;
+      line-height: 0.75rem;
+      text-align: center;
+      font-size: 0.67rem;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+
+    &:after {
+      content: '⏵';
+      display: none;
+    }
+  }
+}
+
+/* Collapsible Groups - Opened State */
+table.zGRID .collapsible.opened .row td > * {
+  max-height: 20rem;
+}
+
+/* Collapsible Groups - Closed State */
+table.zGRID .collapsible.closed {
+  & .group th {
+    border-bottom: none;
+
+    & button.oc {
+      &:after {
+        content: '⏵';
+        display: block;
+      }
+
+      &:before {
+        display: none;
+      }
+    }
+  }
+
+  & .row td {
+    padding: 0 0.5rem;
+    overflow: hidden;
+    line-height: 0;
+    color: transparent;
+    background: transparent;
+    border: none;
+
+    & > * {
+      display: block;
+      max-height: 0;
+      overflow: hidden;
+    }
+
+    & * {
+      background: transparent;
+    }
+
+    & button,
+    & input {
+      display: none;
+    }
+  }
+}
+
+/* ============================================
+   TABLE - BADGES
+   ============================================ */
+
+table.zGRID tr .badges {
+  font-size: 0.6rem;
+  position: absolute;
+  display: block;
+  right: 0;
+  bottom: 0;
+
+  & .badge {
+    display: inline-block;
+    color: var(--color-text-white);
+    background-color: var(--color-green-accent);
+    height: 1rem;
+    line-height: 1rem;
+    padding: 0 0.25rem 0 0.33rem;
+    text-align: center;
+    border-top-left-radius: 0.45rem;
+    min-width: 0.9rem;
+    font-weight: bold;
+  }
+}
+
+/* ============================================
+   TABLE - SPECIAL COLUMNS
+   ============================================ */
+
+table.zGRID tr {
+  & .id {
+    display: none;
+  }
+
+  & .number {
+    width: 3rem;
+
+    & div.cell {
+      padding: 0;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+
+      & .clear {
+        display: none;
+      }
+    }
+  }
+}
+
+/* ============================================
+   TABLE - CELLS (Editable & Read-only)
+   ============================================ */
+
+table.zGRID tr {
+  & button,
+  & input,
+  & td,
+  & li,
+  & th {
+    font-size: 0.75rem;
+  }
+
+  & .cell {
+    position: relative;
+    padding: 1.25rem 3rem;
+
+    & button.clear {
+      position: absolute;
+      top: 0;
+      right: 0;
+      padding: 0;
+      line-height: 1rem;
+      width: 1rem;
+      height: 1rem;
+      font-size: 0.6rem;
+      font-weight: bold;
+      font-family: monospace;
+      text-align: center;
+      display: none;
+    }
+
+    & .findIt,
+    & input {
+      position: absolute;
+      border: none;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 0.5rem;
+      background-color: var(--color-bg-cell);
+
+      &:focus {
+        background-color: var(--color-bg-cell-focus);
+        color: var(--color-text-black);
+        font-weight: bold;
+      }
+    }
+  }
+
+  & .cell.read-only {
+    padding: 0.5rem 0.5rem;
+  }
+
+  & .textIt-box {
+    padding: 0;
+
+    & .textIt {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+    }
+  }
+}
+
+/* ============================================
+   FINDIT COMPONENT (Type-ahead dropdown)
+   ============================================ */
+
+.findIt {
+  position: relative;
+
+  & button.clear {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 0;
+    line-height: 1rem;
+    width: 1rem;
+    height: 1rem;
+    font-size: 0.6rem;
+    font-weight: bold;
+    font-family: monospace;
+    text-align: center;
+  }
+
+  & ul.options {
+    z-index: -1;
+    overflow: hidden;
+    max-height: 0;
+    position: absolute;
+    top: 100%;
+    background-color: var(--color-bg-white);
+    box-shadow: 
+      0.125rem 0.5rem 0.5rem 1px var(--shadow-medium),
+      0 0 0 1px var(--shadow-medium);
+    margin: -0.25rem 0 0 0.125rem;
+    left: 0;
+    width: 0;
+    min-width: 0;
+    max-width: 0;
+    color: transparent;
+
+    & li {
+      display: block;
+      padding: 0.25rem 0.5rem;
+      color: var(--color-text-black);
+      white-space: nowrap;
+      text-decoration: none;
+
+      &.active {
+        background-color: var(--color-green-dark);
+        color: var(--color-text-white);
+        font-weight: 600;
+
+        & * {
+          color: var(--color-text-white);
+        }
+      }
+    }
+  }
+
+  &:focus,
+  &:focus-within {
+    z-index: 9;
+
+    & ul.options {
+      z-index: 9;
+      max-height: 12rem;
+      min-width: 100%;
+      max-width: 200%;
+      width: auto;
+      overflow: auto;
+    }
+  }
+}
+
+/* ============================================
+   GRID FILTER INPUT
+   ============================================ */
+
+.gridFilterInput {
+  padding: 0.5rem;
+  border-top-right-radius: 0.25rem;
+  border-top-left-radius: 0.25rem;
+  position: sticky;
+  z-index: 8;
+  top: 2rem;
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+form table {
+  & thead th,
+  & tbody td *,
+  & tbody td {
+    opacity: 1;
+  }
+}
+
+.TS_loading form table {
+  & thead th,
+  & tbody > *,
+  & tbody td * {
+    opacity: 0.5;
+  }
 }

@@ -7,5 +7,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     routes: SCOOP.routes,
     metaData: SCOOP.metaData,
   });
+  console.log(SCOOP);
   await api.mountAllGrids(SCOOP.metaData);
 });

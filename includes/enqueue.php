@@ -17,40 +17,79 @@ function scoop_client_routes(): array {
   return $out;
 }
 
-// enqueue.php - REPLACE scoop_client_metadata()
 function scoop_client_metadata(): array {
-  $out = [];
-  
-  foreach (scoop_routes_config() as $key => $cfg) {
-    $post_type = $cfg['post_type'] ?? null;
-    if (!$post_type) continue;
-    
-    $entity_spec = scoop_entity_specs($post_type);
-    if (!$entity_spec) continue;
-    
-    $writeable_fields = $entity_spec['writeable'] ?? [];
-    $writeable_set = array_flip($writeable_fields);
-    
-    // Build column definitions
-    $columns = [];
-    foreach ($entity_spec['fields'] as $field_key => $field_desc) {
-      $columns[$field_key] = [
-        'label'    => ucfirst(str_replace('_', ' ', $field_key)),
-        'dataType' => $field_desc['data_type'] ?? 'string',
-        'control'  => $field_desc['control'] ?? 'input',
-        'hidden'   => $field_desc['hidden'] ?? false,
-        'visible'  => !($field_desc['hidden'] ?? false),
-        'editable' => isset($writeable_set[$field_key]), // ← KEY PART
-      ];
+
+  $out  = [];
+  $user = wp_get_current_user();
+
+  $routes = scoop_routes_config();
+
+  foreach ($routes as $route_key => $cfg) {
+
+    // Primary entity for this module (today: one entity per module)
+    $primary = $cfg['pod_name'] ?? ($cfg['post_type'] ?? '');
+
+    // Future-proof: allow multiple editable entities per module
+    // Later you can add in _config.php: 'entity_keys' => ['slot','tub']
+    if (!empty($cfg['entity_keys']) && is_array($cfg['entity_keys'])) {
+      $entity_keys = $cfg['entity_keys'];
+      if ($primary === '' && !empty($entity_keys)) $primary = (string)$entity_keys[0];
+    } else {
+      $entity_keys = ($primary !== '') ? [$primary] : [];
     }
-    
-    $out[$key] = [
-      'postPod'  => $post_type,
-      'columns'  => $columns,
-      'writeable' => $writeable_fields, // Keep for debugging
+
+    $entities_out = [];
+
+    foreach ($entity_keys as $entity_key) {
+      $spec   = scoop_entity_specs($entity_key);
+      $fields = $spec['fields'] ?? [];
+
+      if (empty($fields) || !is_array($fields)) {
+        $entities_out[$entity_key] = [];
+        continue;
+      }
+
+      // Static "ever editable" list from specs
+      $spec_writeable = $spec['writeable'] ?? [];
+      if (!is_array($spec_writeable)) $spec_writeable = [];
+
+      // Dynamic per-user list from policy
+      $policy_writeable = scoop_user_writeable_fields($user, $entity_key);
+      if (!is_array($policy_writeable)) $policy_writeable = [];
+
+      // Final editable set = spec ∩ policy
+      $writeable_set = array_flip(array_values(array_intersect($spec_writeable, $policy_writeable)));
+
+      // Build LIST (Grid-friendly): [{key,label,dataType,control,hidden,visible,editable}, ...]
+      $columns = [];
+      foreach ($fields as $field_key => $field_def) {
+        // Back-compat: if you still have 'state' => 'string' style
+        if (is_string($field_def)) $field_def = ['data_type' => $field_def];
+        if (!is_array($field_def)) $field_def = [];
+
+        $hidden = (bool)($field_def['hidden'] ?? false);
+
+        $columns[] = [
+          'key'      => (string)$field_key,
+          'label'    => ucfirst(str_replace('_', ' ', (string)$field_key)),
+          'dataType' => $field_def['data_type'] ?? 'string',
+          'control'  => $field_def['control'] ?? 'input',
+          'hidden'   => $hidden,
+          'visible'  => !$hidden,
+          'editable' => isset($writeable_set[$field_key]),
+        ];
+      }
+
+      $entities_out[$entity_key] = $columns;
+    }
+
+    $out[$route_key] = [
+      'primary'  => $primary,
+      'entities' => $entities_out,
     ];
   }
-  
+
+  error_log('Final metadata module keys: ' . print_r(array_keys($out), true));
   return $out;
 }
 
@@ -94,3 +133,25 @@ add_filter('script_loader_tag', function($tag, $handle, $src) {
     esc_url($src)
   );
 }, 10, 3);
+
+// admin-page.php (or wherever you have your wp_enqueue_scripts hook)
+
+add_action('wp_enqueue_scripts', function () {
+    error_log("wp_enqueue_scripts hook fired");
+    error_log("is_singular: " . (is_singular() ? 'YES' : 'NO'));
+    
+    if (!is_singular()) return;
+
+    global $post;
+    error_log("post exists: " . ($post ? 'YES' : 'NO'));
+    
+    if (!$post) return;
+    
+    error_log("post_content: " . substr($post->post_content, 0, 200));
+    error_log("has shortcode: " . (has_shortcode($post->post_content, 'scoop_grid') ? 'YES' : 'NO'));
+    
+    if (!has_shortcode($post->post_content, 'scoop_grid')) return;
+
+    error_log("CALLING scoop_enqueue_assets()");
+    scoop_enqueue_assets();
+});

@@ -81,10 +81,10 @@ export default class ScoopAPI {
     return u;
   }
 
-  async _fetch(url, { method="GET", headers={}, body=null, useNonce=false } = {}) {
+  async _fetch(url, { method="GET", headers={}, body=null, useNonce=true } = {}) {
     const u0 = (url instanceof URL) ? url : this._absUrl(url);
     const u = (method === "GET") ? this._absUrlWithBust(u0) : ((u0 instanceof URL) ? u0 : this._absUrl(u0));
-
+    console.log('_fetch????');
     const res = await fetch(u, {
       method,
       credentials: "include",
@@ -98,7 +98,7 @@ export default class ScoopAPI {
       },
       body,
     });
-
+    console.log('???_fetch');
     const text = await res.text().catch(() => "");
     let data = null;
     try { data = text ? JSON.parse(text) : null; }
@@ -147,6 +147,28 @@ export default class ScoopAPI {
     const key = this._typesKey();
     base.searchParams.set("types", key);
     return base;
+  }
+
+  _columnsForGridType(name) {
+    const entityMap = {
+      Cabinet: "slot",
+      FlavorTub: "tub",
+      Batch: "batch",
+      Closeout: "closeout",
+    };
+
+    const entity = entityMap[name] || name;
+    const meta = SCOOP.metaData?.[entity];
+
+    if (!meta) return [];
+
+    // meta is assumed to be { fieldKey: fieldDef, ... }
+    return Object.entries(meta)
+      .map(([key, def]) => ({
+        key,
+        ...def,
+      }))
+      .filter(col => col.visible !== false);
   }
 
   // Returns full bundle JSON: { ok, types, needs, data }
@@ -239,7 +261,9 @@ export default class ScoopAPI {
       const modelCtrl = this.getModelCtrl(name, location);
 
       // Get columns from metadata immediately
-      const columns = this.Meta.forGrid(name);
+      const md = SCOOP.metaData?.[name];
+      const primary = md?.primary;
+      const columns = (primary && md?.entities?.[primary]) ? md.entities[primary] : [];
 
       // Grid gets columns before data loads
       const G = new Grid(dom, name, { 

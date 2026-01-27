@@ -3,8 +3,19 @@
 add_action('rest_api_init', function () {
   register_rest_route('scoop/v1', '/bundle', [
     'methods'  => ['GET'],
-    'callback' => 'scoop_bundle_get',
-    'permission_callback' => '__return_true',
+    'callback' => function(\WP_REST_Request $req) {
+      return scoop_bundle_get($req);
+    },
+    'permission_callback' => function(\WP_REST_Request $req) {
+      $u = wp_get_current_user();
+      error_log('SCOOP whoami: user_id=' . ($u->ID ?? 0)
+        . ' roles=' . json_encode($u->roles ?? [])
+        . ' can_edit_posts=' . (current_user_can('edit_posts') ? 'yes' : 'no')
+        . ' can_manage_options=' . (current_user_can('manage_options') ? 'yes' : 'no')
+      );
+
+      return is_user_logged_in();
+    },
   ]);
 });
 

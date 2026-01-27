@@ -1,13 +1,6 @@
   <?php
-
-  /**
-   * REST: /wp-json/scoop/v1/planning
-   * - GET: health/info (optional)
-   * - POST: apply Cabinet[cells][slotId][field] = value
-   */
-
+  
   add_action('rest_api_init', function () {
-    
     $routes = scoop_routes_config();
 
     foreach ($routes as $key => $cfg) {
@@ -16,16 +9,24 @@
         'callback' => function(\WP_REST_Request $req) use ($cfg, $key) {
           return scoop_handle_request($req, $cfg, $key);
         },
-        'permission_callback' => function(\WP_REST_Request $req) {
-          $u = wp_get_current_user();
-          error_log('SCOOP perm: method=' . $req->get_method()
-            . ' user_id=' . ($u->ID ?? 0)
-            . ' logged_in=' . (is_user_logged_in() ? 'yes' : 'no')
-            . ' can_edit_posts=' . (current_user_can('edit_posts') ? 'yes' : 'no')
-            . ' can_manage_options=' . (current_user_can('manage_options') ? 'yes' : 'no')
-            . ' is_super_admin=' . (is_super_admin() ? 'yes' : 'no')
-          );
-          return is_user_logged_in() && current_user_can('edit_posts');
+        'permission_callback' => function(\WP_REST_Request $req) use ($key) {
+          if (!is_user_logged_in()) return false;
+          
+          $user = wp_get_current_user();
+          $method = $req->get_method();
+          
+          $allowed = scoop_user_can_route($user, $key, $method);
+          
+          error_log(sprintf(
+            'SCOOP %s %s: user=%s role=%s allowed=%s',
+            $method,
+            $key,
+            $user->user_login,
+            implode(',', $user->roles),
+            $allowed ? 'YES' : 'NO'
+          ));
+          
+          return $allowed;
         },
       ]);
     }

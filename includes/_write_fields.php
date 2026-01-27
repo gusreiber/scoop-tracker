@@ -2,16 +2,27 @@
 /**
  * Fields (Pods slugs) that the Cabinet endpoint is allowed to write.
  */
-function scoop_planning_allowed_slot_fields(): array {
-  return scoop_entity_specs('slot')['writeable']; 
+function scoop_allowed_fields_for_entity(\WP_User $u, string $entity_key, array $route_fields): array {
+  $policy_fields = scoop_user_writeable_fields($u, $entity_key); // from policy
+  if (empty($policy_fields)) return [];
+  return array_values(array_intersect($route_fields, $policy_fields));
 }
-function scoop_batches_allowed_fields(): array {
+
+function scoop_planning_allowed_slot_fields(\WP_User $u): array {
+  $route_fields =  scoop_entity_specs('slot')['writeable']; // ['current_flavor','immediate_flavor','next_flavor'];
+  return scoop_allowed_fields_for_entity($u, 'slot', $route_fields);
+}
+
+function scoop_batches_allowed_fields(\WP_User $u): array {
   return [ 'flavor','count' ];
 }
-function scoop_tubs_allowed_fields(): array {
-  return scoop_entity_specs('tub')['writeable']; 
+
+function scoop_tubs_allowed_fields(\WP_User $u): array {
+  $route_fields = scoop_entity_specs('tub')['writeable']; // what this endpoint supports
+  return scoop_allowed_fields_for_entity($u, 'tub', $route_fields);
 }
-function scoop_closeouts_allowed_fields(): array {
+
+function scoop_closeouts_allowed_fields(\WP_User $u): array {
   return [ 'tubs_emptied', 'flavor', 'use', 'location', 'order']; //'amount' 
 }
 
@@ -31,8 +42,6 @@ function scoop_save_pod_fields( string $pod_name, int $id, array $data ) {
     return $e->getMessage();
   }
 }
-
-
 function scoop_create_pod_item(string $pod_name, array $allowed_fields, array $data) {
   if (!function_exists('pods_api')) {
     return new WP_Error('pods_missing', 'Pods API not available.');

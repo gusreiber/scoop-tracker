@@ -2,6 +2,27 @@
 
 if (!defined('ABSPATH')) exit;
 
+function scoop_user_primary_role(\WP_User $u): string {
+  $roles = (array)($u->roles ?? []);
+  return $roles[0] ?? '';
+}
+
+function scoop_policy_for_user(\WP_User $u): array {
+  $p = scoop_access_policy();
+  $role = scoop_user_primary_role($u);
+  $base = $p['_default'] ?? [];
+  $rolep = $p[$role] ?? [];
+  // role overrides win
+  return array_replace_recursive($base, $rolep);
+}
+
+function scoop_can_route(\WP_User $u, string $route_key, string $method): bool {
+  $pol = scoop_policy_for_user($u);
+  return (bool)($pol['routes'][$route_key][$method] ?? false);
+}
+//scoop_user_writeable_fields
+// scoop_writable_fields is now scoop_user_writeable_fields in _policy.php
+
 function scoop_create_custom_roles() {
   // Remove old roles if they exist (for updates)
   remove_role('scoop_manager');
@@ -14,9 +35,9 @@ function scoop_create_custom_roles() {
 
   // Scoop Manager - Full control of inventory
   add_role('scoop_manager', 'Manager', [
-    'read'         => true,
-    'edit_posts'   => true,
-    'upload_files' => true,
+    'read'           => true,
+    'edit_posts'     => true,
+    'upload_files'   => true,
     'scoop_readonly' => true,
     'scoop_write'    => true,
     'scoop_admin'    => true,

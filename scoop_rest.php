@@ -18,16 +18,20 @@ function scoop_require($rel) {
   require_once $path;
 }
 
+error_log("========== SCOOP REST PLUGIN LOADING ==========");
+
 /**
  * Config/constants first
  */
 scoop_require('includes/_config.php');
 scoop_require('includes/_specs.php');
 scoop_require('includes/_write_fields.php');
+
 /**
- * Helpers next (no hooks should depend on files after this point)
+ * Helpers next
  */
-scoop_require('includes/_pods_helpers.php'); // you create this (scoop_rel_id, nodate, pods_api_save, guard helpers)
+scoop_require('includes/_pods_helpers.php');
+scoop_require('includes/_policy.php');
 
 /**
  * Pods hooks / domain behavior
@@ -42,9 +46,7 @@ scoop_require('includes/hooks/closeout.php');
  */
 scoop_require('includes/bundle-fetch.php');
 scoop_require('includes/bundle.php');
-
 scoop_require('includes/rest.php');
-
 
 /**
  * UI glue (shortcode/admin/enqueue) last
@@ -53,7 +55,7 @@ scoop_require('includes/enqueue.php');
 scoop_require('includes/shortcode.php');
 scoop_require('includes/admin-page.php');
 
+error_log("========== SCOOP REST PLUGIN LOADED ==========");
+
 register_activation_hook(__FILE__, 'scoop_readonly');
 add_filter('pods_api_pre_save_pod_item', 'scoop_enforce_tub_rules', 10, 3);
-
-error_log( "--------------");

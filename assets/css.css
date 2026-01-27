@@ -398,6 +398,9 @@ table.zGRID th {
    TABLE - CELLS (td)
    ============================================ */
 
+table.zGRID tr:focus-within{
+    z-index: 9;
+}
 table.zGRID td {
   border: 1px solid var(--color-border-green);
 

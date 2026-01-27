@@ -44,7 +44,12 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
 
   $post_type = $spec['post_type'];
   $pod_name  = $spec['pod'];
-  $pod_write = $spec['writeable'];
+  $pod_write = $spec['writeable'] ?? [];
+  if (is_callable($pod_write)) {
+    $pod_write = (array) $pod_write(wp_get_current_user());
+  }
+
+
 
   // Keep this big to avoid paging; we’ll filter in PHP for now.
   // If you later confirm fields are stored in postmeta, you can add meta_query here.
@@ -53,7 +58,7 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
     'post_status'    => 'any',
     'posts_per_page' => 2000,
     'fields'         => 'ids',
-    'writeable'       => $pod_write,
+    //'writeable'      => $pod_write,
     'no_found_rows'  => true,
   ]);
 

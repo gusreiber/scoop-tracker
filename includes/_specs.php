@@ -14,25 +14,25 @@ function scoop_get_entity_spec_keys(string $bundle_key): array {
 }
 
 function scoop_entity_specs(string $key = ''): array {
-  $spc =[
+  $spc = [
     'tub' => [
       'post_type' => 'tub',
       'pod'       => 'tub',
-      'title'     => true, // TODO: Remove... not shown, but JS might try to use...
+      'title'     => true,
       'fields'    => [
-          'state'    => ['data_type' => 'string', 'control' => 'enum',  ],
-          'use'      => ['data_type' => 'int',    'control' => 'find'  ],
-          'amount'   => ['data_type' => 'float',  'control' => 'input' ],
-          'flavor'   => ['data_type' => 'int',    'control' => 'input' ],
-          'date'     => ['data_type' => 'string', 'control' => 'input' ],
-          'location' => ['data_type' => 'int',    'control' => 'input', 'hidden' => true ],
-          'index'    => ['data_type' => 'int',    'hidden'  => true ],
+        'state'    => ['data_type' => 'string', 'control' => 'enum'],
+        'use'      => ['data_type' => 'int',    'control' => 'find'],
+        'amount'   => ['data_type' => 'float',  'control' => 'input'],
+        'flavor'   => ['data_type' => 'int',    'control' => 'input'],
+        'date'     => ['data_type' => 'string', 'control' => 'input'],
+        'location' => ['data_type' => 'int',    'control' => 'input', 'hidden' => true],
+        'index'    => ['data_type' => 'int',    'hidden'  => true],
       ],
       'post_fields' => [
-          'author_name' => 'string',     // comes from WP_Post->post_author
+        'author_name' => 'string',
       ],
       'filter' => function(array $row, array $ctx) {
-          return ($row['state'] ?? '') !== 'Emptied';
+        return ($row['state'] ?? '') !== 'Emptied';
       },
       'writeable' => ['state','use','amount']
     ],
@@ -42,19 +42,19 @@ function scoop_entity_specs(string $key = ''): array {
       'pod'       => 'slot',
       'title'     => true,
       'fields'    => [
-        'cabinet'          => ['data_type' => 'int', 'control' => 'find', 'hidden' => true ],
-        'location'         => ['data_type' => 'int', 'control' => 'find', 'hidden' => true ],
-        'current_flavor'   => ['data_type' => 'int', 'control' => 'find' ],
-        'immediate_flavor' => ['data_type' => 'int', 'control' => 'find' ],
-        'next_flavor'      => ['data_type' => 'int', 'control' => 'find' ],
+        'cabinet'          => ['data_type' => 'int', 'control' => 'find', 'hidden' => true],
+        'location'         => ['data_type' => 'int', 'control' => 'find', 'hidden' => true],
+        'current_flavor'   => ['data_type' => 'int', 'control' => 'find'],
+        'immediate_flavor' => ['data_type' => 'int', 'control' => 'find'],
+        'next_flavor'      => ['data_type' => 'int', 'control' => 'find'],
       ],
-      'writeable' => ['current_flavor','immediate_flavor','next_flavor']
+      'writeable' => ['current_flavor','immediate_flavor','next_flavor'],
     ],
 
     'cabinet' => [
       'post_type' => 'cabinet',
       'pod'       => 'cabinet',
-      'title'     => true,
+      'title'     => 'Cabinets',
       'fields'    => [
         'location' => ['data_type' => 'int', 'control' => 'find' ],
         'max_tubs' => ['data_type' => 'int', 'control' => 'find' ],
@@ -65,7 +65,7 @@ function scoop_entity_specs(string $key = ''): array {
     'flavor' => [
       'post_type' => 'flavor',
       'pod'       => 'flavor',
-      'title'     => true,
+      'title'     => 'Flavors',
       'fields'    => [
         // add fields as needed; you can omit tub if you’ll compute from tub list
       ],
@@ -75,7 +75,7 @@ function scoop_entity_specs(string $key = ''): array {
     'use' => [
       'post_type' => 'use',
       'pod'       => 'use',
-      'title'     => true,
+      'title'     => 'Uses',
       'fields'    => [
         'order' => 'int',
       ],
@@ -85,14 +85,14 @@ function scoop_entity_specs(string $key = ''): array {
     'location' => [
       'post_type' => 'location',
       'pod'       => 'location',
-      'title'     => true,
+      'title'     => 'Locations',
       'fields'    => [
         // none needed for now
       ],
       'writeable' => []
-    ],
+    ]
   ];
-  if( $key === '') return $spc;
+  
+  if ($key === '') return $spc;
   return $spc[$key] ?? [];
-
 }

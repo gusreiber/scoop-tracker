@@ -21,7 +21,6 @@ function scoop_client_metadata(): array {
 
   $out  = [];
   $user = wp_get_current_user();
-
   $routes = scoop_routes_config();
 
   foreach ($routes as $route_key => $cfg) {
@@ -75,8 +74,9 @@ function scoop_client_metadata(): array {
           'dataType' => $field_def['data_type'] ?? 'string',
           'control'  => $field_def['control'] ?? 'input',
           'hidden'   => $hidden,
+          'titleMap' => $field_def['titleMap'] ?? null,
           'visible'  => !$hidden,
-          'editable' => isset($writeable_set[$field_key]),
+          'write'    => isset($writeable_set[$field_key]),
         ];
       }
 
@@ -96,6 +96,7 @@ function scoop_client_metadata(): array {
 function scoop_enqueue_assets() {
   $base_url  = SCOOP_REST_URL;
   $base_path = SCOOP_REST_DIR;
+  $user      = wp_get_current_user(); 
 
     // CSS
     wp_enqueue_style(
@@ -116,9 +117,13 @@ function scoop_enqueue_assets() {
 
     wp_localize_script('scoop-grid', 'SCOOP', [
         'nonce'   => wp_create_nonce('wp_rest'),
-        'isAdmin' => current_user_can('edit_posts'),
+        'isAdmin' => current_user_can( 'manage_options' ),
         'routes'  => scoop_client_routes(),
         'metaData'=> scoop_client_metadata(), //scoop_fetch_entities
+        'user'    => ( is_user_logged_in() ) ? [
+          'name'  => $user -> data -> user_nicename,
+          'roles' => $user -> roles
+        ] : null,
     ]);
 }
 

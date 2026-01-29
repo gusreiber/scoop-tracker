@@ -1,183 +1,290 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-if (!function_exists('scoop_log')) {
-  function scoop_log(string $msg): void {
-    if (defined('SCOOP_DEBUG') && SCOOP_DEBUG) error_log($msg);
-  }
-}
-if (!function_exists('scoop_rel_id')) {
-  function scoop_rel_id($val): int {
-    if (empty($val)) return 0;
-    if (is_numeric($val)) return (int)$val;
-    if (is_array($val)) return (int) (is_numeric(reset($val)) ? reset($val) : 0);
-    if (is_object($val) && isset($val->ID)) return (int)$val->ID;
-    return 0;
-  }
-}
-if (!function_exists('scoop_guard')) {
-  function scoop_guard(string $key, callable $fn, $default = null) {
-    $GLOBALS['scoop_guard'] ??= [];
-    if (!empty($GLOBALS['scoop_guard'][$key])) return $default;
-    $GLOBALS['scoop_guard'][$key] = true;
-    try { return $fn(); }
-    finally { unset($GLOBALS['scoop_guard'][$key]); }
-  }
-}
+/**
+ * CLOSEOUT AUTOMATION
+ * 
+ * When a closeout is created with:
+ * - tubs_emptied: 3.5 (can be fractional)
+ * - flavor: ID
+ * - location: ID  
+ * - use: ID
+ * 
+ * This will:
+ * 1. Find matching partial tub if needed (±0.2)
+ * 2. Find whole tubs (prefer Opened, oldest first)
+ * 3. Mark tubs as Emptied, link them bidirectionally
+ * 4. Set emptied_at date on tubs
+ */
 
 /**
- * Pre-save: normalize/auto-fill closeout fields for admin-form creates.
- * For REST creates, you should pass location explicitly and this becomes mostly a no-op.
+ * Pre-save: Build title for closeout
  */
 add_filter('pods_api_pre_save_pod_item_closeout', 'scoop_prepare_closeout', 5, 2);
 function scoop_prepare_closeout($pieces, $is_new_item) {
-
-  // Ensure list
   if (!isset($pieces['fields_active']) || !is_array($pieces['fields_active'])) {
     $pieces['fields_active'] = [];
   }
 
-  // 1) Resolve location id (admin conveniences only)
-  $location_id = 0;
-
-  if (!empty($_POST['scoop_location_id'])) {
-    $location_id = (int) $_POST['scoop_location_id'];
-  }
-
-  if (!$location_id && !empty($_SERVER['HTTP_REFERER'])) {
-    $maybe_id = url_to_postid($_SERVER['HTTP_REFERER']);
-    if ($maybe_id && get_post_type($maybe_id) === 'location') {
-      $location_id = (int) $maybe_id;
-    }
-  }
-
-  if ($location_id) {
-    $pieces['fields']['location']['value'] = $location_id;
-    if (!in_array('location', $pieces['fields_active'], true)) $pieces['fields_active'][] = 'location';
-  }
-
-  // 2) Build title
-  $tubs_emptied = (int) ($pieces['fields']['tubs_emptied']['value'] ?? 0);
+  $tubs_emptied = (float)($pieces['fields']['tubs_emptied']['value'] ?? 0);
   $flavor_id    = scoop_rel_id($pieces['fields']['flavor']['value'] ?? null);
+  $location_id  = scoop_rel_id($pieces['fields']['location']['value'] ?? null);
 
-  $flavor_name   = $flavor_id ? (string) get_the_title($flavor_id) : '';
-  $location_name = $location_id ? (string) get_the_title($location_id) : '';
+  $flavor_name   = $flavor_id ? get_the_title($flavor_id) : '';
+  $location_name = $location_id ? get_the_title($location_id) : '';
 
-  if ($tubs_emptied > 0 && $flavor_name !== '') {
-    $post_title = "{$tubs_emptied}x {$flavor_name}" . ($location_name ? " @ {$location_name}" : '');
+  if ($tubs_emptied > 0 && $flavor_name) {
+    $post_title = sprintf(
+      '%.2fx %s%s',
+      $tubs_emptied,
+      $flavor_name,
+      $location_name ? " @ {$location_name}" : ''
+    );
+    
     $pieces['object_fields']['post_title']['value'] = $post_title;
-
-    // keep slug tidy
     $pieces['object_fields']['post_name']['value'] = sanitize_title($post_title);
-
-    if (!in_array('post_title', $pieces['fields_active'], true)) $pieces['fields_active'][] = 'post_title';
+    
+    if (!in_array('post_title', $pieces['fields_active'], true)) {
+      $pieces['fields_active'][] = 'post_title';
+    }
   }
 
   return $pieces;
 }
 
 /**
- * Define eligibility for tub to be emptied by a closeout.
- * Tune this in one place.
- */
-function scoop_closeout_tub_where(int $flavor_id, int $location_id): string {
-  // IMPORTANT: adjust state list to match your real workflow.
-  // Suggestion: only tub that are currently Serving (or Opened) get emptied by closeout.
-  // Also exclude already-emptied.
-  $states = ["Serving", "Opened"];
-  $state_sql = "'" . implode("','", array_map('esc_sql', $states)) . "'";
-  return "flavor.ID = {$flavor_id} AND location.ID = {$location_id} AND state IN ({$state_sql})";
-}
-
-/**
- * Post-save: process closeout once (idempotent).
- * Recommended: keep closeout record; mark processed_at + processed_count.
- *
- * Requires closeout pod to have fields:
- * - processed_at (datetime)  [optional but strongly recommended]
- * - processed_count (number) [optional]
- * - processed_note (text)    [optional]
+ * Post-save: Process closeout (idempotent)
  */
 add_filter('pods_api_post_save_pod_item_closeout', 'scoop_process_closeout', 20, 3);
 function scoop_process_closeout($pieces, $is_new_item, $id) {
   $closeout_id = (int)$id;
-  if (!$closeout_id || !function_exists('pods') || !function_exists('pods_api')) return $pieces;
+  if (!$closeout_id) return $pieces;
 
   return scoop_guard("process_closeout:{$closeout_id}", function() use ($pieces, $closeout_id) {
-
     $closeout = pods('closeout', $closeout_id);
     if (!$closeout || !$closeout->exists()) return $pieces;
 
-    // Idempotency: skip if already processed
-    $processed_at = $closeout->field('processed_at');
-    if (!empty($processed_at) && $processed_at !== '0000-00-00 00:00:00') {
-      scoop_log("closeout {$closeout_id} already processed_at={$processed_at}");
+    // Idempotency: skip if already has linked tubs
+    $existing_tubs = $closeout->field('tub');
+    if (!empty($existing_tubs)) {
+      scoop_log("Closeout {$closeout_id} already processed");
       return $pieces;
     }
 
-    $location_id  = (int)$closeout->field('location.ID');
-    $flavor_id    = (int)$closeout->field('flavor.ID');
-    $use_id       = (int)$closeout->field('use.ID');
-    $need         = (int)$closeout->field('tubs_emptied');
+    $location_id  = scoop_rel_id($closeout->field('location'));
+    $flavor_id    = scoop_rel_id($closeout->field('flavor'));
+    $use_id       = scoop_rel_id($closeout->field('use'));
+    $need         = (float)$closeout->field('tubs_emptied');
 
     if (!$location_id || !$flavor_id || !$use_id || $need <= 0) {
-      // record failure note if fields exist
-      pods_api()->save_pod_item([
-        'pod'  => 'closeout',
-        'id'   => $closeout_id,
-        'data' => [
-          'processed_at'   => current_time('mysql'),
-          'processed_count'=> 0,
-          'processed_note' => 'Missing required data (location/flavor/use/tubs_emptied).',
-        ],
-      ]);
+      scoop_fail_closeout($closeout_id, 'Missing required data (location/flavor/use/tubs_emptied)');
       return $pieces;
     }
 
-    // Fetch eligible tub
-    $tub = pods('tub', [
-      'where'   => scoop_closeout_tub_where($flavor_id, $location_id),
-      // Better ordering: oldest first by “sold_on/opened” if you have it.
-      // Adjust to your actual datetime field(s).
-      'orderby' => 'sold_on ASC, post_date ASC',
-      'limit'   => $need,
-    ]);
+    // Match tubs with fractional logic
+    $match = scoop_match_closeout_tubs($flavor_id, $location_id, $need);
+    
+    if ($match['error']) {
+      scoop_fail_closeout($closeout_id, $match['error']);
+      return $pieces;
+    }
 
-    $updated = 0;
+    if (empty($match['tubs'])) {
+      scoop_fail_closeout($closeout_id, 'No eligible tubs found');
+      return $pieces;
+    }
 
-    if ($tub && $tub->total() > 0) {
-      while ($tub->fetch()) {
-        $tub_id = (int)$tub->id();
-        if (!$tub_id) continue;
+    // Mark tubs as emptied
+    $updated_tub_ids = [];
+    $total_amount = 0;
+    $emptied_at = current_time('mysql');
 
-        // Use Pods API to ensure hooks fire
-        $res = pods_api()->save_pod_item([
-          'pod'  => 'tub',
-          'id'   => $tub_id,
-          'data' => [
-            'state' => 'Emptied',
-            'use'   => $use_id,
-          ],
-        ]);
-        if ($res) $updated++;
+    foreach ($match['tubs'] as $tub_obj) {
+      $tub_id = (int)$tub_obj->id();
+      if (!$tub_id) continue;
+
+      $amount = (float)$tub_obj->field('amount') ?: 1.0;
+      
+      $res = pods_api()->save_pod_item([
+        'pod'  => 'tub',
+        'id'   => $tub_id,
+        'data' => [
+          'state'      => 'Emptied',
+          'use'        => $use_id,
+          'closeout'   => $closeout_id,
+          'emptied_at' => $emptied_at,
+        ],
+      ]);
+      
+      if ($res) {
+        $updated_tub_ids[] = $tub_id;
+        $total_amount += $amount;
       }
     }
 
-    // Mark closeout processed (keep record)
+    // Link tubs back to closeout
+    $note = sprintf(
+      'Closed %.2f tubs (requested %.2f). Tub IDs: %s',
+      $total_amount,
+      $need,
+      implode(', ', $updated_tub_ids)
+    );
+
     pods_api()->save_pod_item([
       'pod'  => 'closeout',
       'id'   => $closeout_id,
       'data' => [
-        'processed_at'    => current_time('mysql'),
-        'processed_count' => $updated,
-        'processed_note'  => ($updated < $need)
-          ? "Requested {$need}, updated {$updated} (not enough eligible tub)."
-          : "OK ({$updated}).",
+        'tub'          => $updated_tub_ids,
+        'post_content' => $note,
       ],
     ]);
 
-    scoop_log("closeout {$closeout_id}: requested={$need} updated={$updated}");
+    scoop_log("Closeout {$closeout_id}: requested={$need} closed={$total_amount}");
 
     return $pieces;
   }, $pieces);
+}
+
+/**
+ * Match tubs: handle fractional + whole logic
+ */
+function scoop_match_closeout_tubs(int $flavor_id, int $location_id, float $need): array {
+  $whole = floor($need);
+  $fraction = $need - $whole;
+  
+  $results = [
+    'tubs'  => [],
+    'total' => 0,
+    'error' => null
+  ];
+  
+  // Step 1: Match fractional part if needed
+  if ($fraction > 0.01) {
+    $fractional_tub = scoop_find_fractional_tub($flavor_id, $location_id, $fraction);
+    
+    if (!$fractional_tub) {
+      $results['error'] = sprintf(
+        'No partial tub found matching %.2f (need %.2f ± 0.2)',
+        $fraction,
+        $fraction
+      );
+      return $results;
+    }
+    
+    $results['tubs'][] = $fractional_tub;
+    $results['total'] += (float)$fractional_tub->field('amount') ?: 1.0;
+  }
+  
+  // Step 2: Match whole tubs
+  if ($whole > 0) {
+    $whole_tubs = scoop_find_whole_tubs($flavor_id, $location_id, $whole);
+    
+    if (count($whole_tubs) < $whole) {
+      $results['error'] = sprintf(
+        'Only found %d whole tubs, need %d',
+        count($whole_tubs),
+        $whole
+      );
+      return $results;
+    }
+    
+    foreach ($whole_tubs as $tub) {
+      $results['tubs'][] = $tub;
+      $results['total'] += (float)$tub->field('amount') ?: 1.0;
+    }
+  }
+  
+  return $results;
+}
+
+/**
+ * Find one partial tub matching target ± 0.2
+ */
+function scoop_find_fractional_tub(int $flavor_id, int $location_id, float $target): ?object {
+  $min = max(0.01, $target - 0.2);
+  $max = min(1.0, $target + 0.2);
+  
+  $where = scoop_closeout_tub_where($flavor_id, $location_id);
+  $where .= " AND amount >= {$min} AND amount <= {$max} AND amount < 1";
+  
+  $tub = pods('tub', [
+    'where'   => $where,
+    'orderby' => "
+      CASE WHEN state = 'Opened' THEN 0 ELSE 1 END ASC,
+      post_date ASC,
+      `index` ASC
+    ",
+    'limit'   => 1,
+  ]);
+  
+  return ($tub && $tub->total() > 0) ? $tub : null;
+}
+
+/**
+ * Find whole tubs (amount >= 0.8, prefer Opened, oldest first)
+ */
+function scoop_find_whole_tubs(int $flavor_id, int $location_id, int $count): array {
+  $where = scoop_closeout_tub_where($flavor_id, $location_id);
+  $where .= " AND (amount IS NULL OR amount >= 0.8)"; // NULL = full tub (1.0)
+  
+  $tub = pods('tub', [
+    'where'   => $where,
+    'orderby' => "
+      CASE WHEN state = 'Opened' THEN 0 ELSE 1 END ASC,
+      post_date ASC,
+      `index` ASC
+    ",
+    'limit'   => $count,
+  ]);
+  
+  $results = [];
+  if ($tub && $tub->total() > 0) {
+    while ($tub->fetch()) {
+      $results[] = clone $tub;
+    }
+  }
+  
+  return $results;
+}
+
+/**
+ * Build WHERE clause for eligible tubs
+ */
+function scoop_closeout_tub_where(int $flavor_id, int $location_id): string {
+  // Get valid states from Pods (dynamic!)
+  $state_options = scoop_pods_dropdown_options('tub', 'state');
+  
+  if (empty($state_options)) {
+    // Fallback if helper fails
+    $valid_states = ['Hardening', 'Freezing', 'Tempering', 'Opened'];
+  } else {
+    $valid_states = array_filter(
+      array_column($state_options, 'key'),
+      fn($s) => $s !== 'Emptied' && $s !== '__override__'
+    );
+  }
+  
+  $state_sql = "'" . implode("','", array_map('esc_sql', $valid_states)) . "'";
+  
+  return sprintf(
+    "flavor.ID = %d AND location.ID = %d AND state IN (%s)",
+    $flavor_id,
+    $location_id,
+    $state_sql
+  );
+}
+
+/**
+ * Mark closeout as failed with error note
+ */
+function scoop_fail_closeout(int $closeout_id, string $error): void {
+  pods_api()->save_pod_item([
+    'pod'  => 'closeout',
+    'id'   => $closeout_id,
+    'data' => [
+      'post_content' => 'ERROR: ' . $error,
+    ],
+  ]);
+  
+  scoop_log("Closeout {$closeout_id} failed: {$error}");
 }

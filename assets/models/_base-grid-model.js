@@ -89,16 +89,17 @@ export default class BaseGridModel {
 
   buildCols() {
     // Try metadata first for column schema
-    if (this.metaData?.columns) {
-      this.columns = this._columnsFromMetadata();
-      if (this.columns?.length) return this.columns;
-    }
+    const md = this.metaData;
+    if (!md || !md.primary || !md.entities) return; 
+    
+    this.columns = md.entities[md.primary];
+    if (this.columns?.length) return this.columns;
     
     // Subclass must provide fallback
     throw new Error(`${this.name}.buildCols(): no metadata and no fallback implemented`);
   }
 
-  _columnsFromMetadata() {
+  _columnsFromMetadata(key, propList) {
     const cols = [];
     for (const [key, meta] of Object.entries(this.metaData.columns)) {
       if (!meta.visible) continue;

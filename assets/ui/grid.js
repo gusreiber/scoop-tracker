@@ -28,6 +28,9 @@ export default class Grid extends El{
     this.rowGroups = [];
     this.rowGroupDom = [];
 
+    this.sortColumn = null;
+    this.sortDirection = 'asc';
+
     this.baseline = new Map();
     this.dirtySet = new Set();
     this.state = null;
@@ -138,7 +141,11 @@ export default class Grid extends El{
     
     for (const col of this.cols) {
       const TH = this.el( 
-        "th", { text: col.label ?? col.key, classes:[col.key, col.type] }  
+        "th", { 
+          text: col.label ?? col.key, 
+          classes:[col.key, col.type, 'sortable'],
+          data: {key:col.key} 
+        }  
       );
       if(col.hidden) TH.classList.add('hidden');
       this.TRH.append(TH);
@@ -403,6 +410,96 @@ _buildRows() {
     requestAnimationFrame(() => (focusable ?? h).focus());
   }
 
+  _sortCols(e){
+    console.log(e);
+    const el = e.target;
+    const colKey = el.dataset.key;
+    if(el.closest("th.sortable")){
+      if (this.sortColumn === colKey) {
+          this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.sortColumn = colKey;
+        this.sortDirection = 'asc';
+      }
+      
+      this._applySortAndRender();
+      //this._updateSortIndicators();
+    }
+  }
+
+  _applySortAndRender(){
+    const sortedGroups = this.rowGroups.map((group, groupIndex) => {
+      const groupRows = this.rows.filter((row, i) => {
+        // Find which group this row belongs to
+        let currentGroup = 0;
+        for (let g = 0; g < this.rowGroups.length; g++) {
+          if (i >= this.rowGroups[g].startIndex) {
+            currentGroup = g;
+          } else {
+            break;
+          }
+        }
+        return currentGroup === groupIndex;
+      });
+      
+      const sorted = this._sortRows(groupRows, this.sortColumn, this.sortDirection);
+      return { group, rows: sorted };
+    });
+      
+    // Rebuild rows array in sorted order
+    this.rows = [];
+    this.rowGroups = [];
+    let startIndex = 0;
+    
+    sortedGroups.forEach(({ group, rows }) => {
+      group.startIndex = startIndex;
+      this.rowGroups.push(group);
+      this.rows.push(...rows);
+      startIndex += rows.length;
+    });
+    
+    // Re-render the table
+    this._rebuildBodies({ rowGroups: this.rowGroups, rows: this.rows });
+  }
+
+  _sortRows(rows, colKey, direction) {
+    if (!colKey) return rows;
+    
+    const sorted = [...rows].sort((a, b) => {
+      const aVal = this._getSortValue(a[colKey]);
+      const bVal = this._getSortValue(b[colKey]);
+      
+      // Handle nulls
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      
+      // Compare
+      let comparison = 0;
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        comparison = aVal - bVal;
+      } else {
+        comparison = String(aVal).localeCompare(String(bVal));
+      }
+      
+      return direction === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted;
+  }
+
+  _getSortValue(cellData) {
+    // Handle different cell data structures
+    if (cellData == null) return null;
+    
+    // If it's an object with display/id (your cell structure)
+    if (typeof cellData === 'object') {
+      return cellData.display ?? cellData.id ?? cellData.value ?? null;
+    }
+    
+    return cellData;
+  }
+
   async _bindEvents() {
     if (this._eventsBound || !this.FORM) return;
     this._eventsBound = true;
@@ -470,7 +567,10 @@ _buildRows() {
 
     }, true);
 
-    this.FORM.addEventListener("mousedown", (e)=>{this._showHide(e)}, true);
+    this.FORM.addEventListener("mousedown", (e)=>{
+      this._showHide(e);
+      this._sortCols(e)?.bind(this);
+    }, true);
 
     this.FORM.addEventListener("submit", async (e) => {      
       e.preventDefault();

@@ -9,20 +9,6 @@ export default class FlavorTubGridModel extends BaseGridModel{
     this._build();
   }
 
-  buildCols(){
-    this.columns = [
-      {key:'id',              label:'id'},
-      {key:'state',           label:'state',   type:'state',  write:true},
-      {key:'use',             label:'use',     type:'use',    write:true,  titleMap:'use'},
-      {key:'amount',          label:'amount',  type:'num',    write:true,  control: 'text'},
-      {key:'flavor',          label:'flavor',  type:'flavor', titleMap:'flavor'},
-      {key:'date',            label:'date',    type:'date'},
-      {key:'index',           label:'index',   type:'num'},
-    ]
-
-    return this.columns;
-  }
-
   buildRows(){
     const locationTubIds = this.filterByLocation(this.domain.tub)
       .filter(t => t.state !== "Emptied");

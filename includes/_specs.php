@@ -21,11 +21,11 @@ function scoop_entity_specs(string $key = ''): array {
       'title'     => true,
       'fields'    => [
         'state'    => ['data_type' => 'string', 'control' => 'enum'],
-        'use'      => ['data_type' => 'int',    'control' => 'find'],
+        'use'      => ['data_type' => 'int',    'control' => 'find', 'titleMap' => 'use'],
         'amount'   => ['data_type' => 'float',  'control' => 'input'],
-        'flavor'   => ['data_type' => 'int',    'control' => 'input'],
+        'flavor'   => ['data_type' => 'int',    'control' => 'input', 'titleMap' => 'flavor'],
         'date'     => ['data_type' => 'string', 'control' => 'input'],
-        'location' => ['data_type' => 'int',    'control' => 'input', 'hidden' => true],
+        'location' => ['data_type' => 'int',    'control' => 'input', 'titleMap' => 'location', 'hidden' => true],
         'index'    => ['data_type' => 'int',    'hidden'  => true],
       ],
       'post_fields' => [
@@ -44,9 +44,9 @@ function scoop_entity_specs(string $key = ''): array {
       'fields'    => [
         'cabinet'          => ['data_type' => 'int', 'control' => 'find', 'hidden' => true],
         'location'         => ['data_type' => 'int', 'control' => 'find', 'hidden' => true],
-        'current_flavor'   => ['data_type' => 'int', 'control' => 'find'],
-        'immediate_flavor' => ['data_type' => 'int', 'control' => 'find'],
-        'next_flavor'      => ['data_type' => 'int', 'control' => 'find'],
+        'current_flavor'   => ['data_type' => 'int', 'control' => 'find', 'titleMap' => 'flavor'],
+        'immediate_flavor' => ['data_type' => 'int', 'control' => 'find', 'titleMap' => 'flavor'],
+        'next_flavor'      => ['data_type' => 'int', 'control' => 'find', 'titleMap' => 'flavor'],
       ],
       'writeable' => ['current_flavor','immediate_flavor','next_flavor'],
     ],
@@ -65,6 +65,7 @@ function scoop_entity_specs(string $key = ''): array {
     'flavor' => [
       'post_type' => 'flavor',
       'pod'       => 'flavor',
+      'titleMap'  => 'flavor',
       'title'     => 'Flavors',
       'fields'    => [
         // add fields as needed; you can omit tub if you’ll compute from tub list
@@ -75,9 +76,11 @@ function scoop_entity_specs(string $key = ''): array {
     'use' => [
       'post_type' => 'use',
       'pod'       => 'use',
+      'titleMap'  => 'use',
       'title'     => 'Uses',
       'fields'    => [
-        'order' => 'int',
+      'order'     => 'int',
+      'titleMap'  => 'use'
       ],
       'writeable' => []
     ],
@@ -86,6 +89,7 @@ function scoop_entity_specs(string $key = ''): array {
       'post_type' => 'location',
       'pod'       => 'location',
       'title'     => 'Locations',
+      'titleMap'  => 'location',
       'fields'    => [
         // none needed for now
       ],

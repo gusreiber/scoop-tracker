@@ -6,7 +6,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     base: "/",
     routes: SCOOP.routes,
     metaData: SCOOP.metaData,
+    user: SCOOP.user
   });
   console.log(SCOOP);
+  if( await api.userHelper(SCOOP) === false ) return;
   await api.mountAllGrids(SCOOP.metaData);
+  
 });

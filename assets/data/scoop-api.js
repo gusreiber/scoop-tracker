@@ -7,22 +7,23 @@ import ColumnsProvider    from "../models/_column-provider.js";
 import FormCodec          from "./form-codec.js";
 
 export default class ScoopAPI {
-  constructor({ nonce, base = "/", routes = {}, metaData = null } = {}) {
+  constructor({ nonce, base = "/", routes = {}, metaData = null, user = null } = {}) {
     // Core config
-    this.nonce = nonce ?? null;
-    this.baseUrl = this._absUrl(base);
-    this.routes = this._normalizeRoutes(routes);
-    this.metaData = metaData;
-    this.Meta     = new ColumnsProvider(metaData);
+    this.nonce     = nonce ?? null;
+    this.baseUrl   = this._absUrl(base);
+    this.routes    = this._normalizeRoutes(routes);
+    this.metaData  = metaData;
+    this.Meta      = new ColumnsProvider(metaData);
+    this.user      = user;
 
     // Grid/page state
     this.gridTypes = new Set();
-    this.typesKey = "";
+    this.typesKey  = "";
     this.bundleUrl = new URL(this.baseUrl);
 
     // Domain state
-    this._hosts = null;
-    this._domain = null;
+    this._hosts    = null;
+    this._domain   = null;
     this._domainInflight = null;
 
     // Request control + caching
@@ -169,6 +170,23 @@ export default class ScoopAPI {
         ...def,
       }))
       .filter(col => col.visible !== false);
+  }
+
+  async userHelper(scoop){
+    const u = this.user;
+    if(!u) {
+      document.body.classList.add('SCOOP_NO_USER');
+      return false;
+    }
+    if(! u.roles.includes('administrator')){
+      document.body.classList.remove('logged-in','admin-bar');
+      document.documentElement.style.setProperty("margin-top", "0px", "important");
+      document.getElementById('wpadminbar').remove();
+    }
+
+    document.body.classList.add(...(u.roles));
+    return true;
+
   }
 
   // Returns full bundle JSON: { ok, types, needs, data }

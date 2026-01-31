@@ -89,7 +89,7 @@ function scoop_client_metadata(): array {
     ];
   }
 
-  error_log('Final metadata module keys: ' . print_r(array_keys($out), true));
+  //error_log('Final metadata module keys: ' . print_r(array_keys($out), true));
   return $out;
 }
 

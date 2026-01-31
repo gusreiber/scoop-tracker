@@ -46,27 +46,27 @@ function scoop_access_policy(): array {
 function scoop_get_user_policy(\WP_User $user): array {
   $policy = scoop_access_policy();
   
-  error_log("scoop_get_user_policy called for user: " . $user->user_login);
-  error_log("User roles: " . print_r($user->roles, true));
+  // error_log("scoop_get_user_policy called for user: " . $user->user_login);
+  // error_log("User roles: " . print_r($user->roles, true));
   
   // Check roles in priority order
   if (in_array('administrator', $user->roles)) {
-    error_log("User is administrator - using _default policy");
+    //error_log("User is administrator - using _default policy");
     return $policy['_default'];
   }
   
   if (in_array('editor', $user->roles)) {
-    error_log("User is editor - using editor policy");
+    //error_log("User is editor - using editor policy");
     return $policy['editor'];
   }
   
   if (in_array('author', $user->roles)) {
-    error_log("User is author - using author policy");
+    //error_log("User is author - using author policy");
     return $policy['author'];
   }
   
   // Default policy
-  error_log("User has no matching role - using _default policy");
+  //error_log("User has no matching role - using _default policy");
   return $policy['_default'];
 }
 
@@ -74,7 +74,7 @@ function scoop_user_writeable_fields(\WP_User $user, string $entity): array {
   $policy = scoop_get_user_policy($user);
   $fields = $policy['entities'][$entity] ?? [];
   
-  error_log("scoop_user_writeable_fields($entity) for " . $user->user_login . ": " . print_r($fields, true));
+  //error_log("scoop_user_writeable_fields($entity) for " . $user->user_login . ": " . print_r($fields, true));
   
   return $fields;
 }

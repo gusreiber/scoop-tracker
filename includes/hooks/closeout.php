@@ -57,6 +57,7 @@ function scoop_prepare_closeout($pieces, $is_new_item) {
  */
 add_filter('pods_api_post_save_pod_item_closeout', 'scoop_process_closeout', 20, 3);
 function scoop_process_closeout($pieces, $is_new_item, $id) {
+  error_log("???? hello?");
   $closeout_id = (int)$id;
   if (!$closeout_id) return $pieces;
 
@@ -216,7 +217,7 @@ function scoop_find_fractional_tub(int $flavor_id, int $location_id, float $targ
     ",
     'limit'   => 1,
   ]);
-  
+  error_log('?????? scoop_find_fractional_tub:'.$tub->total()  );
   return ($tub && $tub->total() > 0) ? $tub : null;
 }
 
@@ -243,7 +244,7 @@ function scoop_find_whole_tubs(int $flavor_id, int $location_id, int $count): ar
       $results[] = clone $tub;
     }
   }
-  
+  error_log('????????? scoop_find_whole_tubs ');
   return $results;
 }
 
@@ -253,19 +254,22 @@ function scoop_find_whole_tubs(int $flavor_id, int $location_id, int $count): ar
 function scoop_closeout_tub_where(int $flavor_id, int $location_id): string {
   // Get valid states from Pods (dynamic!)
   $state_options = scoop_pods_dropdown_options('tub', 'state');
-  
+  error_log("?????!!! scoop_closeout_tub_where: ".$location_id);
   if (empty($state_options)) {
     // Fallback if helper fails
     $valid_states = ['Hardening', 'Freezing', 'Tempering', 'Opened'];
+    error_log("???? mt ");
   } else {
     $valid_states = array_filter(
       array_column($state_options, 'key'),
       fn($s) => $s !== 'Emptied' && $s !== '__override__'
     );
+    error_log("???? state_options ");
   }
   
   $state_sql = "'" . implode("','", array_map('esc_sql', $valid_states)) . "'";
   
+  error_log("???? sql ".$state_sql);
   return sprintf(
     "flavor.ID = %d AND location.ID = %d AND state IN (%s)",
     $flavor_id,

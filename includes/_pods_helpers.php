@@ -233,11 +233,32 @@ function scoop_pods_ready(): bool {
   return function_exists('pods_api') && is_object(pods_api());
 }
 
-function scoop_pods_field_def(string $pod_name, string $field_name): array {
+function scoop_pods_field_def(string $pod_name, string $field_name) /* no : array */ {
   if (!scoop_pods_ready()) return [];
+
   $pod = pods_api()->load_pod(['name' => $pod_name]);
-  if (!$pod || empty($pod['fields'][$field_name])) return [];
-  return $pod['fields'][$field_name];
+  if (!$pod) return [];
+
+  $fields = $pod['fields'] ?? null;
+  if (!is_array($fields) || empty($fields[$field_name])) return [];
+
+  $field = $fields[$field_name];
+
+  // New Pods: field definitions may be Pods\Whatsit\Field objects
+  if (is_object($field)) {
+    if (method_exists($field, 'export')) {
+      $arr = $field->export();
+      return is_array($arr) ? $arr : [];
+    }
+    if (method_exists($field, 'to_array')) {
+      $arr = $field->to_array();
+      return is_array($arr) ? $arr : [];
+    }
+    // Last resort: try public properties (often not useful, but avoids fatal)
+    return (array)$field;
+  }
+
+  return is_array($field) ? $field : [];
 }
 
 function scoop_pods_dropdown_options(string $pod_name, string $field_name): array {
@@ -246,22 +267,27 @@ function scoop_pods_dropdown_options(string $pod_name, string $field_name): arra
   if (isset($cache[$k])) return $cache[$k];
 
   $field = scoop_pods_field_def($pod_name, $field_name);
-  $opts  = $field['options'] ?? [];
+  $opts  = is_array($field) ? ($field['options'] ?? []) : [];
 
   $out = [];
 
+  // Pods “pick_custom” format: newline-separated, optional "key|label"
   if (!empty($opts['pick_custom']) && is_string($opts['pick_custom'])) {
     $lines = preg_split("/\r\n|\r|\n/", trim($opts['pick_custom']));
     foreach ($lines as $line) {
       $line = trim($line);
       if ($line === '') continue;
+
       if (strpos($line, '|') !== false) {
         [$key, $label] = array_map('trim', explode('|', $line, 2));
       } else {
         $key = $label = $line;
       }
+
       $out[] = ['key' => (string)$key, 'label' => (string)$label];
     }
+
+  // Some field types store options as "choices" map
   } elseif (!empty($opts['choices']) && is_array($opts['choices'])) {
     foreach ($opts['choices'] as $key => $label) {
       $out[] = ['key' => (string)$key, 'label' => (string)$label];
@@ -270,4 +296,5 @@ function scoop_pods_dropdown_options(string $pod_name, string $field_name): arra
 
   return $cache[$k] = $out;
 }
+
 

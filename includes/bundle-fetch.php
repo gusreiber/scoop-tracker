@@ -33,7 +33,7 @@ function scoop_cast($v, $desc) {
 }
 
 function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = false ): array {
-      error_log('-----------scoop_fetch_entities');
+  // error_log('-----------scoop_fetch_entities');
   $specs = scoop_entity_specs();
   if (empty($specs[$key])) return [];
 
@@ -105,8 +105,7 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
 
   return $out;
 }
-//$field = scoop_pods_field_def('tub', 'state');
-//error_log(print_r($field, true));
+
 function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array {
   // Convert request context you care about (location, etc.)
   $ctx = [];

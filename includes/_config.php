@@ -1,7 +1,7 @@
 <?php
 
 function scoop_routes_config(string $batch_key = ''): array {
-  error_log('???config????');
+
   $cfg = [
 
     'Cabinet' => [

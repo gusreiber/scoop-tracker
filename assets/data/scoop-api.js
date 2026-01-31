@@ -175,16 +175,16 @@ export default class ScoopAPI {
   async userHelper(scoop){
     const u = this.user;
     if(!u) {
-      document.body.classList.add('SCOOP_NO_USER');
+      document.documentElement.classList.add('SCOOP_NO_USER');
       return false;
     }
     if(! u.roles.includes('administrator')){
-      document.body.classList.remove('logged-in','admin-bar');
+      document.documentElement.classList.remove('logged-in','admin-bar');
       document.documentElement.style.setProperty("margin-top", "0px", "important");
       document.getElementById('wpadminbar').remove();
     }
 
-    document.body.classList.add(...(u.roles));
+    document.documentElement.classList.add(...(u.roles));
     return true;
 
   }

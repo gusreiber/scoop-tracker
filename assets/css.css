@@ -86,7 +86,23 @@ body * {
    LAYOUT - MAIN & FOOTER
    ============================================ */
 
+html.author,
+html.author > body{
+  background-color:rgb(177, 236, 177) !important;
+}
+html.author:before{
+    content: 'author';
+    display: block;
+    position: fixed;
+    bottom: 3rem;
+    right: 2rem;
+    font-size: 3.5rem;
+    opacity: .25;
+    font-weight: bold;
+  }
+
 html body {
+
   & main,
   & main > * {
     margin: 0 !important;

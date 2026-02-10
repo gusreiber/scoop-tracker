@@ -70,7 +70,7 @@ function scoop_client_metadata(): array {
 
         $columns[] = [
           'key'      => (string)$field_key,
-          'label'    => ucfirst(str_replace('_', ' ', (string)$field_key)),
+          'label'    => $field_def['label'] ?? ucfirst(str_replace('_', ' ', (string)$field_key)),
           'dataType' => $field_def['data_type'] ?? 'string',
           'control'  => $field_def['control'] ?? 'input',
           'hidden'   => $hidden,

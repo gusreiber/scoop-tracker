@@ -131,7 +131,18 @@ export default class BaseGridModel {
   }
 
   buildRows(){
-    throw new Error("buildRows() must be implemented by subclass");
+    const type = this.metaData.primary;
+    const items = this.domain[type] || [];
+    console.log('br-d:',items);
+    this.rows = items;
+    /*
+    items.forEach((item, i) => {
+        const row = { id: item.id };
+        this.fillRowFromColumns(row, item, i);
+        this.rows.push(row);
+    });*/
+    console.log('br',this.rows);
+    return this.rows;
   }
 
   buildGroupedRows({

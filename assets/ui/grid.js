@@ -71,6 +71,9 @@ export default class Grid extends El{
 
     this.FORM.dispatchEvent(new Event("ts:grid:init"));
     this._isInit = true;
+    console.log('refresh INNNNIT');
+    if(this.name === 'DateActivity') 
+      console.log('refresh Init?');
   }
 
   loadConfig({ api, formCodec, domainCodec, modelCtrl } = {}) {
@@ -83,6 +86,9 @@ export default class Grid extends El{
 
   async refresh(state) {
     if (!this._isInit) throw new Error("Grid.refresh() called before init()");
+    console.log('refresh REFHRESHHHHHHH');
+    if(this.name === 'DateActivity') 
+      console.log('refresh DateActivity');
     this.state = state;
     this._rebuildBodies(state);
     this._captureBaseline();
@@ -110,6 +116,7 @@ export default class Grid extends El{
     this.rows = rows;
     this.rowGroups = rowGroups;
     this._buildRows();
+    console.log('??- grid rows', this.name, this.rows);
   }
 
   _build(){
@@ -134,6 +141,7 @@ export default class Grid extends El{
 
 
   _buildCols(){
+    console.log('GIRd buidCols', this.cols);
     if(!this.cols || !this.TABLE  || !this.TRH) return;
 
     this.TRH.replaceChildren();
@@ -189,52 +197,52 @@ export default class Grid extends El{
     }
   }
 
-_buildRows() {
-  try {
-    const rows = this.rows ?? [];
-    const cols = this.cols ?? [];
-    const rowGroups = this.rowGroups ?? [];
-    const el = this.el;
+  _buildRows() {
+    try {
+      const rows = this.rows ?? [];
+      const cols = this.cols ?? [];
+      const rowGroups = this.rowGroups ?? [];
+      const el = this.el;
 
-    if (!rowGroups.length) {
-      this.rowGroupDom = [ el('tbody') ];
-      this.TABLE.append(this.rowGroupDom[0]);
-    }
-
-    let i = 0;
-
-    rows.forEach((row, r) => {
-      if (rowGroups[i + 1] && r === rowGroups[i + 1].startIndex) i++;
-
-      const TR = el('tr', { classes:['row'], data:{ rowId: row?.id?.rowId ?? row?.id ?? 0 } });
-
-      cols.forEach(col => {
-        const data = row?.[col.key] ?? "";
-        TR.append(this._getCellDom(col, data));
-      });
-
-      const body = this.rowGroupDom[i];
-      if (!body) {
-        console.error("Grid buildRows: missing tbody", {
-          grid: this.name,
-          i, r,
-          rowGroups: rowGroups.map(g => g.startIndex),
-          rowGroupDomLen: this.rowGroupDom.length,
-          rowsLen: rows.length
-        });
-        return; // stop building further rows; or create a fallback body (below)
+      if (!rowGroups.length) {
+        this.rowGroupDom = [ el('tbody') ];
+        this.TABLE.append(this.rowGroupDom[0]);
       }
 
-      body.append(TR);
-    });
+      let i = 0;
 
-  } catch (e) {
-    console.error("Grid _buildRows exception", this.name, e, {
-      rowsLen: this.rows?.length,
-      rowGroups: this.rowGroups
-    });
+      rows.forEach((row, r) => {
+        if (rowGroups[i + 1] && r === rowGroups[i + 1].startIndex) i++;
+
+        const TR = el('tr', { classes:['row'], data:{ rowId: row?.id?.rowId ?? row?.id ?? 0 } });
+
+        cols.forEach(col => {
+          const data = row?.[col.key] ?? "";
+          TR.append(this._getCellDom(col, data));
+        });
+
+        const body = this.rowGroupDom[i];
+        if (!body) {
+          console.error("Grid buildRows: missing tbody", {
+            grid: this.name,
+            i, r,
+            rowGroups: rowGroups.map(g => g.startIndex),
+            rowGroupDomLen: this.rowGroupDom.length,
+            rowsLen: rows.length
+          });
+          return; // stop building further rows; or create a fallback body (below)
+        }
+
+        body.append(TR);
+      });
+
+    } catch (e) {
+      console.error("Grid _buildRows exception", this.name, e, {
+        rowsLen: this.rows?.length,
+        rowGroups: this.rowGroups
+      });
+    }
   }
-}
 
 
   _getCellDom(col,data){
@@ -411,7 +419,6 @@ _buildRows() {
   }
 
   _sortCols(e){
-    console.log(e);
     const el = e.target;
     const colKey = el.dataset.key;
     if(el.closest("th.sortable")){
@@ -428,6 +435,12 @@ _buildRows() {
   }
 
   _applySortAndRender(){
+    const preSortRows = this.rows;
+    if(!this.rowGroups || this.rowGroups.length < 1 ){
+      this.rows = this._sortRows(preSortRows, this.sortColumn, this.sortDirection);
+      this._rebuildBodies({ rowGroups: this.rowGroups, rows: this.rows });
+      return;
+    } 
     const sortedGroups = this.rowGroups.map((group, groupIndex) => {
       const groupRows = this.rows.filter((row, i) => {
         // Find which group this row belongs to
@@ -445,7 +458,7 @@ _buildRows() {
       const sorted = this._sortRows(groupRows, this.sortColumn, this.sortDirection);
       return { group, rows: sorted };
     });
-      
+     
     // Rebuild rows array in sorted order
     this.rows = [];
     this.rowGroups = [];
@@ -505,7 +518,6 @@ _buildRows() {
     this._eventsBound = true;
 
     this.FORM.addEventListener('ts:findit-change', (e) => {
-      console.log('!!!!ts:findit-change',e);
       const h = e.target.closest('input[type="hidden"][name]');
       if (!h) return;
     
@@ -650,7 +662,6 @@ _buildRows() {
       document.addEventListener("ts:domain:updated", this._onDomainUpdated);
     }    
   }
-
   
   destroy() {
     if (this._onDomainUpdated) {

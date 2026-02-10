@@ -1,38 +1,69 @@
 <?php
 
 function scoop_bundle_specs(): array {
-  return [
+  error_log('🔍 TRACE: scoop_bundle_specs() called');
+  
+  $specs = [
     'Cabinet'   => ['needs' => ['cabinet','slot','flavor']],
     'FlavorTub' => ['needs' => ['tub','flavor','use']],
     'Batch'     => ['needs' => ['flavor']],
     'Closeout'  => ['needs' => ['flavor','use']],
+    'DateActivity' => ['needs' => ['tub','flavor','use','location']],
   ];
+  
+  error_log('🔍 TRACE: Bundle specs available: ' . implode(', ', array_keys($specs)));
+  
+  return $specs;
 }
 
 function scoop_get_entity_spec_keys(string $bundle_key): array {
-  return scoop_bundle_specs()[$bundle_key]['needs'];
+  error_log("🔍 TRACE: scoop_get_entity_spec_keys() called for: $bundle_key");
+  
+  $specs = scoop_bundle_specs();
+  
+  if (!isset($specs[$bundle_key])) {
+    error_log("🔍 TRACE: WARNING - Bundle key not found: $bundle_key");
+    return [];
+  }
+  
+  $needs = $specs[$bundle_key]['needs'];
+  error_log("🔍 TRACE: Entity specs for $bundle_key: " . implode(', ', $needs));
+  
+  return $needs;
 }
 
 function scoop_entity_specs(string $key = ''): array {
+  error_log('🔍 TRACE: scoop_entity_specs() called with key: ' . ($key ?: '(empty)'));
+  
   $spc = [
     'tub' => [
       'post_type' => 'tub',
       'pod'       => 'tub',
       'title'     => true,
       'fields'    => [
-        'state'    => ['data_type' => 'string', 'control' => 'enum'],
-        'use'      => ['data_type' => 'int',    'control' => 'find', 'titleMap' => 'use'],
-        'amount'   => ['data_type' => 'float',  'control' => 'input'],
-        'flavor'   => ['data_type' => 'int',    'control' => 'input', 'titleMap' => 'flavor'],
-        'date'     => ['data_type' => 'string', 'control' => 'input'],
-        'location' => ['data_type' => 'int',    'control' => 'input', 'titleMap' => 'location', 'hidden' => true],
-        'index'    => ['data_type' => 'int',    'hidden'  => true],
+        'state'         => ['data_type' => 'string', 'control' => 'enum'],
+        'use'           => ['data_type' => 'int',    'control' => 'find', 'titleMap' => 'use'],
+        'flavor'        => ['data_type' => 'int',    'control' => 'input', 'titleMap' => 'flavor'],
+        'author_name'   => ['data_type' => 'string', 'label'   => 'Author'],
+        'date'          => ['data_type' => 'string', 'control' => 'input', 'label' => 'Created'],
+        'post_modified' => ['data_type' => 'string', 'control' => 'input', 'label' => 'Modified'],
+        'opened_on'     => ['data_type' => 'string'],
+        'emptied_at'    => ['data_type' => 'string'],
+        'location'      => ['data_type' => 'int',    'control' => 'input', 'titleMap' => 'location', 'hidden' => true],
+        'index'         => ['data_type' => 'int',    'hidden'  => true],
       ],
       'post_fields' => [
-        'author_name' => 'string',
+        'author_name'   => 'string',
+        'post_modified' => 'datetime',
+        'post_date'     => 'datetime',
       ],
       'filter' => function(array $row, array $ctx) {
-        return ($row['state'] ?? '') !== 'Emptied';
+        if (($row['state'] ?? '') !== 'Emptied') return true;
+        
+        $modifiedTime = strtotime($row['post_modified']);
+        $fortyEightHoursAgo = time() - (48 * 60 * 60);
+    
+        return $modifiedTime >= $fortyEightHoursAgo;
       },
       'writeable' => ['state','use','amount']
     ],
@@ -68,7 +99,7 @@ function scoop_entity_specs(string $key = ''): array {
       'titleMap'  => 'flavor',
       'title'     => 'Flavors',
       'fields'    => [
-        // add fields as needed; you can omit tub if you’ll compute from tub list
+        // add fields as needed; you can omit tub if you'll compute from tub list
       ],
       'writeable' => []
     ],
@@ -97,6 +128,16 @@ function scoop_entity_specs(string $key = ''): array {
     ]
   ];
   
-  if ($key === '') return $spc;
-  return $spc[$key] ?? [];
+  if ($key === '') {
+    error_log('🔍 TRACE: Returning all entity specs, count: ' . count($spc));
+    return $spc;
+  }
+  
+  if (!isset($spc[$key])) {
+    error_log("🔍 TRACE: WARNING - Entity spec key not found: $key");
+    return [];
+  }
+  
+  error_log("🔍 TRACE: Returning entity spec for: $key");
+  return $spc[$key];
 }

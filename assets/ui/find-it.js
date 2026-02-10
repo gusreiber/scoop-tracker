@@ -72,27 +72,21 @@ export default class FindIt extends El {
     if (this._eventsBound) return;
     this._eventsBound = true;
 
-    // Listen on the closest form (scoped) or fall back to document (global)
     const root = this.BASE.closest("form") ?? document;
-
     root.addEventListener("ts:grid:close-findits", () => this.close());
 
-    // DO NOT open on focus. (You want open on typing / arrows only.)
-
-    // Open + filter on user input
     this.INP.addEventListener("input", () => {
       if (this.suppressInput) return;
       if (!this.isOpen) this.open();
-
       this._applyFilter(this.INP.value);
     });
 
-    // Keyboard navigation + commit
     this.INP.addEventListener("keydown", (e) => {
       const k = e.key;
 
       if (k === "Escape") {
         e.preventDefault();
+        console.log('[FindIt] Escape pressed - clearing');
         this.clear();
         this.close();
         return;
@@ -100,13 +94,9 @@ export default class FindIt extends El {
 
       if (k === "ArrowDown" || k === "ArrowUp") {
         e.preventDefault();
-
         if (!this.isOpen) this.open();
         if (!this.filtered?.length) return;
 
-        // Special case:
-        // open + filtered is exactly one + already active -> ArrowDown expands to all options
-        // while keeping the same option active (by key)
         if (
           k === "ArrowDown" &&
           this.isOpen &&
@@ -115,12 +105,9 @@ export default class FindIt extends El {
           (this.options?.length ?? 0) > 1
         ) {
           const keepKey = this.filtered[0]?.key;
-
           this.filtered = this.options ?? [];
-
           const idx = this.filtered.findIndex(op => String(op.key) === String(keepKey));
           this.activeIndex = idx >= 0 ? idx : 0;
-
           this._renderOptions();
           this._setActiveIndex(this.activeIndex, { updateInput: true });
           return;
@@ -128,19 +115,13 @@ export default class FindIt extends El {
 
         const dir = (k === "ArrowDown") ? 1 : -1;
         const n = this.filtered.length;
-
-        const next = (this.activeIndex < 0)
-          ? 0
-          : (this.activeIndex + dir + n) % n;
-
+        const next = (this.activeIndex < 0) ? 0 : (this.activeIndex + dir + n) % n;
         this._setActiveIndex(next, { updateInput: true });
         return;
       }
 
-      // Let Tab behave normally (do not trap focus)
       if (k === "Tab") return;
 
-      // Commit selection
       if (k === "Enter") {
         if (!this.isOpen) return;
         e.preventDefault();
@@ -149,10 +130,8 @@ export default class FindIt extends El {
       }
     });
 
-    // Prevent mousedown from stealing focus away from the input
     this.UL.addEventListener("mousedown", (e) => e.preventDefault());
 
-    // Click selection (li-based, matches your new renderer)
     this.UL.addEventListener("click", (e) => {
       const li = e.target.closest('li[data-idx]');
       if (!li) return;
@@ -162,24 +141,63 @@ export default class FindIt extends El {
     });
 
     this.INP.addEventListener("blur", () => {
-      // If the user typed something that matches exactly, select it.
-      // Otherwise, decide if you want to clear the ID or keep the text.
+      console.log('[FindIt] Blur event - INP.value:', this.INP.value);
+      
       const match = this.options.find(op => op.label === this.INP.value);
+      
       if (match) {
+        console.log('[FindIt] Blur - found match:', match.key, match.label);
         this.select(match);
       } else {
-        // If no match is found, you likely want to clear the hidden ID
-        // or set the ID to the text value depending on your business logic.
+        console.log('[FindIt] Blur - no match, clearing');
+        const oldValue = this.value;
+        
         this.value = ""; 
         this.HDN.value = "";
+        
+        console.log('[FindIt] Blur - dispatching ts:findit-change (cleared from', oldValue, 'to empty)');
+        
+        // FIX: Dispatch the change event!
+        this.HDN.dispatchEvent(new Event('ts:findit-change', { bubbles: true }));
       }
+      
       this.close();
     });
+  }
 
-    /*
-    document.addEventListener('ts:grid:new-data', (e)=>{
-      console.log('???? findIt',e );
-    });*/
+  clear() {
+    console.log('[FindIt] clear() called - field:', this.fieldName);
+    console.log('[FindIt] clear() - old value:', this.value);
+    
+    this.HDN.value = "0";
+    this.INP.value = "";
+    this.value = "0";
+    this.display = "";
+    this._applyFilter("", { noPaint: !this.isOpen });
+    
+    console.log('[FindIt] clear() - dispatching ts:findit-change');
+    this.HDN.dispatchEvent(new Event('ts:findit-change', { bubbles: true }));
+  }
+
+  select(op) {
+    console.log('[FindIt] select() called - field:', this.fieldName);
+    console.log('[FindIt] select() - old value:', this.value);
+    console.log('[FindIt] select() - new option:', op);
+    
+    const key = op?.key;
+
+    this.value   = key == null ? "0" : String(key);
+    this.display = String(op?.label ?? "");
+
+    this.HDN.value = this.value;
+    this.INP.value = this.display;
+
+    console.log('[FindIt] select() - new value:', this.value);
+    console.log('[FindIt] select() - dispatching ts:findit-change');
+
+    this.onSelect?.(op);
+    this.HDN.dispatchEvent(new Event('ts:findit-change', { bubbles: true }));
+    this.close();
   }
 
   update(value = (this.value ?? ''), { refresh = true, resolve = this.resolve } = {}) {

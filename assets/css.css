@@ -88,7 +88,7 @@ body * {
 
 html.author,
 html.author > body{
-  background-color:rgb(177, 236, 177) !important;
+  background-color:rgb(171, 222, 171) !important;
 }
 html.author:before{
     content: 'author';
@@ -465,7 +465,7 @@ table.zGRID {
   & th.none-left,
   & td.none-left {
     background-color: var(--color-alert-none);
-    border-color: var(--color-alert-none);
+    color: var(--color-text-white);
 
     & *:not(li) {
       color: var(--color-text-white);

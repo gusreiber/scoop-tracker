@@ -66,18 +66,28 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
   foreach ($ids as $id) {
     $pod = pods($pod_name, $id);
     if (!$pod || !$pod->exists()) continue;
-    
 
-    $row = [
-      'id' => (int)$id,
-    ];
+    $row = [ 'id' => (int)$id ];
 
-    if (!empty($spec['title'])) {
-      $row['_title'] = get_the_title($id);
-    }
+    if (!empty($spec['title'])) $row['_title'] = get_the_title($id);
 
     foreach (($spec['fields'] ?? []) as $field => $desc) {
       $row[$field] = scoop_cast($pod->field($field), $desc);
+    }
+
+    // Handle post_fields
+    $p = get_post($id);
+    foreach (($spec['post_fields'] ?? []) as $field => $type) {
+      if ($field === 'author_name') {
+        $row['author_name'] = scoop_cast(
+          get_the_author_meta('display_name', $p?->post_author ?? 0),
+          'string'
+        );
+      } elseif ($field === 'post_modified') {
+        $row['post_modified'] = $p?->post_modified ?? '';
+      } elseif ($field === 'post_date') {
+        $row['post_date'] = $p?->post_date ?? '';
+      }
     }
 
     // Optional contextual filter

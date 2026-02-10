@@ -15,6 +15,11 @@ function scoop_closeouts_allowed_fields( $user ): array {
   return [ 'tubs_emptied', 'flavor', 'use', 'location', 'order']; //'amount' 
 }
 
+function scoop_dateactivity_allowed_fields( $user ): array {
+  return [ 'author', 'modified', 'flavor' ];
+
+}
+
 function scoop_save_pod_field( string $pod_name, int $id, string $field, $value ) {
   $value = scoop_coerce_value($field, $value);
   return scoop_pods_api_save($pod_name, $id, [ $field => $value ]);

@@ -1,6 +1,7 @@
 <?php
 
 function scoop_routes_config(string $batch_key = ''): array {
+  error_log('🔍 TRACE: scoop_routes_config() called with batch_key: ' . ($batch_key ?: '(empty)'));
 
   $cfg = [
 
@@ -39,7 +40,28 @@ function scoop_routes_config(string $batch_key = ''): array {
       'post_type'    => 'closeout',
       'pod_name'     => 'closeout',
       'allowed_fields_cb' => 'scoop_closeouts_allowed_fields',
+    ],
+    'DateActivity' => [
+      'path'        => '/tubs',
+      'methods'      => ['GET','POST'],
+      'mode'         => 'update',
+      'envelope_key' => 'DateActivity',
+      'post_type'    => 'tub',
+      'pod_name'     => 'tub',
+      'allowed_fields_cb' => 'scoop_dateactivity_allowed_fields',
     ]
   ];
-  return ($batch_key === '')? $cfg : $cfg[$batch_key];
+  
+  if ($batch_key === '') {
+    error_log('🔍 TRACE: Returning all configs, count: ' . count($cfg));
+    return $cfg;
+  }
+  
+  if (!isset($cfg[$batch_key])) {
+    error_log('🔍 TRACE: WARNING - Config key not found: ' . $batch_key);
+    return [];
+  }
+  
+  error_log('🔍 TRACE: Returning config for: ' . $batch_key);
+  return $cfg[$batch_key];
 }

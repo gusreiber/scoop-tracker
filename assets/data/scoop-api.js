@@ -1,10 +1,12 @@
 import Grid               from "../ui/grid.js";
-import CabinetGridModel   from "../models/cabinet-grid-model.js";
-import BatchGridModel     from "../models/batch-grid-model.js";
-import CloseoutGridModel  from "../models/closeout-grid-model.js";
-import FlavorTubGridModel from "../models/flavor-tub-grid-model.js";
 import ColumnsProvider    from "../models/_column-provider.js";
 import FormCodec          from "./form-codec.js";
+import CabinetGridModel      from "../models/cabinet-grid-model.js";
+import BatchGridModel        from "../models/batch-grid-model.js";
+import CloseoutGridModel     from "../models/closeout-grid-model.js";
+import FlavorTubGridModel    from "../models/flavor-tub-grid-model.js";
+import DateActivityGridModel from "../models/date-activity-grid-model.js";
+
 
 export default class ScoopAPI {
   constructor({ nonce, base = "/", routes = {}, metaData = null, user = null } = {}) {
@@ -66,7 +68,8 @@ export default class ScoopAPI {
       "Cabinet"   : CabinetGridModel,
       "FlavorTub" : FlavorTubGridModel,
       "Batch"     : BatchGridModel,
-      "Closeout"  : CloseoutGridModel
+      "Closeout"  : CloseoutGridModel,
+      "DateActivity" : DateActivityGridModel,
     };
   }
 

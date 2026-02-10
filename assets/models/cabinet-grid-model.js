@@ -13,7 +13,7 @@ export default class CabinetGridModel extends BaseGridModel{
 
   buildRows() {
     const cabinetIds = this.getIdsForLocation(this.domain.cabinet);
-    return this.buildGroupedRows({
+    const rtn = this.buildGroupedRows({
       groupsMap     : this._slotsByCabinetId,
       includeGroupId: (id) => cabinetIds.has(Number(id)),      
       getGroupLabel : (id) => this.labelFromMap(id, this._cabinetsById),
@@ -21,6 +21,7 @@ export default class CabinetGridModel extends BaseGridModel{
       groupType     : 'cabinet',
       rowType       : 'slot'
     });
+    return rtn;
   }
 
 }

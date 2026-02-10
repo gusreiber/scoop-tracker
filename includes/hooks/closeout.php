@@ -76,7 +76,10 @@ function scoop_process_closeout($pieces, $is_new_item, $id) {
     return $pieces;
   }
 
-  return scoop_guard("process_closeout:{$closeout_id}", function() use ($pieces, $closeout_id) {
+  return scoop_guard(
+    "process_closeout:{$closeout_id}", 
+    function() use ($pieces, $closeout_id) 
+    {
     error_log("  Inside guard for closeout {$closeout_id}");
     
     $closeout = pods('closeout', $closeout_id);
@@ -150,7 +153,7 @@ function scoop_process_closeout($pieces, $is_new_item, $id) {
     error_log("  emptied_at: {$emptied_at}");
 
     foreach ($match['tubs'] as $idx => $tub_obj) {
-      $tub_id = (int)$tub_obj->id();
+      $tub_id = (int)$tub_obj->id;  // ← Changed from ->id()
       error_log("    Tub #{$idx}: ID={$tub_id}");
       
       if (!$tub_id) {
@@ -158,9 +161,9 @@ function scoop_process_closeout($pieces, $is_new_item, $id) {
         continue;
       }
 
-      $amount = (float)$tub_obj->field('amount') ?: 1.0;
+      $amount = (float)$tub_obj->amount;  // ← Changed from ->field('amount')
       error_log("      amount: {$amount}");
-      
+        
       $update_data = [
         'state'      => 'Emptied',
         'use'        => $use_id,
@@ -279,8 +282,8 @@ function scoop_match_closeout_tubs(int $flavor_id, int $location_id, float $need
     }
     
     foreach ($whole_tubs as $tub) {
-      $whole_amount = (float)$tub->field('amount') ?: 1.0;
-      error_log("      Whole tub ID " . $tub->id() . " with amount {$whole_amount}");
+      $whole_amount = (float)$tub->amount;  // ← Changed
+      error_log("      Whole tub ID {$tub->id} with amount {$whole_amount}");  // ← Changed
       $results['tubs'][] = $tub;
       $results['total'] += $whole_amount;
     }
@@ -332,7 +335,7 @@ function scoop_find_whole_tubs(int $flavor_id, int $location_id, int $count): ar
   error_log("      scoop_find_whole_tubs: looking for {$count}");
   
   $where = scoop_closeout_tub_where($flavor_id, $location_id);
-  $where .= " AND (amount IS NULL OR amount >= 0.8)"; // NULL = full tub (1.0)
+  $where .= " AND (amount IS NULL OR amount >= 0.8)";
   
   error_log("      WHERE: {$where}");
   
@@ -353,8 +356,18 @@ function scoop_find_whole_tubs(int $flavor_id, int $location_id, int $count): ar
   if ($tub && $tub->total() > 0) {
     $idx = 0;
     while ($tub->fetch()) {
-      error_log("        [{$idx}] ID: " . $tub->id() . ", state: " . $tub->field('state') . ", amount: " . ($tub->field('amount') ?: 'NULL'));
-      $results[] = clone $tub;
+      $tub_id = $tub->id();
+      $amount = $tub->field('amount') ?: 1.0;
+      $state = $tub->field('state');
+      
+      error_log("        [{$idx}] ID: {$tub_id}, state: {$state}, amount: {$amount}");
+      
+      // Store as simple object with just the data we need
+      $results[] = (object)[
+        'id'     => $tub_id,
+        'amount' => $amount,
+        'state'  => $state,
+      ];
       $idx++;
     }
   }

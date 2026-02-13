@@ -12,38 +12,80 @@ import ColumnsProvider from "./_column-provider.js";
 
 export default class BaseGridModel {
   
-  constructor(name, domain, options = {}) {
-    const { location = 935 } = options || {};
-    this.name = name;
+  // BaseGridModel - Split _build() into two phases
+  constructor(name, domain = null, options = {}) {
+      this.name = name;
+      this.domain = null;  // Always start null
+      this.metaData = options?.metaData ?? null;
+      this.location = options?.location ?? 935;
+
+      this.showList = [];
+      this.columns = [];
+      this.rows = [];
+      this.rowGroups = [];
+      
+      // Phase 1: Build columns from metadata (no domain needed)
+      if (this.metaData) {
+          this._buildColumns();
+      }
+      
+      // Phase 2: Set domain and build rows if provided
+      if (domain) {
+          this.setDomain(domain);
+      }
+  }
+  
+  setShowList(keys = []) {
+    this.showList = Array.isArray(keys) ? keys : [];
+    this._applyColumnFilter();
+  }
+  getShowList(){
+    return this.showList;
+  }
+
+  setDomain(domain) {
     this.domain = domain;
-    this.metaData = options?.metaData ?? null;
-    console.log(name, options);
+    
+    // Clear cached title maps when domain changes
+    this._titleMaps = new Map();
+    
+    // Initialize domain-dependent helpers
+        
+    this._cabinetsById     = domain.cabinet ? Indexer.byId(domain.cabinet) : new Map();
+    this._slotsByCabinetId = domain.cabinet && domain.slot ? Indexer.groupBy(
+        domain.slot, s => s.cabinet) : new Map();
+    this._flavorsById      = domain.flavor ?  Indexer.byId(domain.flavor) : new Map();
+    this._tubsById         = domain.tub ?     Indexer.byId(
+        domain.tub.filter(t => t.state !== 'Emptied')) : new Map();
+    this._availByFlavor = domain?.tub ?       Indexer.groupBy(
+        domain.tub.filter(t => t.state !== "Emptied"),
+        t => t.flavor) : new Map();
 
-    this.location = location;
-    // --- grid contract ---
-    this.columns = [];
-    this.rows = [];
-    this.rowGroups = [];
-    this.minCount = 0;
+    if (domain) {
+      this.flavorMeta = new Flavor({
+          flavorsById: this._flavorsById,
+          location:    this.location,
+          tub:         domain.tub
+      });
 
-    // --- derived indexes (convenience, not exposed to Grid) ---
-    this._tubsById         = domain.tub? 
-                             Indexer.byId(domain.tub.filter(t => t.state !== 'Emptied'))  : [];
-    this._flavorsById      = domain.flavor? 
-                             Indexer.byId(domain.flavor) : [];
-    this._availByFlavor    = domain.tub? 
-                             Indexer.groupBy(
-                              domain.tub.filter( t => t.state !== "Emptied"),
-                              t => t.flavor
-                            ) : [];
+      this.fBadgeSpecs = this.flavorMeta.getFlavorBadgeSpecs();
+    }
+    
+    this._buildRows();
+  }
 
-    this.flavorMeta = new Flavor({
-      flavorsById: this._flavorsById,
-      location:    this.location,
-      tub:        domain.tub
-    });
-
-    this.fBadgeSpecs = this.flavorMeta.getFlavorBadgeSpecs();
+  _buildColumns() {
+      this.buildCols();  // Only columns, from metadata
+  }
+  
+  _buildRows() {
+      this.buildRows();  // Only rows, from domain
+  }
+  
+  // Keep _build() for legacy one-shot init if needed
+  _build() {
+      this._buildColumns();
+      this._buildRows();
   }
 
   getById(map, id) {
@@ -66,8 +108,11 @@ export default class BaseGridModel {
   }
 
   filterByLocation(list, { locationKey = "location" } = {}) {
-    return (Array.isArray(list) ? list : []).filter(item =>
-      item?.[locationKey] === this.location
+    // Accept either array or full domain object
+    const items = Array.isArray(list) ? list : (list?.[this.metaData?.primary] || []);
+    
+    return items.filter(item =>
+        item?.[locationKey] === this.location
     );
   }
   
@@ -82,23 +127,39 @@ export default class BaseGridModel {
 
   }
 
-  _build() {
-    this.buildCols();
-    this.buildRows();
-  }
-
   buildCols() {
-    // Try metadata first for column schema
     const md = this.metaData;
     if (!md || !md.primary || !md.entities) return; 
     
-    this.columns = md.entities[md.primary];
+    const rawColumns = md.entities[md.primary];
+    
+    // Apply titleMap inference
+    this._allColumns = rawColumns.map(col => ({
+        ...col,
+        titleMap: col.titleMap || this._inferTitleMap(col.key)
+    }));
+    
+    this._applyColumnFilter();
+    
     if (this.columns?.length) return this.columns;
     
-    // Subclass must provide fallback
     throw new Error(`${this.name}.buildCols(): no metadata and no fallback implemented`);
   }
 
+  _applyColumnFilter() {
+    if (!this._allColumns.length) return;
+    
+    // If showList is empty, show all columns
+    if (!this.showList.length) {
+        this.columns = this._allColumns;
+        return;
+    }
+    
+    // Filter to only columns in showList
+    const showSet = new Set(this.showList);
+    this.columns = this._allColumns.filter(col => showSet.has(col.key));
+  }
+  
   _columnsFromMetadata(key, propList) {
     const cols = [];
     for (const [key, meta] of Object.entries(this.metaData.columns)) {
@@ -130,18 +191,22 @@ export default class BaseGridModel {
     return maps[key] ?? null;
   }
 
+  _filterColumnsByKeys(columns, allowedKeys = []) {
+    const set = new Set(allowedKeys);
+    return (columns ?? []).filter(col => set.has(col.key));
+  }
+
   buildRows(){
     const type = this.metaData.primary;
     const items = this.domain[type] || [];
-    console.log('br-d:',items);
-    this.rows = items;
-    /*
+    
+    this.rows = [];
     items.forEach((item, i) => {
         const row = { id: item.id };
         this.fillRowFromColumns(row, item, i);
         this.rows.push(row);
-    });*/
-    console.log('br',this.rows);
+    });
+    
     return this.rows;
   }
 
@@ -191,74 +256,104 @@ export default class BaseGridModel {
 
   }
   
-  getAlertCase(id, fieldKey = 'flavor') {  // Changed param name from 'type' to 'fieldKey'
-    // Only flavor-related fields get alert cases
+  // In BaseGridModel
+  getBadges(id, fieldKey = 'flavor', spec = this.fBadgeSpecs) {
+    // Gracefully handle missing domain
+    if (!this.flavorMeta) return [];
+    
     if (fieldKey === 'flavor' || fieldKey.includes('_flavor')) {
-      return this.flavorMeta.alertCase(id);
+        return this.flavorMeta.badges(id, spec);
+    }
+    return [];
+  }
+  
+  getOptions(id, fieldKey) {
+    if (!fieldKey || fieldKey === 'id') return [];
+    
+    // Gracefully handle missing domain
+    if (!this.domain) return [];
+    
+    if (fieldKey === 'state') return [
+        {key:'__override__',   label:'__override__'},
+        {key:'Hardening',      label:'Hardening'},
+        {key:'Freezing',       label:'Freezing'},
+        {key:'Tempering',      label:'Tempering'},
+        {key:'Opened',         label:'Opened'},
+        {key:'Emptied',        label:'Emptied'}
+    ];
+    
+    if (fieldKey === 'location') {
+        return [...(this.domain.location || [])]
+            .map(u => ({
+                key: u.id,
+                label: u._title || u.title?.rendered || ''
+            }));
+    }
+    
+    if (fieldKey === 'use') {
+        return [...(this.domain.use || [])]
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+            .map(u => ({
+                key: u.id,
+                label: u._title || u.title?.rendered || ''
+            }));
+    }
+    
+    if (fieldKey === 'flavor' || fieldKey === 'current_flavor' || 
+        fieldKey === 'immediate_flavor' || fieldKey === 'next_flavor') {
+        return this.flavorMeta?.optionsAll || [];  // ← Safe access
+    }
+    
+    return [];
+  }
+  
+  getAlertCase(id, fieldKey = 'flavor') {
+    if (!this.flavorMeta) return '';  // ← Safe access
+    
+    if (fieldKey === 'flavor' || fieldKey.includes('_flavor')) {
+        return this.flavorMeta.alertCase(id);
     }
     return '';
   }
 
-  getBadges(id, fieldKey = 'flavor', spec = this.fBadgeSpecs) {  // Changed param name
-    // Only flavor-related fields get badges
-    if (fieldKey === 'flavor' || fieldKey.includes('_flavor')) {
-      return this.flavorMeta.badges(id, spec);
-    }
-    return [];
-  }
-
-  getOptions(id, fieldKey) {  // Changed param name from 'type' to 'fieldKey'
-    if (!fieldKey || fieldKey === 'id') return [];
-    
-    if (fieldKey === 'state') return [
-      {key:'__override__',   label:'__override__'},
-      {key:'Hardening',      label:'Hardening'},
-      {key:'Freezing',       label:'Freezing'},
-      {key:'Tempering',      label:'Tempering'},
-      {key:'Opened',         label:'Opened'},
-      {key:'Emptied',        label:'Emptied'}
-    ];
-    
-    if (fieldKey === 'location') {
-      return [...this.domain.location]
-        .map(u => ({
-          key: u.id,
-          label: u._title || u.title?.rendered || ''
-        }));
-    }
-    
-    if (fieldKey === 'use') {
-      return [...this.domain.use]
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-        .map(u => ({
-          key: u.id,
-          label: u._title || u.title?.rendered || ''
-        }));
-    }
-    
-    // Handle all flavor-related fields
-    if (fieldKey === 'flavor' || fieldKey === 'current_flavor' || 
-        fieldKey === 'immediate_flavor' || fieldKey === 'next_flavor') {
-      return this.flavorMeta.optionsAll;
-    }
-    
-    return [];
-  }
-
   getTitleMap(name) {
-    this._titleMaps ??= new Map();           // Map<string, Map<number, obj>>
-    if (this._titleMaps.has(name)) return this._titleMaps.get(name);
+    this._titleMaps ??= new Map();
+    
+    // Return cached if available
+    if (this._titleMaps.has(name)) {
+        return this._titleMaps.get(name);
+    }
 
-    const list = this.domain?.[name];
-    const map  = Indexer.byId(Array.isArray(list) ? list : []);
+    // Defensive: return empty map if no domain
+    if (!this.domain) {
+        console.warn(`getTitleMap("${name}") called without domain - returning empty Map`);
+        const emptyMap = new Map();
+        this._titleMaps.set(name, emptyMap);
+        return emptyMap;
+    }
+
+    // Build map from domain
+    const list = this.domain[name];
+    if (!Array.isArray(list)) {
+        console.warn(`getTitleMap("${name}") - domain.${name} is not an array`);
+        const emptyMap = new Map();
+        this._titleMaps.set(name, emptyMap);
+        return emptyMap;
+    }
+    
+    const map = Indexer.byId(list);
     this._titleMaps.set(name, map);
     return map;
   }
 
   titleFrom(id, col) {
     if (!col?.titleMap) return id;
-    const map = this.getTitleMap(col.titleMap);  // col.titleMap = "use" | "flavor" | ...
-    return map.get(Number(id))?._title ?? "";
+    
+    const map = this.getTitleMap(col.titleMap);
+    const title = map.get(Number(id))?._title;
+    
+    // Return title if found, otherwise return the ID as a string
+    return title ?? String(id);
   }
   
   fillRowFromColumns(row, rowData, i) {

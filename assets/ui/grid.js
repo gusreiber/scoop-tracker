@@ -18,8 +18,8 @@ export default class Grid extends El{
     super();
     this.target = target;
     this.name = name;
-    this.modelCtrl = config?.modelCtrl ?? null;
-    this.location = config?.modelCtrl?.location ?? 0;
+    this.modelCtrl = config?.modelInstance ?? null;
+    this.location = config?.modelInstance?.location ?? 0;
     this.formCodec = config?.formCodec;
 
     this._columnsSet = false;
@@ -71,9 +71,6 @@ export default class Grid extends El{
 
     this.FORM.dispatchEvent(new Event("ts:grid:init"));
     this._isInit = true;
-    console.log('refresh INNNNIT');
-    if(this.name === 'DateActivity') 
-      console.log('refresh Init?');
   }
 
   loadConfig({ api, formCodec, domainCodec, modelCtrl } = {}) {
@@ -84,11 +81,23 @@ export default class Grid extends El{
     this.postUrl = this.api?.baseUrl ?? this.postUrl;
   }
 
+  async setDomain(domain) {
+    // Pass domain to model, which will build rows
+    this.modelCtrl.setDomain(domain);
+    
+    // Model IS the state
+    this.state = this.modelCtrl;
+    
+    // Initialize or refresh grid
+    if (this._isInit) {
+        this.refresh(this.state);
+    } else {
+        this.init(this.state);
+    }
+  }
+
   async refresh(state) {
     if (!this._isInit) throw new Error("Grid.refresh() called before init()");
-    console.log('refresh REFHRESHHHHHHH');
-    if(this.name === 'DateActivity') 
-      console.log('refresh DateActivity');
     this.state = state;
     this._rebuildBodies(state);
     this._captureBaseline();
@@ -116,7 +125,6 @@ export default class Grid extends El{
     this.rows = rows;
     this.rowGroups = rowGroups;
     this._buildRows();
-    console.log('??- grid rows', this.name, this.rows);
   }
 
   _build(){
@@ -141,7 +149,6 @@ export default class Grid extends El{
 
 
   _buildCols(){
-    console.log('GIRd buidCols', this.cols);
     if(!this.cols || !this.TABLE  || !this.TRH) return;
 
     this.TRH.replaceChildren();
@@ -338,13 +345,32 @@ export default class Grid extends El{
       this.baseline.set(k, f.value);
     }
 
-    this._updateDirtyIndicator(0);
+    //this._updateDirtyIndicator(0);
+    console.log('--> baseline ',this.baseline);
   }
 
+  /*
   _updateDirtyIndicator(n) {
     if (!this.DIRTY_IND) return;
     this.DIRTY_IND.textContent = `${n} change${n === 1 ? "" : "s"}`;
+  }*/
+
+  _normValue(colKey, raw) {
+    if (raw == null) return "";
+  
+    // state enum
+    if (colKey === "state") return String(raw);
+  
+    // amount float
+    if (colKey === "amount") {
+      const n = Number(raw);
+      return Number.isFinite(n) ? n : 0;
+    }
+  
+    // default: use your existing scalar normalizer (may return number or string)
+    return this.formCodec.normalizeScalar(raw);
   }
+    
 
   _normRelId(v) {
     if (v == null) return 0;
@@ -368,7 +394,7 @@ export default class Grid extends El{
         this.dirtySet.delete(k);
       }
     }
-    this._updateDirtyIndicator(this.dirtySet.size);
+    //this._updateDirtyIndicator(this.dirtySet.size);
   }
   
   _showHide(e, el=e.target){
@@ -382,12 +408,13 @@ export default class Grid extends El{
 
   }
 
-  _captureFocusAddress() {
+  _captureFocusAddress(e) {
     const el = document.activeElement;
     if (!el || !this.FORM.contains(el)) return null;
 
     // If focus is inside a cell editor, find the hidden input that already has the key
-    const h = el.closest('td')?.querySelector('input[type="hidden"][name]');
+    const h = (e.target instanceof HTMLInputElement && e.target.type === "hidden")
+      ? e.target : e.target.closest('input[type="hidden"][name]');
     if (!h) return null;
 
     const parsed = this.formCodec.parseBracketName(h.name);
@@ -513,36 +540,35 @@ export default class Grid extends El{
     return cellData;
   }
 
+  _handleCellChange(e) {
+    const h = e.target.closest('input[type="hidden"][name]');
+    if (!h) return;
+  
+    const parsed = this.formCodec.parseBracketName(h.name);
+    if (!parsed || parsed.length < 4) return;
+    if (parsed[0] !== this.name || parsed[1] !== "cells") return;
+  
+    const rowId = Number(parsed[2]);
+    const colKey = parsed[3];
+    const k = `${rowId}|${colKey}`;
+    
+    const v = (h.name.indexOf('[state]') === -1) ?
+      this.formCodec.normalizeScalar(h.value ?? "") : h.value;
+  
+    const before = this._normValue(colKey, this.baseline.get(k));
+    const after  = this._normValue(colKey, v);
+    
+    if (before === after) this.dirtySet.delete(k);
+    else this.dirtySet.add(k);
+  }
+
   async _bindEvents() {
     if (this._eventsBound || !this.FORM) return;
     this._eventsBound = true;
 
-    this.FORM.addEventListener('ts:findit-change', (e) => {
-      const h = e.target.closest('input[type="hidden"][name]');
-      if (!h) return;
-    
-      const parsed = this.formCodec.parseBracketName(h.name);
-      if (!parsed || parsed.length < 4) return;
-      if (parsed[0] !== this.name || parsed[1] !== "cells") return;
-    
-      const rowId = Number(parsed[2]);
-      const colKey = parsed[3];
-      const k = `${rowId}|${colKey}`;
-      //TODO: Hacking state enum. Need Enum check in formCodec.normalizeScalar
-      const v = (h.name.indexOf('[state]') === -1 )?
-        this.formCodec.normalizeScalar(h.value ?? ""):
-         h.value;
-      const before = this.baseline.get(k);
-      
-      const beforeId = this._normRelId(before);
-      const afterId  = (h.name.indexOf('[state]') === -1 )? this._normRelId(v) : h.value;
-
-      if (beforeId === afterId) this.dirtySet.delete(k);
-      else this.dirtySet.add(k);
-    
-      // Display count wherever you want
-      this._updateDirtyIndicator(this.dirtySet.size);
-    });
+    // Listen for BOTH FindIt and TextIt changes
+    this.FORM.addEventListener('ts:findit-change', this._handleCellChange.bind(this));
+    this.FORM.addEventListener('ts:textit-change', this._handleCellChange.bind(this));
 
     this.FORM.addEventListener("keydown", (e) => {
 
@@ -581,12 +607,12 @@ export default class Grid extends El{
 
     this.FORM.addEventListener("mousedown", (e)=>{
       this._showHide(e);
-      this._sortCols(e)?.bind(this);
+      this._sortCols(e);
     }, true);
 
     this.FORM.addEventListener("submit", async (e) => {      
       e.preventDefault();
-      this._captureFocusAddress();
+      this._captureFocusAddress(e);
 
       if(e.submitter && e.submitter.classList.contains('oc')) return false;
       console.log('FORM POST URL',this.postUrl);
@@ -649,7 +675,7 @@ export default class Grid extends El{
         if (this._reloading) return;
         this._reloading = true;
         try {
-          const model = await this.modelCtrl.load();
+          const model = await this.modelCtrl ?? null;
           if (this._isInit) {
             await this.refresh(model);
             this._restoreFocusAddress();

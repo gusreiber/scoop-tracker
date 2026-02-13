@@ -8,14 +8,19 @@ export default class DateActivityGridModel extends BaseGridModel{
   }
 
   buildRows() {
-    const type = this.metaData.primary;
-    const allItems = this.domain[type] || [];
+    if (!this.domain) return [];
+
+    // Access the primary entity from domain
+    const primary = this.metaData?.primary || 'tub';
+    const items = this.domain[primary] || [];
+    
+    const locationTubIds = this.filterByLocation(items);
     
     // Filter for items modified in last 48 hours
     const now = Date.now();
     const fortyEightHoursAgo = now - (48 * 60 * 60 * 1000);
     
-    const recentItems = allItems.filter(item => {
+    const recentItems = locationTubIds.filter(item => {
       if (!item.post_modified) return false;
       const modifiedDate = new Date(item.post_modified).getTime();
       return modifiedDate >= fortyEightHoursAgo;

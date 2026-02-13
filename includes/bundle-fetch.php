@@ -49,9 +49,7 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
     $pod_write = (array) $pod_write(wp_get_current_user());
   }
 
-
-
-  // Keep this big to avoid paging; we’ll filter in PHP for now.
+  // Keep this big to avoid paging; we'll filter in PHP for now.
   // If you later confirm fields are stored in postmeta, you can add meta_query here.
   $ids = get_posts([
     'post_type'      => $post_type,
@@ -100,40 +98,61 @@ function scoop_fetch_entities(string $key, array $ctx = [], bool $fields_only = 
       if ((int)$row['location'] !== (int)$ctx['location']) continue;
     }
 
-    $p = get_post($id);
-    foreach (($spec['post_fields'] ?? []) as $field => $type) {
-      if ($field === 'author_name') {
-        $row['author_name'] = scoop_cast(
-          get_the_author_meta('display_name', $p?->post_author ?? 0),
-          'string'
-        );
-      }
-    }
-
     $out[] = $row;
+  }
+
+  // Enrich slots with location from parent cabinet
+  if ($key === 'slot' && !empty($out)) {
+    $out = scoop_enrich_slots_with_location($out);
   }
 
   return $out;
 }
 
-function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req): array {
-  // Convert request context you care about (location, etc.)
-  $ctx = [];
+/**
+ * Enrich slots with location from parent cabinet
+ */
+function scoop_enrich_slots_with_location(array $slots): array {
+  // Extract unique cabinet IDs
+  $cabinet_ids = array_unique(array_filter(array_map(function($slot) {
+    return scoop_rel_id($slot['cabinet'] ?? null);
+  }, $slots)));
 
-  $loc = $req->get_param('location');
-  if ($loc !== null && $loc !== '') $ctx['location'] = (int) $loc;
+  if (empty($cabinet_ids)) return $slots;
 
-  $map = [ 
-    'tub'      => 'tub',
-    'flavor'   => 'flavor',
-    'slot'     => 'slot',
-    'use'      => 'use',
-    'location' => 'location',
-    'cabinet'  => 'cabinet',
-    'batch'   => 'batch',
-    'closeout' => 'closeout',
-  ];
+  // Batch fetch cabinet locations
+  $cabinet_locations = [];
+  foreach ($cabinet_ids as $cab_id) {
+    $cabinet = pods('cabinet', $cab_id);
+    if ($cabinet && $cabinet->exists()) {
+      $location_id = scoop_rel_id($cabinet->field('location'));
+      $cabinet_locations[$cab_id] = $location_id;
+    }
+  }
 
-  $key = $map[$needType] ?? $needType;
-  return scoop_fetch_entities($key, $ctx);
+  // Enrich each slot with its cabinet's location
+  foreach ($slots as &$slot) {
+    $cabinet_id = scoop_rel_id($slot['cabinet'] ?? null);
+    $slot['location'] = $cabinet_locations[$cabinet_id] ?? 0;
+  }
+  unset($slot); // Break reference
+
+  return $slots;
+}
+
+function scoop_bundle_fetch_type(string $needType, \WP_REST_Request $req, array $bundle_ctx = []): array {
+    $ctx = [];
+
+    $loc = $req->get_param('location');
+    if ($loc !== null && $loc !== '') $ctx['location'] = (int) $loc;
+    
+    // THIS LINE MUST BE HERE
+    if (!empty($bundle_ctx['requesting_types'])) {
+        $ctx['requesting_types'] = $bundle_ctx['requesting_types'];
+    }
+    
+    error_log("scoop_bundle_fetch_type: needType={$needType}, ctx=" . json_encode($ctx));  // ← ADD THIS
+    
+    $key = $map[$needType] ?? $needType;
+    return scoop_fetch_entities($key, $ctx);
 }

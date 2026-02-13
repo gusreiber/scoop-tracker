@@ -63,7 +63,7 @@ function scoop_bundle_get(\WP_REST_Request $req) {
 
   $data = [];
   foreach ($needTypes as $needType) {
-    $data[$needType] = scoop_bundle_fetch_type($needType, $req);
+      $data[$needType] = scoop_bundle_fetch_type($needType, $req, ['requesting_types' => $types]);  // ← Make sure this 3rd param is there
   }
 
   return new \WP_REST_Response([

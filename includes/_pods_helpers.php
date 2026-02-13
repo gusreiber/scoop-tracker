@@ -20,8 +20,6 @@ function scoop_can_route(\WP_User $u, string $route_key, string $method): bool {
   $pol = scoop_policy_for_user($u);
   return (bool)($pol['routes'][$route_key][$method] ?? false);
 }
-//scoop_user_writeable_fields
-// scoop_writable_fields is now scoop_user_writeable_fields in _policy.php
 
 function scoop_create_custom_roles() {
   // Remove old roles if they exist (for updates)

@@ -42,14 +42,15 @@ function scoop_entity_specs(string $key = ''): array {
       'title'     => true,
       'fields'    => [
         'state'         => ['data_type' => 'string', 'control' => 'enum'],
-        'use'           => ['data_type' => 'int',    'control' => 'find', 'titleMap' => 'use'],
-        'flavor'        => ['data_type' => 'int',    'control' => 'input', 'titleMap' => 'flavor'],
+        'use'           => ['data_type' => 'int',    'control' => 'find',  'titleMap' => 'use'],
+        'flavor'        => ['data_type' => 'int',    'control' => 'find', 'titleMap' => 'flavor'],
+        'amount'        => ['data_type' => 'float',  'control' => 'text'],
         'author_name'   => ['data_type' => 'string', 'label'   => 'Author'],
-        'date'          => ['data_type' => 'string', 'control' => 'input', 'label' => 'Created'],
-        'post_modified' => ['data_type' => 'string', 'control' => 'input', 'label' => 'Modified'],
+        'date'          => ['data_type' => 'string', 'control' => 'find', 'label' => 'Created'],
+        'post_modified' => ['data_type' => 'string', 'control' => 'find', 'label' => 'Modified'],
         'opened_on'     => ['data_type' => 'string'],
         'emptied_at'    => ['data_type' => 'string'],
-        'location'      => ['data_type' => 'int',    'control' => 'input', 'titleMap' => 'location', 'hidden' => true],
+        'location'      => ['data_type' => 'int',    'control' => 'find', 'titleMap' => 'location', 'hidden' => true],
         'index'         => ['data_type' => 'int',    'hidden'  => true],
       ],
       'post_fields' => [
@@ -58,13 +59,38 @@ function scoop_entity_specs(string $key = ''): array {
         'post_date'     => 'datetime',
       ],
       'filter' => function(array $row, array $ctx) {
-        if (($row['state'] ?? '') !== 'Emptied') return true;
+        $state = $row['state'] ?? '';
+        $requesting_types = $ctx['requesting_types'] ?? [];
         
-        $modifiedTime = strtotime($row['post_modified']);
-        $fortyEightHoursAgo = time() - (48 * 60 * 60);
-    
-        return $modifiedTime >= $fortyEightHoursAgo;
+        // DEBUG
+        error_log("TUB FILTER - Tub {$row['id']}: state={$state}, requesting_types=" . json_encode($requesting_types));
+        
+        $has_date_activity = in_array('DateActivity', $requesting_types, true);
+        $has_other_grids = !empty(array_diff($requesting_types, ['DateActivity']));
+        
+        error_log("  has_date_activity={$has_date_activity}, has_other_grids={$has_other_grids}");
+        
+        // DateActivity needs: recent tubs (any state)
+        if ($has_date_activity) {
+            $modified = strtotime($row['post_modified'] ?? '');
+            $fortyEightHoursAgo = time() - (48 * 60 * 60);
+            
+            if ($modified && $modified >= $fortyEightHoursAgo) {
+                error_log("  KEEP: Recent tub for DateActivity");
+                return true;
+            }
+        }
+        
+        // Other grids need: active tubs (not Emptied)
+        if ($has_other_grids && $state !== 'Emptied') {
+            error_log("  KEEP: Active tub for other grids");
+            return true;
+        }
+        
+        error_log("  REJECT: Doesn't match any grid needs");
+        return false;
       },
+      
       'writeable' => ['state','use','amount']
     ],
 

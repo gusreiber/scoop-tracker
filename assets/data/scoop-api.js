@@ -88,7 +88,6 @@ export default class ScoopAPI {
   async _fetch(url, { method="GET", headers={}, body=null, useNonce=true } = {}) {
     const u0 = (url instanceof URL) ? url : this._absUrl(url);
     const u = (method === "GET") ? this._absUrlWithBust(u0) : ((u0 instanceof URL) ? u0 : this._absUrl(u0));
-    console.log('_fetch????');
     const res = await fetch(u, {
       method,
       credentials: "include",
@@ -102,7 +101,6 @@ export default class ScoopAPI {
       },
       body,
     });
-    console.log('???_fetch');
     const text = await res.text().catch(() => "");
     let data = null;
     try { data = text ? JSON.parse(text) : null; }
@@ -117,7 +115,7 @@ export default class ScoopAPI {
   }
 
 
-  // --- WRITES (unchanged) ---
+  // --- WRITES  ---
   async postJson(payload, type = "", { useNonce = true } = {}) {
     const url = this.route(type);
     const bodyObj = { [type]: payload }; // <-- THE RULE
@@ -193,13 +191,21 @@ export default class ScoopAPI {
   }
 
   // Returns full bundle JSON: { ok, types, needs, data }
-  async getBundleForTypes(types, { cache = true } = {}) {
+  async getBundleForTypes(types, { cache = true, modifiedSince = null } = {}) {
     const key = this._typesKey(types);
     if (!key) throw new Error("getBundleForTypes: no types");
 
-    if (cache && this._bundleCache.has(key)) return this._bundleCache.get(key);
+    if (cache && !modifiedSince && this._bundleCache.has(key)) {
+        return this._bundleCache.get(key);
+    }
 
     const url = this._bundleUrlForTypes(types);
+    
+    // Add modified_since parameter if provided
+    if (modifiedSince) {
+        url.searchParams.set('modified_since', modifiedSince.toISOString());
+    }
+    
     const bundle = await this.getJson(url);
 
     // Minimal guards so models can safely assume arrays exist.
@@ -255,52 +261,50 @@ export default class ScoopAPI {
     return this._domain ?? {};
   }
 
-  // Controller factory that DOES NOT fetch; it use a provided domain.
-  getModelCtrl(name, location = 0) {
-    const Ctor = this.getModelsBom()[name];
-    if (!Ctor) throw new Error(`Missing model for grid type "${name}"`);
-
-    return {
-      type: name,
-      location,
-      load: async () => {
-        const domain = this.getDomainSnapshot();
-        return new Ctor(name, domain, { location, metaData: SCOOP.metaData[name]});
-      }
-    };
-  }
-
   // --- MOUNTING ---
-
   async mountAllGrids({ root = document, formCodec = FormCodec } = {}) {
-    if (!this.getTypesFromGridHosts(root)) return;
-
-    // Build grids with pre-loaded columns from metadata
+    if (!this.getTypesFromGridHosts(root)) return [];
+    
+    // Phase 1: Create models with metadata only
     const grids = this._hosts.map(dom => {
-      const name = dom.dataset.gridType;
-      const location = Number(dom.dataset.location || 0);
-      const modelCtrl = this.getModelCtrl(name, location);
-
-      // Get columns from metadata immediately
-      const md = SCOOP.metaData?.[name];
-      const primary = md?.primary;
-      const columns = (primary && md?.entities?.[primary]) ? md.entities[primary] : [];
-
-      // Grid gets columns before data loads
-      const G = new Grid(dom, name, { 
-        api: this, 
-        modelCtrl, 
-        formCodec,
-        columns  // ← Pass columns early
-      });
-      return G;
+        const name = dom.dataset.gridType;
+        const location = Number(dom.dataset.location || 0);
+        const ModelClass = this.getModelsBom()[name];
+        
+        const modelInstance = new ModelClass(name, null, {
+            location,
+            metaData: SCOOP.metaData?.[name]
+        });
+        
+        return new Grid(dom, name, {
+            api: this,
+            modelInstance,
+            formCodec,
+            columns: modelInstance.columns
+        });
     });
-
-    // One request for all grids on the page
-    this._domain = await this.refreshPageDomain();
-
-    // Now load models and populate rows
-    const models = await Promise.all(grids.map(g => g.modelCtrl.load()));
-    models.forEach((m, i) => grids[i].init(m));
+    
+    // Phase 2: Fetch domain with date filtering if needed
+    const needsDateFilter = this.gridTypes.has('DateActivity');
+    
+    if (needsDateFilter) {
+        const fortyEightHoursAgo = new Date(Date.now() - 48 * 60 * 60 * 1000);
+        const url = this._bundleUrlForTypes();
+        url.searchParams.set('modified_since', fortyEightHoursAgo.toISOString());
+        
+        const bundle = await this.getJson(url);
+        this._domain = bundle?.data ?? {};
+    } else {
+        await this.refreshPageDomain({ force: true });
+    }
+    
+    // Phase 3: Set domain on each grid
+    grids.forEach(g => {
+        g.setDomain(this._domain);  // Pass full domain now
+    });
+    
+    return grids;
   }
+  
+  
 }

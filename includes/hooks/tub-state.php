@@ -1,6 +1,7 @@
 <?php
 
 function scoop_enforce_tub_rules( $pieces, $is_new_item, $id = 0 ) {
+  error_log('-----------------------------------------');
   error_log('scoop_enforce_tub_rules');
 
   // Resolve tub ID robustly
@@ -18,8 +19,12 @@ function scoop_enforce_tub_rules( $pieces, $is_new_item, $id = 0 ) {
     }
   }
 
+  error_log('');
+  
+  error_log('');
   error_log('scoop_enforce_tub_rules tub_id=' . $tub_id);
-
+  error_log('');
+  
   // Only apply to edits, not new items.
   if ($is_new_item || $tub_id <= 0) return $pieces;
 

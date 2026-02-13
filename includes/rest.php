@@ -197,6 +197,7 @@
     foreach ($cells as $id_raw => $row) {
       $id = (int)$id_raw;
       error_log("🔍 TRACE: Processing cell ID: $id");
+      error_log("🔍 --> UPDATING TUB: id={$id}, pod={$pod_name}, clean=" . json_encode($clean));
       
       if ($id <= 0 || !is_array($row)) {
         error_log("🔍 TRACE: Skipping invalid cell: ID=$id, is_array=" . (is_array($row) ? 'yes' : 'no'));

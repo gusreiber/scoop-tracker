@@ -18,7 +18,7 @@ export default class Grid extends El{
     super();
     this.target = target;
     this.name = name;
-    this.modelCtrl = config?.modelInstance ?? null;
+    this.modelInstance = config?.modelInstance ?? null;
     this.location = config?.modelInstance?.location ?? 0;
     this.formCodec = config?.formCodec;
 
@@ -73,20 +73,20 @@ export default class Grid extends El{
     this._isInit = true;
   }
 
-  loadConfig({ api, formCodec, domainCodec, modelCtrl } = {}) {
+  loadConfig({ api, formCodec, domainCodec, modelInstance } = {}) {
     if (api) this.api = api;
     if (formCodec) this.formCodec = formCodec;
     if (domainCodec) this.domainCodec = domainCodec;
-    if (modelCtrl) this.modelCtrl = modelCtrl;
+    if (modelInstance) this.modelInstance = modelInstance;
     this.postUrl = this.api?.baseUrl ?? this.postUrl;
   }
 
   async setDomain(domain) {
-    // Pass domain to model, which will build rows
-    this.modelCtrl.setDomain(domain);
+    // Pass full domain to model, which will build rows
+    this.modelInstance.setDomain(domain);
     
     // Model IS the state
-    this.state = this.modelCtrl;
+    this.state = this.modelInstance;
     
     // Initialize or refresh grid
     if (this._isInit) {
@@ -106,7 +106,7 @@ export default class Grid extends El{
   
   preloadColumns(columns) {
     this.setColumns(columns, true);
-    this._captureBaseline(); // optional: only if inputs already exist (often they won’t yet)
+    this._captureBaseline(); // optional: only if inputs already exist (often they won't yet)
   }
 
   setColumns(columns = [], force){
@@ -146,7 +146,6 @@ export default class Grid extends El{
     this.setRowGroups(rowGroups ?? []);
     this.setRows(rows ?? []);
   }
-
 
   _buildCols(){
     if(!this.cols || !this.TABLE  || !this.TRH) return;
@@ -251,7 +250,6 @@ export default class Grid extends El{
     }
   }
 
-
   _getCellDom(col,data){
     // TODO: Decide if I am going to demand data types for all cells
     // TODO: Decide how I am going to swallow or reflect those types in the css class
@@ -344,16 +342,7 @@ export default class Grid extends El{
       const k = `${f.rowId}|${f.colKey}`;
       this.baseline.set(k, f.value);
     }
-
-    //this._updateDirtyIndicator(0);
-    console.log('--> baseline ',this.baseline);
   }
-
-  /*
-  _updateDirtyIndicator(n) {
-    if (!this.DIRTY_IND) return;
-    this.DIRTY_IND.textContent = `${n} change${n === 1 ? "" : "s"}`;
-  }*/
 
   _normValue(colKey, raw) {
     if (raw == null) return "";
@@ -394,7 +383,6 @@ export default class Grid extends El{
         this.dirtySet.delete(k);
       }
     }
-    //this._updateDirtyIndicator(this.dirtySet.size);
   }
   
   _showHide(e, el=e.target){
@@ -457,7 +445,6 @@ export default class Grid extends El{
       }
       
       this._applySortAndRender();
-      //this._updateSortIndicators();
     }
   }
 
@@ -615,7 +602,6 @@ export default class Grid extends El{
       this._captureFocusAddress(e);
 
       if(e.submitter && e.submitter.classList.contains('oc')) return false;
-      console.log('FORM POST URL',this.postUrl);
 
       if (!this.api) throw new Error('Grid submit: missing this.api');
       if (!this.postUrl) throw new Error('Grid submit: missing this.postUrl');
@@ -626,7 +612,7 @@ export default class Grid extends El{
       try {
         const isAll = this.state.submitMode === 'all';
         const changes = ( isAll)? this._buildAllPayload() :this._buildDirtyPayload();
-        console.log("try changes", changes);
+        
         // OPTIONAL: no-op submit guard
         if (!Object.keys(changes.cells).length && !isAll) {
           console.log("No changes to submit.", changes);
@@ -641,26 +627,20 @@ export default class Grid extends El{
         }
 
         if (!r.data?.ok) {
-          // app error payload from your endpoint
-          // TODO: use r.data.errors to mark cells invalid
           Toast.addMessage({title:'bad post', message:JSON.stringify(r.data, null)});
           return;
         }
+        
         if (r.ok && r.data?.ok) {
           document.body.classList.add('TS_GRID-UPDATING');
-          this.modelCtrl?.invalidate?.(); 
-          await this.modelCtrl?.load?.({ force: true });
-        
+          
           this._commitPosted(changes);
           
           const TOAST = Toast.addMessage({title:'Update sent', message:r.data.updated});
           
           await this.api.refreshPageDomain({ force: true, toast:TOAST, info:{name:this.name, response:r} });
           this._restoreFocusAddress();
-          
         }
-        // TODO: mark successful cells as clean (e.g., store baseline values)
-        
         
       } catch (err) {
         console.error("POST exception:", err);
@@ -675,9 +655,17 @@ export default class Grid extends El{
         if (this._reloading) return;
         this._reloading = true;
         try {
-          const model = await this.modelCtrl ?? null;
+          // Get fresh domain from API
+          const freshDomain = this.api.getDomainSnapshot();
+          
+          // Update model with new domain (rebuilds rows)
+          if (this.modelInstance) {
+            this.modelInstance.setDomain(freshDomain);
+          }
+          
+          // Refresh grid with updated model
           if (this._isInit) {
-            await this.refresh(model);
+            await this.refresh(this.modelInstance);
             this._restoreFocusAddress();
           }
         } finally {

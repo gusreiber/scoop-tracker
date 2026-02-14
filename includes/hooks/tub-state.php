@@ -1,5 +1,88 @@
 <?php
 
+/**
+ * Auto-populate created_on and changed_on fields when tub is created
+ * Runs on ANY creation mechanism (WP admin, API, Pods, etc.)
+ * Priority 5 - runs before scoop_enforce_tub_rules
+ */
+add_filter('pods_api_pre_save_pod_item_tub', 'scoop_auto_set_tub_created_on', 5, 2);
+function scoop_auto_set_tub_created_on($pieces, $is_new_item) {
+  // Only run on new items
+  if (!$is_new_item) {
+    return $pieces;
+  }
+  
+  error_log('scoop_auto_set_tub_created_on: Setting created_on and changed_on for new tub');
+  
+  // Set both created_on and changed_on to current time (matches what WP uses for post_date)
+  $now = current_time('mysql');
+  
+  $pieces['fields']['created_on']['value'] = $now;
+  $pieces['fields']['changed_on']['value'] = $now;
+  
+  // Ensure both are marked as active so Pods saves them
+  if (!isset($pieces['fields_active']) || !is_array($pieces['fields_active'])) {
+    $pieces['fields_active'] = [];
+  }
+  
+  if (!in_array('created_on', $pieces['fields_active'], true)) {
+    $pieces['fields_active'][] = 'created_on';
+  }
+  
+  if (!in_array('changed_on', $pieces['fields_active'], true)) {
+    $pieces['fields_active'][] = 'changed_on';
+  }
+  
+  error_log('scoop_auto_set_tub_created_on: created_on and changed_on both set to ' . $now);
+  
+  return $pieces;
+}
+
+/**
+ * Auto-update changed_on field whenever tub is edited
+ * Priority 8 - runs before state rules
+ */
+add_filter('pods_api_pre_save_pod_item_tub', 'scoop_auto_update_tub_changed_on', 8, 2);
+function scoop_auto_update_tub_changed_on($pieces, $is_new_item) {
+  // Only run on edits, not new items
+  if ($is_new_item) {
+    return $pieces;
+  }
+  
+  error_log('scoop_auto_update_tub_changed_on: Updating changed_on for edited tub');
+  
+  // Check if user is explicitly setting changed_on themselves
+  $user_setting_changed_on = isset($pieces['fields']['changed_on']) 
+    && array_key_exists('value', (array)$pieces['fields']['changed_on']);
+  
+  // If user is NOT explicitly setting it, auto-update to now
+  if (!$user_setting_changed_on) {
+    $now = current_time('mysql');
+    
+    $pieces['fields']['changed_on']['value'] = $now;
+    
+    // Ensure it's marked as active so Pods saves it
+    if (!isset($pieces['fields_active']) || !is_array($pieces['fields_active'])) {
+      $pieces['fields_active'] = [];
+    }
+    
+    if (!in_array('changed_on', $pieces['fields_active'], true)) {
+      $pieces['fields_active'][] = 'changed_on';
+    }
+    
+    error_log('scoop_auto_update_tub_changed_on: changed_on auto-updated to ' . $now);
+  } else {
+    error_log('scoop_auto_update_tub_changed_on: User is explicitly setting changed_on, skipping auto-update');
+  }
+  
+  return $pieces;
+}
+
+/**
+ * Enforce tub state transition rules and auto-set state-based timestamps
+ * Priority 10 (default) - runs after created_on is set and changed_on is updated
+ */
+add_filter('pods_api_pre_save_pod_item_tub', 'scoop_enforce_tub_rules', 10, 3);
 function scoop_enforce_tub_rules( $pieces, $is_new_item, $id = 0 ) {
   error_log('-----------------------------------------');
   error_log('scoop_enforce_tub_rules');
